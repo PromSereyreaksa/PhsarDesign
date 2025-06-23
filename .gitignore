@@ -5,6 +5,9 @@ yarn-debug.log*
 yarn-error.log*
 package-lock.json
 yarn.lock
+Database
+Schema
+Database/
 
 # Logs
 logs/
@@ -32,5 +35,7 @@ out/
 *.swp
 *.bak
 *.tmp.env
+Database
+Schema
 Database
 Schema
