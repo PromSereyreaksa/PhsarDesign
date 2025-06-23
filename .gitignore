@@ -32,3 +32,5 @@ out/
 *.swp
 *.bak
 *.tmp.env
+Database
+Schema
