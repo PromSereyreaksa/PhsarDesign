@@ -3,14 +3,12 @@ import { sequelize } from "../config/database.js";
 
 class Freelancers extends Model {
   static associate(models) {
-    // A Freelancer belongs to one User
     Freelancers.belongsTo(models.Users, {
       foreignKey: "userId",
       as: "user",
       onDelete: "CASCADE",
     });
 
-    // A Freelancer has many Applications
     Freelancers.hasMany(models.Applications, {
       foreignKey: "freelancerId",
       as: "applications",
@@ -30,8 +28,8 @@ Freelancers.init(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: "users",  // Make sure this matches your actual table name (usually lowercase)
-        key: "userId",   // Make sure this matches your Users primary key field name
+        model: "users",
+        key: "userId",
       },
       onDelete: "CASCADE",
     },
@@ -50,6 +48,13 @@ Freelancers.init(
     portfolio_images_text: {
       type: DataTypes.TEXT,
       allowNull: true,
+    },
+    avatarUrl: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      validate: {
+        isUrl: true,  // Optional: ensures stored value is a URL
+      },
     },
   },
   {

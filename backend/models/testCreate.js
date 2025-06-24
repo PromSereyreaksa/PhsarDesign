@@ -11,7 +11,7 @@ async function runTests() {
 
     // Create user and freelancer profile
     const userFreelancer = await Users.create({
-      email: "freelancer414@example.com",
+      email: "freelancer4143@example.com",
       password: "password123",
       role: "freelancer",
     });

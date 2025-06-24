@@ -1,31 +1,48 @@
 import { Sequelize } from "sequelize";
+import dotenv from "dotenv";
+import path from 'path';
+import { fileURLToPath } from 'url';
+import fs from 'fs';
+
+// Get current file's directory
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Find project root (look for package.json)
+function findProjectRoot(startDir) {
+    let currentDir = startDir;
+    while (currentDir !== path.dirname(currentDir)) {
+        if (fs.existsSync(path.join(currentDir, 'package.json'))) {
+            return currentDir;
+        }
+        currentDir = path.dirname(currentDir);
+    }
+    return startDir; // fallback
+}
+
+const projectRoot = findProjectRoot(__dirname);
+const envPath = path.join(projectRoot, '.env');
+
+console.log("Loading .env from:", envPath);
+dotenv.config({ path: envPath });
 
 export const sequelize = new Sequelize(
-  "PhsarDesign",   // replace with your PostgreSQL DB name
-  "postgres",     // replace with your PostgreSQL username
-  "",     // replace with your PostgreSQL password
-  {
-    host: "localhost",    // or your PostgreSQL host
-    dialect: "postgres",  // PostgreSQL dialect
-    logging: false,       // set true to see SQL logs
-    pool: {
-      max: 5,
-      min: 0,
-      acquire: 30000,
-      idle: 10000
-    },
-    define: {
-      freezeTableName: true  // prevent plural table names
+    process.env.DB_NAME,
+    process.env.DB_USER,
+    process.env.DB_PASSWORD || null,
+    {
+        host: process.env.DB_HOST,
+        port: process.env.DB_PORT,
+        dialect: "postgres",
+        logging: false,
+        pool: {
+            max: 5,
+            min: 0,
+            acquire: 30000,
+            idle: 10000,
+        },
+        define: {
+            freezeTableName: true,
+        },
     }
-  }
 );
-
-// Optional connection test
-(async () => {
-  try {
-    await sequelize.authenticate();
-    console.log("PostgreSQL connection has been established successfully.");
-  } catch (error) {
-    console.error("Unable to connect to PostgreSQL:", error);
-  }
-})();

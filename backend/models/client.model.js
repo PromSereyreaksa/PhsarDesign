@@ -1,44 +1,60 @@
-import { DataTypes } from "sequelize";
+import { DataTypes, Model } from "sequelize";
 import { sequelize } from "../config/database.js";
-import Users from "./user.model.js"; // Your Users model
+import Users from "./user.model.js"; // Import the Users model
 
-const Clients = sequelize.define("Clients", {
-  clientId: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true,
-    allowNull: false,
-  },
-  userId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    unique: true,
-    references: {
-      model: Users, // Reference the imported model
-      key: "userId", // Make sure this matches Users model
-    },
-    onDelete: "CASCADE", // Correct way to cascade
-  },
-  organization: {
-    type: DataTypes.STRING(255),
-    allowNull: true,
-  },
-  name: {
-    type: DataTypes.STRING(100),
-    allowNull: false,
-    validate: {
-      len: [2, 100],
-    },
-  },
-}, {
-  tableName: "clients",
-  timestamps: true, // Automatically manage createdAt, updatedAt
-});
+class Clients extends Model {
+  // You can add custom methods here if needed
+}
 
+Clients.init(
+  {
+    clientId: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+      allowNull: false,
+    },
+    userId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      unique: true,
+      references: {
+        model: Users,
+        key: "userId",
+      },
+      onDelete: "CASCADE",
+    },
+    organization: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    name: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+      validate: {
+        len: [2, 100],
+      },
+    },
+    avatarUrl: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      validate: {
+        isUrl: true,
+      },
+    },
+  },
+  {
+    sequelize,
+    modelName: "Clients",
+    tableName: "clients",
+    timestamps: true,
+  }
+);
+
+// Define associations as a static method (recommended)
 Clients.associate = (models) => {
   Clients.belongsTo(models.Users, { foreignKey: "userId", as: "user" });
   Clients.hasMany(models.Projects, { foreignKey: "clientId", as: "projects" });
 };
-
 
 export default Clients;
