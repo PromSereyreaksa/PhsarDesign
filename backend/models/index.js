@@ -6,6 +6,7 @@ import Freelancers from "./freelancer.model.js";
 import Projects from "./project.model.js";
 import Messages from "./message.model.js";
 import Applications from "./applications.model.js";
+import Portfolios from "./portfolio.model.js";
 
 const models = {
   Users,
@@ -14,6 +15,7 @@ const models = {
   Projects,
   Messages,
   Applications,
+  Portfolios, 
 };
 
 // Setup associations for all models that have an associate method
@@ -31,4 +33,5 @@ export {
   Projects,
   Messages,
   Applications,
+  Portfolios,
 };

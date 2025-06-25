@@ -8,7 +8,6 @@ class Freelancers extends Model {
       as: "user",
       onDelete: "CASCADE",
     });
-
     Freelancers.hasMany(models.Applications, {
       foreignKey: "freelancerId",
       as: "applications",

@@ -3,7 +3,6 @@ import { sequelize } from "../config/database.js";
 
 class Users extends Model {
     static associate(models) {
-        // Define associations here
         Users.hasOne(models.ClientProfile, { 
             foreignKey: 'userId',
             as: 'clientProfile'

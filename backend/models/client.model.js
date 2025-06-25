@@ -3,7 +3,10 @@ import { sequelize } from "../config/database.js";
 import Users from "./user.model.js"; // Import the Users model
 
 class Clients extends Model {
-  // You can add custom methods here if needed
+  static associate(models) {
+    Clients.belongsTo(models.Users, { foreignKey: "userId", as: "user" });
+    Clients.hasMany(models.Projects, { foreignKey: "clientId", as: "projects" });
+  }
 }
 
 Clients.init(
@@ -50,11 +53,5 @@ Clients.init(
     timestamps: true,
   }
 );
-
-// Define associations as a static method (recommended)
-Clients.associate = (models) => {
-  Clients.belongsTo(models.Users, { foreignKey: "userId", as: "user" });
-  Clients.hasMany(models.Projects, { foreignKey: "clientId", as: "projects" });
-};
 
 export default Clients;

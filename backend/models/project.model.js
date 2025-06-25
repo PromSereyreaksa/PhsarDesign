@@ -2,7 +2,10 @@ import { DataTypes, Model } from "sequelize";
 import { sequelize } from "../config/database.js";
 
 class Projects extends Model {
-  // Add custom methods here if needed
+  static associate(models) {
+    Projects.belongsTo(models.Clients, { foreignKey: "clientId", as: "client" });
+    Projects.hasMany(models.Applications, { foreignKey: "projectId", as: "applications" });
+  }
 }
 
 Projects.init(

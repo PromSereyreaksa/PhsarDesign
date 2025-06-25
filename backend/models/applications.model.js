@@ -12,7 +12,7 @@ const Applications = sequelize.define("Applications", {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: "projects",  // Use table name lowercase if referencing by string
+      model: "projects", 
       key: "projectId"
     },
     onDelete: "CASCADE"

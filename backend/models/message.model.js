@@ -1,9 +1,12 @@
 import { DataTypes, Model } from "sequelize";
 import { sequelize } from "../config/database.js";
-import Users from "./user.model.js"; // Import Users model
+import Users from "./user.model.js";
 
 class Messages extends Model {
-  // You can add custom methods here if needed
+  static associate(models) {
+    Messages.belongsTo(models.Users, { foreignKey: "senderId", as: "sender" });
+    Messages.belongsTo(models.Users, { foreignKey: "receiverId", as: "receiver" });
+  }
 }
 
 Messages.init(
@@ -52,10 +55,5 @@ Messages.init(
     timestamps: false, // disables createdAt and updatedAt
   }
 );
-
-Messages.associate = (models) => {
-  Messages.belongsTo(models.Users, { foreignKey: "senderId", as: "sender" });
-  Messages.belongsTo(models.Users, { foreignKey: "receiverId", as: "receiver" });
-};
 
 export default Messages;
