@@ -1,55 +1,70 @@
-// models/portfolio.model.js
-import { DataTypes } from "sequelize";
-import { sequelize } from "../config/database.js";
-import Freelancers from "./freelancer.model.js"; 
+import { DataTypes, Model } from 'sequelize';
+import { sequelize } from '../config/database.js';
+// Make sure Freelancer is imported
+import Freelancer from './freelancer.model.js';
 
-const Portfolio = sequelize.define("Portfolio", {
+class Portfolio extends Model {
+  static associate(models) {
+    Portfolio.belongsTo(models.Freelancer, { foreignKey: 'freelancerId', as: 'freelancer' });
+  }
+  static async createPortfolio(data) {
+    try {
+      const portfolio = await this.create(data);
+      return portfolio;
+    } catch (error) {
+      console.error("Error creating portfolio:", error);
+      throw error;
+    }
+  }
+}
+
+Portfolio.init({
   id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
+    type: DataTypes.INTEGER,
     primaryKey: true,
+    autoIncrement: true
   },
   freelancerId: {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: "freelancers",
-      key: "freelancerId",
-    },
-    onDelete: "CASCADE",
+      model: 'Freelancers',
+      key: 'id'
+    }
   },
   title: {
-    type: DataTypes.STRING(255),
-    allowNull: false,
+    type: DataTypes.STRING,
+    allowNull: false
   },
   description: {
     type: DataTypes.TEXT,
-    allowNull: true,
+    allowNull: true
   },
   imageUrl: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: false
   },
   projectUrl: {
     type: DataTypes.STRING,
-    allowNull: true,
-    validate: {
-      isUrl: true,
-    },
+    allowNull: true
   },
   tags: {
-    type: DataTypes.ARRAY(DataTypes.STRING), // Use JSON if using MySQL
-    allowNull: true,
-    defaultValue: [],
+    type: DataTypes.ARRAY(DataTypes.STRING),
+    allowNull: true
   },
+  createdAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
+  },
+  updatedAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
+  }
 }, {
-  tableName: "portfolios",
-  timestamps: true,
+  sequelize,
+  modelName: 'Portfolio'
 });
 
-// In models/freelancer.model.js
-Freelancers.hasMany(Portfolio, { foreignKey: "freelancerId" });
-Portfolio.belongsTo(Freelancers, { foreignKey: "freelancerId" });
 
 
 export default Portfolio;

@@ -13,7 +13,7 @@ function findProjectRoot(startDir) {
     let currentDir = startDir;
     while (currentDir !== path.dirname(currentDir)) {
         if (fs.existsSync(path.join(currentDir, 'package.json'))) {
-            return currentDir;
+        return currentDir;
         }
         currentDir = path.dirname(currentDir);
     }
@@ -46,3 +46,4 @@ export const sequelize = new Sequelize(
         },
     }
 );
+

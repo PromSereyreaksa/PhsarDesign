@@ -21,7 +21,7 @@ const models = {
 // Setup associations for all models that have an associate method
 Object.values(models).forEach((model) => {
   if (typeof model.associate === "function") {
-    model.associate(models);
+  model.associate(models);
   }
 });
 
