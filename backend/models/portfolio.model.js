@@ -1,11 +1,11 @@
 import { DataTypes, Model } from 'sequelize';
 import { sequelize } from '../config/database.js';
-// Make sure Freelancer is imported
-import Freelancer from './freelancer.model.js';
+// Make sure Freelancers is imported
+import Freelancers from './freelancer.model.js';
 
 class Portfolio extends Model {
   static associate(models) {
-    Portfolio.belongsTo(models.Freelancer, { foreignKey: 'freelancerId', as: 'freelancer' });
+    Portfolio.belongsTo(models.Freelancers, { foreignKey: 'freelancerId', as: 'freelancer' });
   }
   static async createPortfolio(data) {
     try {
@@ -28,8 +28,8 @@ Portfolio.init({
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'Freelancers',
-      key: 'id'
+      model: 'freelancers',
+      key: 'freelancerId'
     }
   },
   title: {

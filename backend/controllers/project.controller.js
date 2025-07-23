@@ -1,8 +1,8 @@
-import {Project} from '../models/project.model.js';
+import Projectss from '../models/project.model.js';
 
 export const createProject = async (req, res) => {
     try {
-        const project = await Project.create(req.body);
+        const project = await Projectss.create(req.body);
         res.status(201).json(project);
     } catch (error) {
         console.error("Error creating project:", error);
@@ -12,7 +12,7 @@ export const createProject = async (req, res) => {
 
 export const getAllProjects = async (req, res) => {
     try {
-        const projects = await Project.findAll();
+        const projects = await Projects.findAll();
         res.status(200).json(projects);
     } catch (error) {
         console.error("Error fetching projects:", error);
@@ -22,9 +22,9 @@ export const getAllProjects = async (req, res) => {
 
 export const getProjectById = async (req, res) => {
     try {
-        const project = await Project.findByPk(req.params.id);
+        const project = await Projects.findByPk(req.params.id);
         if (!project) {
-            return res.status(404).json({ error: "Project not found" });
+            return res.status(404).json({ error: "Projects not found" });
         }
         res.status(200).json(project);
     } catch (error) {
@@ -35,14 +35,14 @@ export const getProjectById = async (req, res) => {
 
 export const updateProject = async (req, res) => {
     try {
-        const [updated] = await Project.update(req.body, {
+        const [updated] = await Projects.update(req.body, {
             where: { id: req.params.id }
         });
         if (!updated) {
-            return res.status(404).json({ error: "Project not found" });
+            return res.status(404).json({ error: "Projects not found" });
         }
-        const updatedProject = await Project.findByPk(req.params.id);
-        res.status(200).json(updatedProject);
+        const updatedProjects = await Projects.findByPk(req.params.id);
+        res.status(200).json(updatedProjects);
     } catch (error) {
         console.error("Error updating project:", error);
         res.status(400).json({ error: error.message });
@@ -51,11 +51,11 @@ export const updateProject = async (req, res) => {
 
 export const deleteProject = async (req, res) => {
     try {
-        const deleted = await Project.destroy({
+        const deleted = await Projects.destroy({
             where: { id: req.params.id }
         });
         if (!deleted) {
-            return res.status(404).json({ error: "Project not found" });
+            return res.status(404).json({ error: "Projects not found" });
         }
         res.status(204).send();
     } catch (error) {

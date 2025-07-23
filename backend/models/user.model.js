@@ -21,12 +21,6 @@ class Users extends Model {
     }
 }
 
-Users.associate = (models) => {
-  Users.hasOne(models.Freelancers, { foreignKey: "userId", as: "freelancer" });
-  Users.hasOne(models.Clients, { foreignKey: "userId", as: "client" });
-  Users.hasMany(models.Messages, { foreignKey: "senderId", as: "sentMessages" });
-  Users.hasMany(models.Messages, { foreignKey: "receiverId", as: "receivedMessages" });
-};
 
 
 
