@@ -1,9 +1,9 @@
-import { Portfolios } from "../models/portfolio.model.js";
+import Portfolio from "../models/portfolio.model.js";
 import { Op } from "sequelize";
 
 export const createPortfolio = async (req, res) => {
   try {
-    const portfolio = await Portfolios.createPortfolio(req.body);
+    const portfolio = await Portfolio.createPortfolio(req.body);
     res.status(201).json(portfolio);
   } catch (error) {
     console.error("Error creating portfolio:", error);
@@ -13,8 +13,8 @@ export const createPortfolio = async (req, res) => {
 
 export const getAllPortfolios = async (req, res) => {
   try {
-    const portfolios = await Portfolios.findAll({
-      include: [{ model: Portfolios.Freelancer, as: "freelancer" }],
+    const portfolios = await Portfolio.findAll({
+      include: [{ model: Portfolio.Freelancer, as: "freelancer" }],
     });
     res.status(200).json(portfolios);
   } catch (error) {
@@ -25,8 +25,8 @@ export const getAllPortfolios = async (req, res) => {
 
 export const getPortfolioById = async (req, res) => {
   try {
-    const portfolio = await Portfolios.findByPk(req.params.id, {
-      include: [{ model: Portfolios.Freelancer, as: "freelancer" }],
+    const portfolio = await Portfolio.findByPk(req.params.id, {
+      include: [{ model: Portfolio.Freelancer, as: "freelancer" }],
     });
     if (!portfolio) {
       return res.status(404).json({ error: "Portfolio not found" });
@@ -40,13 +40,13 @@ export const getPortfolioById = async (req, res) => {
 
 export const updatePortfolio = async (req, res) => {
   try {
-    const [updated] = await Portfolios.update(req.body, {
+    const [updated] = await Portfolio.update(req.body, {
       where: { id: req.params.id },
     });
     if (!updated) {
       return res.status(404).json({ error: "Portfolio not found" });
     }
-    const updatedPortfolio = await Portfolios.findByPk(req.params.id);
+    const updatedPortfolio = await Portfolio.findByPk(req.params.id);
     res.status(200).json(updatedPortfolio);
   } catch (error) {
     console.error("Error updating portfolio:", error);
@@ -56,7 +56,7 @@ export const updatePortfolio = async (req, res) => {
 
 export const deletePortfolio = async (req, res) => {
   try {
-    const deleted = await Portfolios.destroy({
+    const deleted = await Portfolio.destroy({
       where: { id: req.params.id },
     });
     if (!deleted) {
@@ -69,11 +69,11 @@ export const deletePortfolio = async (req, res) => {
   }
 };
 
-export const getPortfoliosByFreelancerId = async (req, res) => {
+export const getPortfolioByFreelancerId = async (req, res) => {
   try {
-    const portfolios = await Portfolios.findAll({
+    const portfolios = await Portfolio.findAll({
       where: { freelancerId: req.params.freelancerId },
-      include: [{ model: Portfolios.Freelancer, as: "freelancer" }],
+      include: [{ model: Portfolio.Freelancer, as: "freelancer" }],
     });
     if (!portfolios.length) {
       return res
@@ -87,15 +87,15 @@ export const getPortfoliosByFreelancerId = async (req, res) => {
   }
 };
 
-export const getPortfoliosByTag = async (req, res) => {
+export const getPortfolioByTag = async (req, res) => {
   try {
-    const portfolios = await Portfolios.findAll({
+    const portfolios = await Portfolio.findAll({
       where: {
         tags: {
           [Op.contains]: [req.params.tag],
         },
       },
-      include: [{ model: Portfolios.Freelancer, as: "freelancer" }],
+      include: [{ model: Portfolio.Freelancer, as: "freelancer" }],
     });
     if (!portfolios.length) {
       return res
@@ -109,12 +109,12 @@ export const getPortfoliosByTag = async (req, res) => {
   }
 };
 
-export const getPortfoliosByFreelancerName = async (req, res) => {
+export const getPortfolioByFreelancerName = async (req, res) => {
   try {
-    const portfolios = await Portfolios.findAll({
+    const portfolios = await Portfolio.findAll({
       include: [
         {
-          model: Portfolios.Freelancer,
+          model: Portfolio.Freelancer,
           as: "freelancer",
           where: { name: { [Op.iLike]: `%${req.params.name}%` } },
         },

@@ -1,8 +1,8 @@
-import { Freelancers } from "../models/freelancer.model.js";
+import Freelancers from "../models/freelancer.model.js";
 
 export const createFreelancer = async (req, res) => {
     try {
-        const freelancer = await Freelancers.create(req,body);
+        const freelancer = await Freelancers.create(req.body);
         res.status(201).json(freelancer);
     } catch (error) {
         console.error("Error creating freelancer:", error);
@@ -20,7 +20,7 @@ export const getAllFreelancers = async (req, res) => {
     }
 }
 
-export const getFreelancersById = async (req, res) => {
+export const getFreelancerById = async (req, res) => {
     try {
         const freelancer = await Freelancers.findByPk(req.params.id);
         if (!freelancer) {

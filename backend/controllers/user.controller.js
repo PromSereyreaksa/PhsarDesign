@@ -1,4 +1,4 @@
-import {Users} from '../models/user.model.js';
+import Users from '../models/user.model.js';
 
 export const createUser = async (req, res) => {
     try {
@@ -79,35 +79,6 @@ export const getUserByEmail = async (req, res) => {
     }
 }
 
-export const getUserByUsername = async (req, res) => {
-    try {
-        const user = await Users.findOne({
-            where: { username: req.params.username }
-        });
-        if (!user) {
-            return res.status(404).json({ error: "User not found" });
-        }
-        res.status(200).json(user);
-    } catch (error) {
-        console.error("Error fetching user by username:", error);
-        res.status(500).json({ error: "Internal server error" });
-    }
-}
-
-export const getUserByPhoneNumber = async (req, res) => {
-    try {
-        const user = await Users.findOne({
-            where: { phoneNumber: req.params.phoneNumber }
-        });
-        if (!user) {
-            return res.status(404).json({ error: "User not found" });
-        }
-        res.status(200).json(user);
-    } catch (error) {
-        console.error("Error fetching user by phone number:", error);
-        res.status(500).json({ error: "Internal server error" });
-    }
-}
 
 export const getUserByRole = async (req, res) => {
     try {
@@ -124,34 +95,5 @@ export const getUserByRole = async (req, res) => {
     }
 }
 
-export const getUserByStatus = async (req, res) => {
-    try {
-        const users = await Users.findAll({
-            where: { status: req.params.status }
-        });
-        if (!users.length) {
-            return res.status(404).json({ error: "No users found with this status" });
-        }
-        res.status(200).json(users);
-    } catch (error) {
-        console.error("Error fetching users by status:", error);
-        res.status(500).json({ error: "Internal server error" });
-    }
-}
-
-export const getUserByOrganization = async (req, res) => {
-    try {
-        const users = await Users.findAll({
-            where: { organization: req.params.organization }
-        });
-        if (!users.length) {
-            return res.status(404).json({ error: "No users found in this organization" });
-        }
-        res.status(200).json(users);
-    } catch (error) {
-        console.error("Error fetching users by organization:", error);
-        res.status(500).json({ error: "Internal server error" });
-    }
-}
 
 
