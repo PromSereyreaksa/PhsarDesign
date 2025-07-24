@@ -3,6 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { sequelize } from './config/database.js';
 
+import reviewRoutes from './routes/review.routes.js';
+
 // Import routes
 // import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
@@ -31,6 +33,7 @@ app.use('/api/clients', clientRoutes);
 app.use('/api/freelancers', freelancerRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/portfolio', portfolioRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

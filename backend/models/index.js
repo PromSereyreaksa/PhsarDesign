@@ -7,6 +7,7 @@ import Projects from "./project.model.js";
 import Messages from "./message.model.js";
 import Applications from "./applications.model.js";
 import Portfolios from "./portfolio.model.js";
+import Reviews from "./review.model.js";
 
 const models = {
   Users,
@@ -15,7 +16,8 @@ const models = {
   Projects,
   Messages,
   Applications,
-  Portfolios, 
+  Portfolios,
+  Reviews,
 };
 
 // Setup associations for all models that have an associate method

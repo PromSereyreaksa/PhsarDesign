@@ -1,6 +1,8 @@
 import { DataTypes, Model } from "sequelize";
 import { sequelize } from "../config/database.js";
 
+import Reviews from "./review.model.js";
+
 class Freelancers extends Model {
   static associate(models) {
     Freelancers.belongsTo(models.Users, {
@@ -11,6 +13,11 @@ class Freelancers extends Model {
     Freelancers.hasMany(models.Applications, {
       foreignKey: "freelancerId",
       as: "applications",
+      onDelete: "CASCADE",
+    });
+    Freelancers.hasMany(models.Reviews, {
+      foreignKey: "freelancerId",
+      as: "reviews",
       onDelete: "CASCADE",
     });
   }
@@ -52,7 +59,7 @@ Freelancers.init(
       type: DataTypes.STRING,
       allowNull: true,
       validate: {
-        isUrl: true,  // Optional: ensures stored value is a URL
+        isUrl: true,
       },
     },
   },
