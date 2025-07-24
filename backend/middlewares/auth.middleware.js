@@ -11,11 +11,25 @@ const authenticate = (req, res, next) => {
 
   try {
     const decoded = verifyToken(token);
-    req.user = decoded; 
+    req.user = decoded;
     next();
   } catch (err) {
+    if (err.name === "TokenExpiredError") {
+      return res.status(401).json({ message: "Access token expired" });
+    }
     return res.status(401).json({ message: "Invalid token" });
   }
+
+  const authorize = (roles = []) => {
+    return (req, res, next) => {
+      if (!roles.includes(req.user.role)) {
+        return res.status(403).json({ message: "Forbidden: Access denied" });
+      }
+      next();
+    };
+  };
+
+  module.exports = { authenticate, authorize };
 };
 
 module.exports = { authenticate };
