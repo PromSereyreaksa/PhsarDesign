@@ -4,8 +4,8 @@ import { cn } from "../../lib/utils"
 const Badge = React.forwardRef(({ className, variant = "default", ...props }, ref) => {
   const variants = {
     default: "bg-green-600 text-white",
-    secondary: "bg-gray-100 text-gray-900",
-    outline: "border border-gray-300 text-gray-700",
+    secondary: "bg-gray-700 text-white",
+    outline: "border border-gray-600 text-gray-300 bg-gray-800",
   }
 
   return (

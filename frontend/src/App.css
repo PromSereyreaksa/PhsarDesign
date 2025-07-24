@@ -1,31 +1,11 @@
-/*  
-@tailwind base;
-@tailwind components;
-@tailwind utilities; */
+@import "tailwindcss";
 
-/* Custom animations */ /*
-@keyframes gradient {
-  0%,
-  100% {
-    background-size: 200% 200%;
-    background-position: left center;
-  }
-  50% {
-    background-size: 200% 200%;
-    background-position: right center;
-  }
-}
-
-.animate-gradient {
-  animation: gradient 3s ease infinite;
-}
-
-/* Smooth scroll behavior */ /*
+/* Smooth scroll behavior */
 html {
   scroll-behavior: smooth;
 }
 
-/* Custom scrollbar *//*
+/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -35,15 +15,15 @@ html {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #834c84;
+  background: #a95bab;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a855f7;
+  background: #a95bab;
 }
 
-/* Loading animation for images */ /*
+/* Loading animation for images */
 img {
   transition: opacity 0.3s ease-in-out;
 }
@@ -56,32 +36,21 @@ img[loaded] {
   opacity: 1;
 }
 
-/* Backdrop blur support */ /*
+/* Backdrop blur support */
 .backdrop-blur-md {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
 
-/* Custom button ripple effect */ /*
-.ripple {
-  position: relative;
-  overflow: hidden;
+/* Smooth transitions for better performance */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-.ripple::before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.3);
-  transform: translate(-50%, -50%);
-  transition: width 0.6s, height 0.6s;
-}
-
-.ripple:active::before {
-  width: 300px;
-  height: 300px;
+/* Hardware acceleration for smooth animations */
+.transform {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
 }

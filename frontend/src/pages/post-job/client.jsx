@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { Link } from "react-router-dom"
 import Navbar from "../../components/layout/Navbar"
 import Footer from "../../components/layout/Footer"
 import { Button } from "../../components/ui/button"
@@ -12,9 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Checkbox } from "../../components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "../../components/ui/radio-group"
 import { Badge } from "../../components/ui/badge"
-import { X, Plus, DollarSign, Users } from "lucide-react"
+import { X, Plus, DollarSign, Briefcase, ArrowLeft } from "lucide-react"
 
-export default function PostJob() {
+export default function PostJobClient() {
   const [jobTitle, setJobTitle] = useState("")
   const [jobDescription, setJobDescription] = useState("")
   const [category, setCategory] = useState("")
@@ -26,31 +27,33 @@ export default function PostJob() {
   const [experienceLevel, setExperienceLevel] = useState("")
 
   const categories = [
-    "Web Development",
-    "Mobile Development",
+    "Digital Art",
+    "Logo Design", 
     "Graphic Design",
-    "Content Writing",
-    "Digital Marketing",
-    "Data Science",
-    "Video Editing",
-    "Translation",
+    "3D Design",
+    "Character Design",
+    "Web Design",
+    "UI/UX Design",
+    "Illustration",
+    "Animation",
+    "Photography"
   ]
 
   const suggestedSkills = [
-    "JavaScript",
-    "React",
-    "Node.js",
-    "Python",
-    "PHP",
-    "WordPress",
-    "Graphic Design",
+    "Digital Art",
     "Adobe Photoshop",
-    "Illustrator",
+    "Adobe Illustrator",
     "Figma",
-    "Content Writing",
-    "SEO",
-    "Social Media",
-    "Marketing",
+    "Sketch",
+    "3D Modeling",
+    "Blender",
+    "Character Design",
+    "Logo Design",
+    "Branding",
+    "UI Design",
+    "UX Design",
+    "Animation",
+    "Video Editing"
   ]
 
   const addSkill = (skill) => {
@@ -66,8 +69,8 @@ export default function PostJob() {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    // Handle job posting logic here
     console.log({
+      type: 'client',
       jobTitle,
       jobDescription,
       category,
@@ -83,38 +86,48 @@ export default function PostJob() {
     <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000]">
       <Navbar />
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-[#A95BAB] bg-clip-text text-transparent mb-4">Post a New Job</h1>
-          <p className="text-xl text-gray-300">Tell us about your project and find the perfect freelancer</p>
+      <div className="max-w-4xl mx-auto px-6 sm:px-8 lg:px-12 py-8">
+        {/* Back Button */}
+        <div className="mb-6">
+          <Link to="/home" className="inline-flex items-center text-gray-300 hover:text-[#A95BAB] transition-colors">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Marketplace
+          </Link>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-[#A95BAB] bg-clip-text text-transparent mb-4">
+            Post a Job - Hire Talent
+          </h1>
+          <p className="text-xl text-gray-300">Tell us about your project and find the perfect creative freelancer</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-8 mb-12">
           {/* Job Details */}
           <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="flex items-center text-white">
-                <Users className="h-5 w-5 mr-2" />
+                <Briefcase className="h-5 w-5 mr-2" />
                 Job Details
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <Label htmlFor="job-title">Job Title *</Label>
+                <Label htmlFor="job-title" className="text-gray-300">Job Title *</Label>
                 <Input
                   id="job-title"
-                  placeholder="e.g. Build a responsive website for my business"
+                  placeholder="e.g. Create stunning digital art for album cover"
                   value={jobTitle}
                   onChange={(e) => setJobTitle(e.target.value)}
                   className="mt-1"
                   required
                 />
-                <p className="text-sm text-gray-500 mt-1">A good title helps attract the right freelancers</p>
+                <p className="text-sm text-gray-400 mt-1">A good title helps attract the right freelancers</p>
               </div>
 
               <div>
-                <Label htmlFor="category">Category *</Label>
+                <Label htmlFor="category" className="text-gray-300">Category *</Label>
                 <Select value={category} onValueChange={setCategory} required>
                   <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Select a category" />
@@ -130,17 +143,17 @@ export default function PostJob() {
               </div>
 
               <div>
-                <Label htmlFor="job-description">Job Description *</Label>
+                <Label htmlFor="job-description" className="text-gray-300">Job Description *</Label>
                 <Textarea
                   id="job-description"
-                  placeholder="Describe your project in detail. Include what you want to achieve, any specific requirements, and what deliverables you expect."
+                  placeholder="Describe your project in detail. Include what you want to achieve, any specific requirements, style preferences, and what deliverables you expect."
                   value={jobDescription}
                   onChange={(e) => setJobDescription(e.target.value)}
                   className="mt-1 min-h-[120px]"
                   required
                 />
-                <p className="text-sm text-gray-500 mt-1">
-                  Minimum 50 characters. Be specific about your requirements.
+                <p className="text-sm text-gray-400 mt-1">
+                  Minimum 50 characters. Be specific about your creative requirements.
                 </p>
               </div>
             </CardContent>
@@ -153,7 +166,7 @@ export default function PostJob() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label>Add Skills</Label>
+                <Label className="text-gray-300">Add Skills</Label>
                 <div className="flex gap-2 mt-1">
                   <Input
                     placeholder="Type a skill and press Enter"
@@ -174,12 +187,12 @@ export default function PostJob() {
 
               {skills.length > 0 && (
                 <div>
-                  <Label>Selected Skills</Label>
+                  <Label className="text-gray-300">Selected Skills</Label>
                   <div className="flex flex-wrap gap-2 mt-2">
                     {skills.map((skill) => (
                       <Badge key={skill} variant="secondary" className="flex items-center gap-1">
                         {skill}
-                        <button type="button" onClick={() => removeSkill(skill)} className="ml-1 hover:text-red-600">
+                        <button type="button" onClick={() => removeSkill(skill)} className="ml-1 hover:text-red-400">
                           <X className="h-3 w-3" />
                         </button>
                       </Badge>
@@ -189,7 +202,7 @@ export default function PostJob() {
               )}
 
               <div>
-                <Label>Suggested Skills</Label>
+                <Label className="text-gray-300">Suggested Skills</Label>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {suggestedSkills
                     .filter((skill) => !skills.includes(skill))
@@ -198,7 +211,7 @@ export default function PostJob() {
                       <Badge
                         key={skill}
                         variant="outline"
-                        className="cursor-pointer hover:bg-gray-100"
+                        className="cursor-pointer hover:bg-[#A95BAB]/20 hover:border-[#A95BAB]/50"
                         onClick={() => addSkill(skill)}
                       >
                         + {skill}
@@ -219,21 +232,21 @@ export default function PostJob() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <Label>Budget Type *</Label>
+                <Label className="text-gray-300">Budget Type *</Label>
                 <RadioGroup value={budgetType} onValueChange={setBudgetType} className="mt-2">
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="fixed" id="fixed" />
-                    <Label htmlFor="fixed">Fixed Price - Pay a set amount for the entire project</Label>
+                    <Label htmlFor="fixed" className="text-gray-300">Fixed Price - Pay a set amount for the entire project</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="hourly" id="hourly" />
-                    <Label htmlFor="hourly">Hourly Rate - Pay by the hour</Label>
+                    <Label htmlFor="hourly" className="text-gray-300">Hourly Rate - Pay by the hour</Label>
                   </div>
                 </RadioGroup>
               </div>
 
               <div>
-                <Label htmlFor="budget">{budgetType === "fixed" ? "Project Budget *" : "Hourly Rate *"}</Label>
+                <Label htmlFor="budget" className="text-gray-300">{budgetType === "fixed" ? "Project Budget *" : "Hourly Rate *"}</Label>
                 <div className="relative mt-1">
                   <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
@@ -246,15 +259,15 @@ export default function PostJob() {
                     required
                   />
                 </div>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-gray-400 mt-1">
                   {budgetType === "fixed"
-                    ? "Set a budget for the entire project"
+                    ? "Set a budget for the entire creative project"
                     : "Set an hourly rate you're willing to pay"}
                 </p>
               </div>
 
               <div>
-                <Label htmlFor="duration">Project Duration</Label>
+                <Label htmlFor="duration" className="text-gray-300">Project Duration</Label>
                 <Select value={projectDuration} onValueChange={setProjectDuration}>
                   <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Select project duration" />
@@ -270,15 +283,15 @@ export default function PostJob() {
               </div>
 
               <div>
-                <Label htmlFor="experience">Experience Level</Label>
+                <Label htmlFor="experience" className="text-gray-300">Experience Level</Label>
                 <Select value={experienceLevel} onValueChange={setExperienceLevel}>
                   <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Select required experience level" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="entry">Entry Level - New to this type of work</SelectItem>
-                    <SelectItem value="intermediate">Intermediate - Some experience</SelectItem>
-                    <SelectItem value="expert">Expert - Extensive experience</SelectItem>
+                    <SelectItem value="entry">Entry Level - New creative talent</SelectItem>
+                    <SelectItem value="intermediate">Intermediate - Some creative experience</SelectItem>
+                    <SelectItem value="expert">Expert - Extensive creative portfolio</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -293,15 +306,15 @@ export default function PostJob() {
             <CardContent className="space-y-4">
               <div className="flex items-center space-x-2">
                 <Checkbox id="featured" />
-                <Label htmlFor="featured">Make this job featured (+$19.95)</Label>
+                <Label htmlFor="featured" className="text-gray-300">Make this job featured (+$19.95)</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <Checkbox id="urgent" />
-                <Label htmlFor="urgent">Mark as urgent (+$9.95)</Label>
+                <Label htmlFor="urgent" className="text-gray-300">Mark as urgent (+$9.95)</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <Checkbox id="private" />
-                <Label htmlFor="private">Make this job private (only invited freelancers can see it)</Label>
+                <Label htmlFor="private" className="text-gray-300">Make this job private (only invited freelancers can see it)</Label>
               </div>
             </CardContent>
           </Card>
@@ -315,7 +328,7 @@ export default function PostJob() {
               <Button type="button" variant="outline">
                 Preview Job
               </Button>
-              <Button type="submit" size="lg">
+              <Button type="submit" size="lg" className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 text-white">
                 Post Job
               </Button>
             </div>

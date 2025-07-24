@@ -44,7 +44,7 @@ const DropdownMenuContent = ({ className, children, isOpen, align = "start", ...
   return (
     <div
       className={cn(
-        "absolute z-50 min-w-[8rem] overflow-hidden rounded-md border border-gray-200 bg-white p-1 shadow-md",
+        "absolute z-50 min-w-[8rem] overflow-hidden rounded-md border border-gray-600 bg-black p-1 shadow-md",
         "top-full mt-1",
         alignmentClasses[align],
         className,
@@ -59,7 +59,7 @@ const DropdownMenuContent = ({ className, children, isOpen, align = "start", ...
 const DropdownMenuItem = ({ className, children, ...props }) => (
   <div
     className={cn(
-      "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-gray-100 focus:bg-gray-100",
+      "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm text-white outline-none hover:bg-gray-800 focus:bg-gray-800",
       className,
     )}
     {...props}
