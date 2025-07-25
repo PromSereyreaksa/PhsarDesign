@@ -13,6 +13,7 @@ import clientRoutes from './routes/client.routes.js';
 import freelancerRoutes from './routes/freelancer.routes.js';
 import projectRoutes from './routes/project.routes.js';
 import portfolioRoutes from './routes/portfolio.routes.js';
+import authRoutes from './routes/auth.routes.js';
 
 // Import middleware
 import errorHandler from './middlewares/error.middleware.js';
@@ -21,8 +22,10 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const cookieParser = require('cookie-parser');
 
 // Middleware
+app.use(cookieParser());
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -36,6 +39,7 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/portfolio', portfolioRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/auth', authRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
