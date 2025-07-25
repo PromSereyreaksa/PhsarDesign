@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { sequelize } from './config/database.js';
 
 import reviewRoutes from './routes/review.routes.js';
+import uploadRoutes from './routes/upload.routes.js';
 
 // Import routes
 // import authRoutes from './routes/auth.routes.js';
@@ -37,6 +38,7 @@ app.use('/api/freelancers', freelancerRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/portfolio', portfolioRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/upload', uploadRoutes);
 app.use('/api/auth', authRoutes);
 
 // Health check endpoint
