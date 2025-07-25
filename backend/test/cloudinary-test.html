@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloudinary Upload Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            background: #f9f9f9;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        input, select, textarea, button {
+            margin: 5px 0;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            padding: 10px 20px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            background: #e9ecef;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .image-preview {
+            max-width: 300px;
+            max-height: 300px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎨 ArtLink Cloudinary CRUD Test Page</h1>
+    <p>This page helps you test the Cloudinary upload functionality. Make sure your backend server is running on port 3000.</p>
+
+    <!-- Upload Single Image -->
+    <div class="test-section">
+        <h3>📤 Upload Single Image</h3>
+        <input type="file" id="singleFile" accept="image/*" />
+        <br>
+        <input type="text" id="folder" placeholder="Folder (optional)" value="artlink/test" />
+        <br>
+        <input type="text" id="tags" placeholder="Tags (comma-separated)" value="test,sample" />
+        <br>
+        <button onclick="uploadSingle()">Upload Image</button>
+        <div id="singleResult" class="result" style="display: none;"></div>
+        <img id="singlePreview" class="image-preview" style="display: none;" />
+    </div>
+
+    <!-- Upload Multiple Images -->
+    <div class="test-section">
+        <h3>📤 Upload Multiple Images</h3>
+        <input type="file" id="multipleFiles" accept="image/*" multiple />
+        <br>
+        <input type="text" id="multipleTags" placeholder="Tags (comma-separated)" value="test,multiple" />
+        <br>
+        <button onclick="uploadMultiple()">Upload Images</button>
+        <div id="multipleResult" class="result" style="display: none;"></div>
+    </div>
+
+    <!-- Upload Avatar -->
+    <div class="test-section">
+        <h3>👤 Upload Avatar</h3>
+        <input type="file" id="avatarFile" accept="image/*" />
+        <br>
+        <input type="text" id="userId" placeholder="User ID" value="test_user_123" />
+        <br>
+        <button onclick="uploadAvatar()">Upload Avatar</button>
+        <div id="avatarResult" class="result" style="display: none;"></div>
+        <img id="avatarPreview" class="image-preview" style="display: none;" />
+    </div>
+
+    <!-- List Images -->
+    <div class="test-section">
+        <h3>📋 List Images</h3>
+        <input type="text" id="listFolder" placeholder="Folder" value="artlink" />
+        <br>
+        <input type="number" id="maxResults" placeholder="Max Results" value="10" min="1" max="50" />
+        <br>
+        <button onclick="listImages()">List Images</button>
+        <div id="listResult" class="result" style="display: none;"></div>
+    </div>
+
+    <!-- Get Image Details -->
+    <div class="test-section">
+        <h3>🔍 Get Image Details</h3>
+        <input type="text" id="publicId" placeholder="Public ID (e.g., artlink/test/image123)" />
+        <br>
+        <button onclick="getImageDetails()">Get Details</button>
+        <div id="detailsResult" class="result" style="display: none;"></div>
+    </div>
+
+    <!-- Update Image -->
+    <div class="test-section">
+        <h3>✏️ Update Image Metadata</h3>
+        <input type="text" id="updatePublicId" placeholder="Public ID" />
+        <br>
+        <input type="text" id="updateTags" placeholder="New Tags (comma-separated)" />
+        <br>
+        <textarea id="updateContext" placeholder="Context JSON (e.g., {&quot;title&quot;: &quot;New Title&quot;})" rows="3"></textarea>
+        <br>
+        <button onclick="updateImage()">Update Image</button>
+        <div id="updateResult" class="result" style="display: none;"></div>
+    </div>
+
+    <!-- Delete Image -->
+    <div class="test-section">
+        <h3>🗑️ Delete Image</h3>
+        <input type="text" id="deletePublicId" placeholder="Public ID" />
+        <br>
+        <button onclick="deleteImage()" style="background: #dc3545;">Delete Image</button>
+        <div id="deleteResult" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api/upload';
+
+        function showResult(elementId, data, isSuccess = true) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = `result ${isSuccess ? 'success' : 'error'}`;
+            element.textContent = JSON.stringify(data, null, 2);
+        }
+
+        async function uploadSingle() {
+            const file = document.getElementById('singleFile').files[0];
+            if (!file) {
+                alert('Please select a file');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('image', file);
+            formData.append('folder', document.getElementById('folder').value);
+            formData.append('tags', document.getElementById('tags').value);
+
+            try {
+                const response = await fetch(`${API_BASE}/image`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                showResult('singleResult', result, result.success);
+
+                if (result.success) {
+                    const preview = document.getElementById('singlePreview');
+                    preview.src = result.data.url;
+                    preview.style.display = 'block';
+                }
+            } catch (error) {
+                showResult('singleResult', { error: error.message }, false);
+            }
+        }
+
+        async function uploadMultiple() {
+            const files = document.getElementById('multipleFiles').files;
+            if (files.length === 0) {
+                alert('Please select files');
+                return;
+            }
+
+            const formData = new FormData();
+            for (let file of files) {
+                formData.append('images', file);
+            }
+            formData.append('tags', document.getElementById('multipleTags').value);
+
+            try {
+                const response = await fetch(`${API_BASE}/images`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                showResult('multipleResult', result, result.success);
+            } catch (error) {
+                showResult('multipleResult', { error: error.message }, false);
+            }
+        }
+
+        async function uploadAvatar() {
+            const file = document.getElementById('avatarFile').files[0];
+            const userId = document.getElementById('userId').value;
+            
+            if (!file) {
+                alert('Please select a file');
+                return;
+            }
+            if (!userId) {
+                alert('Please enter User ID');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('avatar', file);
+            formData.append('userId', userId);
+
+            try {
+                const response = await fetch(`${API_BASE}/avatar`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                showResult('avatarResult', result, result.success);
+
+                if (result.success) {
+                    const preview = document.getElementById('avatarPreview');
+                    preview.src = result.data.url;
+                    preview.style.display = 'block';
+                }
+            } catch (error) {
+                showResult('avatarResult', { error: error.message }, false);
+            }
+        }
+
+        async function listImages() {
+            const folder = document.getElementById('listFolder').value;
+            const maxResults = document.getElementById('maxResults').value;
+
+            try {
+                const params = new URLSearchParams({
+                    folder: folder,
+                    max_results: maxResults
+                });
+
+                const response = await fetch(`${API_BASE}/images?${params}`);
+                const result = await response.json();
+                showResult('listResult', result, result.success);
+            } catch (error) {
+                showResult('listResult', { error: error.message }, false);
+            }
+        }
+
+        async function getImageDetails() {
+            const publicId = document.getElementById('publicId').value;
+            if (!publicId) {
+                alert('Please enter Public ID');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/image/${encodeURIComponent(publicId)}`);
+                const result = await response.json();
+                showResult('detailsResult', result, result.success);
+            } catch (error) {
+                showResult('detailsResult', { error: error.message }, false);
+            }
+        }
+
+        async function updateImage() {
+            const publicId = document.getElementById('updatePublicId').value;
+            const tags = document.getElementById('updateTags').value;
+            const contextStr = document.getElementById('updateContext').value;
+
+            if (!publicId) {
+                alert('Please enter Public ID');
+                return;
+            }
+
+            const body = {};
+            if (tags) body.tags = tags.split(',').map(tag => tag.trim());
+            if (contextStr) {
+                try {
+                    body.context = JSON.parse(contextStr);
+                } catch (e) {
+                    alert('Invalid JSON in context field');
+                    return;
+                }
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/image/${encodeURIComponent(publicId)}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                const result = await response.json();
+                showResult('updateResult', result, result.success);
+            } catch (error) {
+                showResult('updateResult', { error: error.message }, false);
+            }
+        }
+
+        async function deleteImage() {
+            const publicId = document.getElementById('deletePublicId').value;
+            if (!publicId) {
+                alert('Please enter Public ID');
+                return;
+            }
+
+            if (!confirm('Are you sure you want to delete this image?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/image/${encodeURIComponent(publicId)}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+                showResult('deleteResult', result, result.success);
+            } catch (error) {
+                showResult('deleteResult', { error: error.message }, false);
+            }
+        }
+    </script>
+</body>
+</html>
