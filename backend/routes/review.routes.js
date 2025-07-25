@@ -6,13 +6,15 @@ import {
   updateReview,
   deleteReview,
 } from '../controllers/review.controller.js';
+import { authenticate } from '../middlewares/auth.middleware.js';
+import { validateReview } from '../middlewares/security.middleware.js';
 
 const router = express.Router();
 
-router.post('/', createReview);
-router.get('/', getAllReviews);
-router.get('/:id', getReviewById);
-router.put('/:id', updateReview);
-router.delete('/:id', deleteReview);
+router.post('/', authenticate, validateReview, createReview);
+router.get('/', getAllReviews); // Public route for viewing reviews
+router.get('/:id', getReviewById); // Public route for review details
+router.put('/:id', authenticate, validateReview, updateReview);
+router.delete('/:id', authenticate, deleteReview);
 
 export default router;

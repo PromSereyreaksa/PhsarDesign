@@ -1,6 +1,6 @@
-const { verifyToken } = require("../utils/jwt");
+import { verifyToken } from "../utils/jwt.js";
 
-const authenticate = (req, res, next) => {
+export const authenticate = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -19,17 +19,13 @@ const authenticate = (req, res, next) => {
     }
     return res.status(401).json({ message: "Invalid token" });
   }
-
-  const authorize = (roles = []) => {
-    return (req, res, next) => {
-      if (!roles.includes(req.user.role)) {
-        return res.status(403).json({ message: "Forbidden: Access denied" });
-      }
-      next();
-    };
-  };
-
-  module.exports = { authenticate, authorize };
 };
 
-module.exports = { authenticate };
+export const authorize = (roles = []) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ message: "Forbidden: Access denied" });
+    }
+    next();
+  };
+};

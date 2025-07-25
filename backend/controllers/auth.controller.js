@@ -1,10 +1,11 @@
-const bcrypt = require("bcrypt");
-const { User } = require("../models");
-const {
+import bcrypt from "bcryptjs";
+import { Users } from "../models/index.js";
+import {
   generateAccessToken,
   generateRefreshToken,
   verifyRefreshToken,
-} = require("../utils/jwt");
+} from "../utils/jwt.js";
+
 const cookieOptions = {
   httpOnly: true,
   secure: true,
@@ -12,28 +13,28 @@ const cookieOptions = {
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 };
 
-exports.register = async (req, res) => {
-  const { email, password, name, role } = req.body;
+export const register = async (req, res) => {
+  const { email, password, firstName, lastName, userType } = req.body;
 
   try {
-    const existingUser = await User.findOne({ where: { email } });
+    const existingUser = await Users.findOne({ where: { email } });
     if (existingUser) {
       return res.status(409).json({ message: "Email already registered" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const safeRole = ["user", "client", "freelancer"].includes(role)
-      ? role
+    const safeRole = ["user", "client", "freelancer"].includes(userType)
+      ? userType
       : "user";
 
-    const newUser = await User.create({
-      name,
+    const newUser = await Users.create({
+      name: `${firstName} ${lastName}`,
       email,
       password: hashedPassword,
       role: safeRole,
     });
 
-    const payload = { id: newUser.id, role: newUser.role };
+    const payload = { id: newUser.userId, role: newUser.role };
     const accessToken = generateAccessToken(payload);
     const refreshToken = generateRefreshToken(payload);
 
@@ -45,15 +46,15 @@ exports.register = async (req, res) => {
   }
 };
 
-exports.login = async (req, res) => {
+export const login = async (req, res) => {
   const { email, password } = req.body;
-  const user = await User.findOne({ where: { email } });
+  const user = await Users.findOne({ where: { email } });
 
   if (!user || !(await bcrypt.compare(password, user.password))) {
     return res.status(401).json({ message: "Invalid credentials" });
   }
 
-  const payload = { id: user.id, role: user.role };
+  const payload = { id: user.userId, role: user.role };
   const accessToken = generateAccessToken(payload);
   const refreshToken = generateRefreshToken(payload);
 
@@ -64,7 +65,7 @@ exports.login = async (req, res) => {
   res.json({ user, accessToken });
 };
 
-exports.refresh = (req, res) => {
+export const refresh = (req, res) => {
   const token = req.cookies.refreshToken;
   if (!token) return res.status(403).json({ message: "No refresh token" });
 
@@ -81,7 +82,14 @@ exports.refresh = (req, res) => {
   }
 };
 
-exports.logout = (req, res) => {
+export const logout = (req, res) => {
   res.clearCookie("refreshToken");
   res.json({ message: "Logged out successfully" });
+};
+
+export default {
+  register,
+  login,
+  refresh,
+  logout
 };

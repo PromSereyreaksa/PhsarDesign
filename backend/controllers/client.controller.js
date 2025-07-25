@@ -23,7 +23,9 @@ export const getAllClients = async (req, res) => {
 
 export const getClientById = async (req, res) => {
     try {
-        const client = await Clients.findByPk(req.params.id);
+        const client = await Clients.findOne({
+            where: { clientId: req.params.id }
+        });
         if (!client) {
             return res.status(404).json({ error: "Client not found" });
         }
@@ -42,7 +44,9 @@ export const updateClient = async (req, res) => {
         if (!updated) {
             return res.status(404).json({ error: "Client not found" });
         }
-        const updatedClient = await Clients.findByPk(req.params.id);
+        const updatedClient = await Clients.findOne({
+            where: { clientId: req.params.id }
+        });
         res.status(200).json(updatedClient);
     } catch (error) {
         console.error("Error updating client:", error);

@@ -1,12 +1,33 @@
 import Users from '../models/user.model.js';
+import bcrypt from 'bcryptjs';
 
 export const createUser = async (req, res) => {
     try {
-        const user = await Users.create(req.body);
-        res.status(201).json(user);
+        const { password, ...userData } = req.body;
+        
+        // Hash password if provided
+        if (password) {
+            const saltRounds = 10;
+            const hashedPassword = await bcrypt.hash(password, saltRounds);
+            userData.password = hashedPassword;
+        }
+        
+        const user = await Users.create(userData);
+        
+        // Remove password from response
+        const { password: _, ...userResponse } = user.toJSON();
+        
+        res.status(201).json({
+            success: true,
+            message: "User created successfully",
+            data: userResponse
+        });
     } catch (error) {
         console.error("Error creating user:", error);
-        res.status(400).json({ error: error.message });
+        res.status(400).json({ 
+            success: false,
+            error: error.message 
+        });
     }
 }
 
@@ -22,7 +43,9 @@ export const getAllUsers = async (req, res) => {
 
 export const getUserById = async (req, res) => {
     try {
-        const user = await Users.findByPk(req.params.id);
+        const user = await Users.findOne({
+            where: { userId: req.params.id }
+        });
         if (!user) {
             return res.status(404).json({ error: "User not found" });
         }
@@ -36,12 +59,14 @@ export const getUserById = async (req, res) => {
 export const updateUser = async (req, res) => {
     try {
         const [updated] = await Users.update(req.body, {
-            where: { id: req.params.id }
+            where: { userId: req.params.id }
         });
         if (!updated) {
             return res.status(404).json({ error: "User not found" });
         }
-        const updatedUser = await Users.findByPk(req.params.id);
+        const updatedUser = await Users.findOne({
+            where: { userId: req.params.id }
+        });
         res.status(200).json(updatedUser);
     } catch (error) {
         console.error("Error updating user:", error);
@@ -52,7 +77,7 @@ export const updateUser = async (req, res) => {
 export const deleteUser = async (req, res) => {
     try {
         const deleted = await Users.destroy({
-            where: { id: req.params.id }
+            where: { userId: req.params.id }
         });
         if (!deleted) {
             return res.status(404).json({ error: "User not found" });

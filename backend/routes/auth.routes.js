@@ -1,32 +1,44 @@
 import express from "express";
-import passport from "../config/passport.js";
-import authController from "../controllers/auth.controller.js";
+import { register, login, refresh, logout } from "../controllers/auth.controller.js";
+import { generateAccessToken } from "../utils/jwt.js";
+import { validateRegistration, validateLogin } from "../middlewares/security.middleware.js";
 
 const router = express.Router();
 
-// Email/password auth
-router.post("/register", authController.register);
-router.post("/login", authController.login);
-router.post("/refresh", authController.refresh);
-router.post("/logout", authController.logout);
+// Email/password auth with validation
+router.post("/register", validateRegistration, register);
+router.post("/login", validateLogin, login);
+router.post("/refresh", refresh);
+router.post("/logout", logout);
 
-// Google OAuth
-router.get(
-  "/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
-);
+// Google OAuth routes - only enable if environment variables are set
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  try {
+    const { default: passport } = await import("../config/passport.js");
+    
+    router.get(
+      "/google",
+      passport.authenticate("google", { scope: ["profile", "email"] })
+    );
 
-router.get(
-  "/google/callback",
-  passport.authenticate("google", { failureRedirect: "/login" }),
-  (req, res) => {
-    const token = authController.generateAccessToken({
-      id: req.user.id,
-      role: req.user.role,
-    });
+    router.get(
+      "/google/callback",
+      passport.authenticate("google", { failureRedirect: "/login" }),
+      (req, res) => {
+        const token = generateAccessToken({
+          id: req.user.id,
+          role: req.user.role,
+        });
 
-    res.redirect(`http://localhost:3000/social-login?token=${token}`);
+        res.redirect(`http://localhost:3000/social-login?token=${token}`);
+      }
+    );
+  } catch (error) {
+    console.warn("Google OAuth configuration failed:", error.message);
+    console.warn("Google OAuth routes disabled. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env to enable.");
   }
-);
+} else {
+  console.info("Google OAuth disabled. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env to enable Google authentication.");
+}
 
 export default router;
