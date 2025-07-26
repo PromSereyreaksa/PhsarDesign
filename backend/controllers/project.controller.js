@@ -1,4 +1,4 @@
-import { Projects } from '../models/index.js';
+import { Projects, Clients, Artist } from '../models/index.js';
 
 export const createProject = async (req, res) => {
     try {
@@ -12,7 +12,12 @@ export const createProject = async (req, res) => {
 
 export const getAllProjects = async (req, res) => {
     try {
-        const projects = await Projects.findAll();
+        const projects = await Projects.findAll({
+            include: [
+                { model: Clients, as: "client" },
+                { model: Artist, as: "artist" }
+            ]
+        });
         res.status(200).json(projects);
     } catch (error) {
         console.error("Error fetching projects:", error);
@@ -26,7 +31,7 @@ export const getProjectById = async (req, res) => {
             where: { projectId: req.params.id }
         });
         if (!project) {
-            return res.status(404).json({ error: "Projects not found" });
+            return res.status(404).json({ error: "Project not found" });
         }
         res.status(200).json(project);
     } catch (error) {
@@ -41,7 +46,7 @@ export const updateProject = async (req, res) => {
             where: { projectId: req.params.id }
         });
         if (!updated) {
-            return res.status(404).json({ error: "Projects not found" });
+            return res.status(404).json({ error: "Project not found" });
         }
         const updatedProjects = await Projects.findOne({
             where: { projectId: req.params.id }
@@ -59,7 +64,7 @@ export const deleteProject = async (req, res) => {
             where: { projectId: req.params.id }
         });
         if (!deleted) {
-            return res.status(404).json({ error: "Projects not found" });
+            return res.status(404).json({ error: "Project not found" });
         }
         res.status(204).send();
     } catch (error) {

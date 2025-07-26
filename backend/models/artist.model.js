@@ -1,31 +1,34 @@
 import { DataTypes, Model } from "sequelize";
 import { sequelize } from "../config/database.js";
 
-import Reviews from "./review.model.js";
-
-class Freelancers extends Model {
+class Artist extends Model {
   static associate(models) {
-    Freelancers.belongsTo(models.Users, {
+    Artist.belongsTo(models.Users, {
       foreignKey: "userId",
       as: "user",
       onDelete: "CASCADE",
     });
-    Freelancers.hasMany(models.Applications, {
-      foreignKey: "freelancerId",
+    Artist.hasMany(models.Applications, {
+      foreignKey: "artistId",
       as: "applications",
       onDelete: "CASCADE",
     });
-    Freelancers.hasMany(models.Reviews, {
-      foreignKey: "freelancerId",
+    Artist.hasMany(models.Reviews, {
+      foreignKey: "artistId",
       as: "reviews",
+      onDelete: "CASCADE",
+    });
+    Artist.hasMany(models.CommissionRequest, {
+      foreignKey: "artistId",
+      as: "commissions",
       onDelete: "CASCADE",
     });
   }
 }
 
-Freelancers.init(
+Artist.init(
   {
-    freelancerId: {
+    artistId: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
@@ -43,19 +46,35 @@ Freelancers.init(
       type: DataTypes.STRING(100),
       allowNull: false,
     },
+    bio: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
     skills: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    specialties: {
       type: DataTypes.TEXT,
       allowNull: true,
     },
     availability: {
       type: DataTypes.STRING(50),
       allowNull: true,
+      defaultValue: "available"
     },
-    portfolio_images_text: {
-      type: DataTypes.TEXT,
+    hourlyRate: {
+      type: DataTypes.DECIMAL(10, 2),
       allowNull: true,
     },
     avatarUrl: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      validate: {
+        isUrl: true,
+      },
+    },
+    portfolioUrl: {
       type: DataTypes.STRING,
       allowNull: true,
       validate: {
@@ -71,13 +90,18 @@ Freelancers.init(
         max: 5,
       },
     },
+    totalCommissions: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
   },
   {
     sequelize,
-    modelName: "Freelancers",
-    tableName: "freelancers",
+    modelName: "Artist",
+    tableName: "artists",
     timestamps: true,
   }
 );
 
-export default Freelancers;
+export default Artist;

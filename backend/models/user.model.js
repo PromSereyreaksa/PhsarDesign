@@ -7,17 +7,17 @@ class Users extends Model {
             foreignKey: 'userId',
             as: 'clientProfile'
         });
-        Users.hasOne(models.Freelancers, { 
+        Users.hasOne(models.Artist, { 
             foreignKey: 'userId',
-            as: 'freelancerProfile'
+            as: 'artistProfile'
         });
     }
 
     // Helper to check only one profile exists
     async hasSingleProfile() {
         const client = await this.getClientProfile();
-        const freelancer = await this.getFreelancerProfile();
-        return (client && !freelancer) || (!client && freelancer);
+        const artist = await this.getArtistProfile();
+        return (client && !artist) || (!client && artist);
     }
 }
 
@@ -51,7 +51,7 @@ Users.init({
     allowNull: false,
     defaultValue: 'user', // Default role is 'user'
     validate: {
-      isIn: [['client', 'freelancer']] // Role must be either 'client' or 'freelancer'
+      isIn: [['client', 'artist']] // Role must be either 'client' or 'artist'
     }
   },
   stripeCustomerId: {

@@ -17,12 +17,12 @@ const Applications = sequelize.define("Applications", {
     },
     onDelete: "CASCADE"
   },
-  freelancerId: {
+  artistId: {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: "freelancers",
-      key: "freelancerId"
+      model: "artists",
+      key: "artistId"
     },
     onDelete: "CASCADE"
   },
@@ -53,7 +53,7 @@ const Applications = sequelize.define("Applications", {
 
 Applications.associate = (models) => {
   Applications.belongsTo(models.Projects, { foreignKey: "projectId", as: "project" });
-  Applications.belongsTo(models.Freelancers, { foreignKey: "freelancerId", as: "freelancer" });
+  Applications.belongsTo(models.Artist, { foreignKey: "artistId", as: "artist" });
 };
 
 export default Applications;
