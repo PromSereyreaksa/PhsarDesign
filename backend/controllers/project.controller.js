@@ -22,7 +22,9 @@ export const getAllProjects = async (req, res) => {
 
 export const getProjectById = async (req, res) => {
     try {
-        const project = await Projects.findByPk(req.params.id);
+        const project = await Projects.findOne({
+            where: { projectId: req.params.id }
+        });
         if (!project) {
             return res.status(404).json({ error: "Projects not found" });
         }
@@ -36,12 +38,14 @@ export const getProjectById = async (req, res) => {
 export const updateProject = async (req, res) => {
     try {
         const [updated] = await Projects.update(req.body, {
-            where: { id: req.params.id }
+            where: { projectId: req.params.id }
         });
         if (!updated) {
             return res.status(404).json({ error: "Projects not found" });
         }
-        const updatedProjects = await Projects.findByPk(req.params.id);
+        const updatedProjects = await Projects.findOne({
+            where: { projectId: req.params.id }
+        });
         res.status(200).json(updatedProjects);
     } catch (error) {
         console.error("Error updating project:", error);
@@ -52,7 +56,7 @@ export const updateProject = async (req, res) => {
 export const deleteProject = async (req, res) => {
     try {
         const deleted = await Projects.destroy({
-            where: { id: req.params.id }
+            where: { projectId: req.params.id }
         });
         if (!deleted) {
             return res.status(404).json({ error: "Projects not found" });

@@ -28,7 +28,9 @@ export const getAllReviews = async (req, res) => {
 
 export const getReviewById = async (req, res) => {
   try {
-    const review = await Reviews.findByPk(req.params.id);
+    const review = await Reviews.findOne({
+      where: { reviewId: req.params.id }
+    });
     if (!review) {
       return res.status(404).json({ error: "Review not found" });
     }
@@ -47,7 +49,9 @@ export const updateReview = async (req, res) => {
     if (!updated) {
       return res.status(404).json({ error: "Review not found" });
     }
-    const updatedReview = await Reviews.findByPk(req.params.id);
+    const updatedReview = await Reviews.findOne({
+      where: { reviewId: req.params.id }
+    });
     res.status(200).json(updatedReview);
   } catch (error) {
     console.error("Error updating review:", error);

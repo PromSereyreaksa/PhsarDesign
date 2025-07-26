@@ -51,7 +51,27 @@ Projects.init(
       allowNull: false,
       defaultValue: "open",
       validate: {
-        isIn: [["open", "in_progress", "completed", "cancelled"]],
+        isIn: [["open", "in_progress", "completed", "cancelled", "paid"]],
+      },
+    },
+    paymentStatus: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      defaultValue: "pending",
+      validate: {
+        isIn: [["pending", "processing", "completed", "failed", "refunded"]],
+      },
+    },
+    paymentIntentId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    freelancerId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: "freelancers",
+        key: "freelancerId",
       },
     },
     createdAt: {

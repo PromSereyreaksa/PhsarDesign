@@ -3,6 +3,8 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { validateFileUpload } from '../middlewares/security.middleware.js';
+import { authenticate } from '../middlewares/auth.middleware.js';
 import {
   uploadSingleImage,
   uploadMultipleFiles,
@@ -100,30 +102,30 @@ const handleMulterError = (error, req, res, next) => {
 /**
  * @route POST /api/upload/image
  * @desc Upload single image
- * @access Public (should be protected in production)
+ * @access Protected
  */
-router.post('/image', upload.single('image'), handleMulterError, uploadSingleImage);
+router.post('/image', authenticate, upload.single('image'), handleMulterError, validateFileUpload, uploadSingleImage);
 
 /**
  * @route POST /api/upload/images
  * @desc Upload multiple images
- * @access Public (should be protected in production)
+ * @access Protected
  */
-router.post('/images', upload.array('images', 10), handleMulterError, uploadMultipleFiles);
+router.post('/images', authenticate, upload.array('images', 10), handleMulterError, validateFileUpload, uploadMultipleFiles);
 
 /**
  * @route POST /api/upload/avatar
  * @desc Upload user avatar
- * @access Protected (require authentication)
+ * @access Protected
  */
-router.post('/avatar', upload.single('avatar'), handleMulterError, uploadAvatar);
+router.post('/avatar', authenticate, upload.single('avatar'), handleMulterError, validateFileUpload, uploadAvatar);
 
 /**
  * @route POST /api/upload/portfolio
  * @desc Upload portfolio image
- * @access Protected (require authentication)
+ * @access Protected
  */
-router.post('/portfolio', upload.single('portfolio'), handleMulterError, uploadPortfolioImage);
+router.post('/portfolio', authenticate, upload.single('portfolio'), handleMulterError, validateFileUpload, uploadPortfolioImage);
 
 // READ ROUTES
 

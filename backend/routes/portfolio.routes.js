@@ -6,14 +6,16 @@ import {
     updatePortfolio,
     deletePortfolio
 } from '../controllers/portfolio.controller.js';
+import { authenticate } from '../middlewares/auth.middleware.js';
+import { validatePortfolioUpdate } from '../middlewares/security.middleware.js';
 
 const router = express.Router();
 
 // Portfolio CRUD operations
-router.post('/', createPortfolio);
-router.get('/', getAllPortfolios);
-router.get('/:id', getPortfolioById);
-router.put('/:id', updatePortfolio);
-router.delete('/:id', deletePortfolio);
+router.post('/', authenticate, validatePortfolioUpdate, createPortfolio);
+router.get('/', getAllPortfolios); // Public route for browsing portfolios
+router.get('/:id', getPortfolioById); // Public route for portfolio details
+router.put('/:id', authenticate, validatePortfolioUpdate, updatePortfolio);
+router.delete('/:id', authenticate, deletePortfolio);
 
 export default router;

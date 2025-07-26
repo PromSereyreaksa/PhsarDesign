@@ -22,7 +22,9 @@ export const getAllFreelancers = async (req, res) => {
 
 export const getFreelancerById = async (req, res) => {
     try {
-        const freelancer = await Freelancers.findByPk(req.params.id);
+        const freelancer = await Freelancers.findOne({
+            where: { freelancerId: req.params.id }
+        });
         if (!freelancer) {
             return res.status(404).json({ error: "Freelancer not found" });
         }
@@ -36,12 +38,14 @@ export const getFreelancerById = async (req, res) => {
 export const updateFreelancer = async (req, res) => {
     try {
         const [updated] = await Freelancers.update(req.body, {
-            where: { id: req.params.id }
+            where: { freelancerId: req.params.id }
         });
         if (!updated) {
             return res.status(404).json({ error: "Freelancer not found" });
         }
-        const updatedFreelancer = await Freelancers.findByPk(req.params.id);
+        const updatedFreelancer = await Freelancers.findOne({
+            where: { freelancerId: req.params.id }
+        });
         res.status(200).json(updatedFreelancer);
     } catch (error) {
         console.error("Error updating freelancer:", error);
@@ -52,7 +56,7 @@ export const updateFreelancer = async (req, res) => {
 export const deleteFreelancer = async (req, res) => {
     try {
         const deleted = await Freelancers.destroy({
-            where: { id: req.params.id }
+            where: { freelancerId: req.params.id }
         });
         if (!deleted) {
           return res.status(404).json({ error: "Freelancer not found" });

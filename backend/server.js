@@ -1,37 +1,69 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
+import morgan from 'morgan';
+import compression from 'compression';
 import { sequelize } from './config/database.js';
 
-import reviewRoutes from './routes/review.routes.js';
-import uploadRoutes from './routes/upload.routes.js';
-
 // Import routes
-// import authRoutes from './routes/auth.routes.js';
+import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 import clientRoutes from './routes/client.routes.js';
 import freelancerRoutes from './routes/freelancer.routes.js';
 import projectRoutes from './routes/project.routes.js';
 import portfolioRoutes from './routes/portfolio.routes.js';
-import authRoutes from './routes/auth.routes.js';
+import reviewRoutes from './routes/review.routes.js';
+import uploadRoutes from './routes/upload.routes.js';
+import paymentRoutes from './routes/payment.routes.js';
 
 // Import middleware
 import errorHandler from './middlewares/error.middleware.js';
+import { 
+  generalLimiter, 
+  authLimiter, 
+  uploadLimiter,
+  securityHeaders, 
+  sanitizeInput,
+  requestLogger 
+} from './middlewares/security.middleware.js';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const cookieParser = require('cookie-parser');
 
-// Middleware
+// Trust proxy for rate limiting and IP detection
+app.set('trust proxy', 1);
+
+// Security middleware (apply first)
+app.use(securityHeaders);
+app.use(sanitizeInput);
+app.use(compression());
+
+// Logging middleware
+app.use(morgan('combined'));
+app.use(requestLogger);
+
+// Rate limiting
+app.use('/api/', generalLimiter);
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api/upload/', uploadLimiter);
+
+// Standard middleware
 app.use(cookieParser());
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Routes
-// app.use('/api/auth', authRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/clients', clientRoutes);
 app.use('/api/freelancers', freelancerRoutes);
@@ -39,6 +71,7 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/portfolio', portfolioRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/payments', paymentRoutes);
 app.use('/api/auth', authRoutes);
 
 // Health check endpoint

@@ -3,11 +3,11 @@ import { sequelize } from "../config/database.js";
 
 class Users extends Model {
     static associate(models) {
-        Users.hasOne(models.ClientProfile, { 
+        Users.hasOne(models.Clients, { 
             foreignKey: 'userId',
             as: 'clientProfile'
         });
-        Users.hasOne(models.FreelancerProfile, { 
+        Users.hasOne(models.Freelancers, { 
             foreignKey: 'userId',
             as: 'freelancerProfile'
         });
@@ -53,6 +53,11 @@ Users.init({
     validate: {
       isIn: [['client', 'freelancer']] // Role must be either 'client' or 'freelancer'
     }
+  },
+  stripeCustomerId: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    unique: true
   },
   createdAt: {
     type: DataTypes.DATE,
