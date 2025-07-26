@@ -35,6 +35,21 @@ export const getClientById = async (req, res) => {
     }
 }
 
+export const getClientBySlug = async (req, res) => {
+    try {
+        const client = await Clients.findOne({
+            where: { slug: req.params.slug }
+        });
+        if (!client) {
+            return res.status(404).json({ error: "Client not found" });
+        }
+        res.status(200).json(client);
+    } catch (error) {
+        console.error("Error fetching client by slug:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+}
+
 export const updateClient = async (req, res) => {
     try {
         const [updated] = await Clients.update(req.body, {
@@ -53,6 +68,24 @@ export const updateClient = async (req, res) => {
     }
 }
 
+export const updateClientBySlug = async (req, res) => {
+    try {
+        const [updated] = await Clients.update(req.body, {
+            where: { slug: req.params.slug }
+        });
+        if (!updated) {
+            return res.status(404).json({ error: "Client not found" });
+        }
+        const updatedClient = await Clients.findOne({
+            where: { slug: req.params.slug }
+        });
+        res.status(200).json(updatedClient);
+    } catch (error) {
+        console.error("Error updating client by slug:", error);
+        res.status(400).json({ error: error.message });
+    }
+}
+
 export const deleteClient = async (req, res) => {
     try {
         const deleted = await Clients.destroy({
@@ -64,6 +97,21 @@ export const deleteClient = async (req, res) => {
         res.status(204).send();
     } catch (error) {
         console.error("Error deleting client:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+}
+
+export const deleteClientBySlug = async (req, res) => {
+    try {
+        const deleted = await Clients.destroy({
+            where: { slug: req.params.slug }
+        });
+        if (!deleted) {
+            return res.status(404).json({ error: "Client not found" });
+        }
+        res.status(204).send();
+    } catch (error) {
+        console.error("Error deleting client by slug:", error);
         res.status(500).json({ error: "Internal server error" });
     }
 }
@@ -142,6 +190,3 @@ export const getClientsByName = async (req, res) => {
         res.status(500).json({ error: "Internal server error" });
     }
 }
-
-
-

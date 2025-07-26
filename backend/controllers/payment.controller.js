@@ -3,18 +3,22 @@ import Stripe from 'stripe';
 import { Op } from 'sequelize';
 import Projects from '../models/project.model.js';
 import Users from '../models/user.model.js';
+import { validate as isUUID } from 'uuid';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-/**
- * Create a payment intent for project payment
- * @route POST /api/payments/create-intent
- * @access Protected
- */
 export const createPaymentIntent = async (req, res) => {
   try {
     const { projectId, amount, currency = 'usd', description } = req.body;
     const userId = req.user.id;
+
+    // Validate UUID format
+    if (!isUUID(projectId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid project ID format'
+      });
+    }
 
     // Validate the project exists and user has permission
     const project = await Projects.findOne({

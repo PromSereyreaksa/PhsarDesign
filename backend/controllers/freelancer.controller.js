@@ -35,6 +35,11 @@ export const getFreelancerById = async (req, res) => {
     }
 }
 
+export const getFreelancerBySlug = async (req, res) => {
+    try {
+        const freelancer = await Freelancers.findOne({
+            where: { slug: req.params.slug }
+
 export const getFreelancerByUserId = async (req, res) => {
     try {
         const freelancer = await Freelancers.findOne({
@@ -45,6 +50,8 @@ export const getFreelancerByUserId = async (req, res) => {
         }
         res.status(200).json(freelancer);
     } catch (error) {
+
+        console.error("Error fetching freelancer by slug:", error);
         console.error("Error fetching freelancer by user ID:", error);
         res.status(500).json({ error: "Internal server error" });
     }
@@ -68,6 +75,24 @@ export const updateFreelancer = async (req, res) => {
     }
 }
 
+export const updateFreelancerBySlug = async (req, res) => {
+    try {
+        const [updated] = await Freelancers.update(req.body, {
+            where: { slug: req.params.slug }
+        });
+        if (!updated) {
+            return res.status(404).json({ error: "Freelancer not found" });
+        }
+        const updatedFreelancer = await Freelancers.findOne({
+            where: { slug: req.params.slug }
+        });
+        res.status(200).json(updatedFreelancer);
+    } catch (error) {
+        console.error("Error updating freelancer by slug:", error);
+        res.status(400).json({ error: error.message });
+    }
+}
+
 export const deleteFreelancer = async (req, res) => {
     try {
         const deleted = await Freelancers.destroy({
@@ -82,6 +107,21 @@ export const deleteFreelancer = async (req, res) => {
         res.status(500).json({ error: "Internal server error" });
     }
 } 
+
+export const deleteFreelancerBySlug = async (req, res) => {
+    try {
+        const deleted = await Freelancers.destroy({
+            where: { slug: req.params.slug }
+        });
+        if (!deleted) {
+          return res.status(404).json({ error: "Freelancer not found" });
+        }
+        res.status(204).send();
+    } catch (error) {
+        console.error("Error deleting freelancer by slug:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+}
  
 export const getFreelancersByCategory = async (req, res) => {
   try {
@@ -95,5 +135,4 @@ export const getFreelancersByCategory = async (req, res) => {
   } catch (error) {
     console.error("Error fetching freelancers by category:", error);
     res.status(500).json({ error: "Internal server error" });}
-}    
-
+}
