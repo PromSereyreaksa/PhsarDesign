@@ -1,8 +1,8 @@
-import Projectss from '../models/project.model.js';
+import { Projects } from '../models/index.js';
 
 export const createProject = async (req, res) => {
     try {
-        const project = await Projectss.create(req.body);
+        const project = await Projects.create(req.body);
         res.status(201).json(project);
     } catch (error) {
         console.error("Error creating project:", error);

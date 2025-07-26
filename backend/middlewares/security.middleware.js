@@ -125,19 +125,28 @@ export const validateRegistration = [
     .normalizeEmail()
     .withMessage('Please provide a valid email address'),
   body('password')
-    .isLength({ min: 8 })
-    .withMessage('Password must be at least 8 characters long')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
-    .withMessage('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'),
+    .isLength({ min: 6 })
+    .withMessage('Password must be at least 6 characters long'),
+  body('name')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Name must be between 2 and 100 characters'),
   body('firstName')
+    .optional()
     .trim()
     .isLength({ min: 2, max: 50 })
     .withMessage('First name must be between 2 and 50 characters'),
   body('lastName')
+    .optional()
     .trim()
     .isLength({ min: 2, max: 50 })
     .withMessage('Last name must be between 2 and 50 characters'),
+  body('role')
+    .isIn(['freelancer', 'client'])
+    .withMessage('Role must be either freelancer or client'),
   body('userType')
+    .optional()
     .isIn(['freelancer', 'client'])
     .withMessage('User type must be either freelancer or client'),
   handleValidationErrors
