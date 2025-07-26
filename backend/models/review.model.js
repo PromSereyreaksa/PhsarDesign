@@ -3,9 +3,9 @@ import { sequelize } from "../config/database.js";
 
 class Reviews extends Model {
   static associate(models) {
-    Reviews.belongsTo(models.Freelancers, {
-      foreignKey: "freelancerId",
-      as: "freelancer",
+    Reviews.belongsTo(models.Artist, {
+      foreignKey: "artistId",
+      as: "artist",
       onDelete: "CASCADE",
     });
     Reviews.belongsTo(models.Users, {
@@ -23,12 +23,12 @@ Reviews.init(
       primaryKey: true,
       autoIncrement: true,
     },
-    freelancerId: {
+    artistId: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: "freelancers",
-        key: "freelancerId",
+        model: "artists",
+        key: "artistId",
       },
       onDelete: "CASCADE",
     },
@@ -62,8 +62,8 @@ Reviews.init(
     indexes: [
       {
         unique: true,
-        fields: ['userId', 'freelancerId'],
-        name: 'unique_user_freelancer_review'
+        fields: ['userId', 'artistId'],
+        name: 'unique_user_artist_review'
       }
     ]
   }

@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 class Projects extends Model {
   static associate(models) {
     Projects.belongsTo(models.Clients, { foreignKey: "clientId", as: "client" });
+    Projects.belongsTo(models.Artist, { foreignKey: "artistId", as: "artist" });
     Projects.hasMany(models.Applications, { foreignKey: "projectId", as: "applications" });
   }
 }
@@ -67,12 +68,12 @@ Projects.init(
       type: DataTypes.STRING,
       allowNull: true,
     },
-    freelancerId: {
+    artistId: {
       type: DataTypes.INTEGER,
       allowNull: true,
       references: {
-        model: "freelancers",
-        key: "freelancerId",
+        model: "artists",
+        key: "artistId",
       },
     },
     createdAt: {
@@ -92,5 +93,6 @@ Projects.init(
     timestamps: false,
   }
 );
+
 
 export default Projects;

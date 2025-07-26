@@ -17,7 +17,12 @@ export const createProject = async (req, res) => {
 
 export const getAllProjects = async (req, res) => {
     try {
-        const projects = await Projects.findAll();
+        const projects = await Projects.findAll({
+            include: [
+                { model: Clients, as: "client" },
+                { model: Artist, as: "artist" }
+            ]
+        });
         res.status(200).json(projects);
     } catch (error) {
         console.error("Error fetching projects:", error);

@@ -10,9 +10,9 @@ import { sequelize } from './config/database.js';
 import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 import clientRoutes from './routes/client.routes.js';
-import freelancerRoutes from './routes/freelancer.routes.js';
+import artistRoutes from './routes/artist.routes.js';
+import commissionRoutes from './routes/commission.routes.js';
 import projectRoutes from './routes/project.routes.js';
-import portfolioRoutes from './routes/portfolio.routes.js';
 import reviewRoutes from './routes/review.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
 import paymentRoutes from './routes/payment.routes.js';
@@ -72,13 +72,12 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/clients', clientRoutes);
-app.use('/api/freelancers', freelancerRoutes);
+app.use('/api/artists', artistRoutes);
+app.use('/api/commissions', commissionRoutes);
 app.use('/api/projects', projectRoutes);
-app.use('/api/portfolio', portfolioRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/payments', paymentRoutes);
-app.use('/api/auth', authRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

@@ -2,22 +2,20 @@ import { sequelize } from "../config/database.js";
 
 import Users from "./user.model.js";
 import Clients from "./client.model.js";
-import Freelancers from "./freelancer.model.js";
+import Artist from "./artist.model.js";
 import Projects from "./project.model.js";
-import Messages from "./message.model.js";
 import Applications from "./applications.model.js";
-import Portfolios from "./portfolio.model.js";
 import Reviews from "./review.model.js";
+import CommissionRequest from "./commissionRequest.model.js";
 
 const models = {
   Users,
   Clients,
-  Freelancers,
+  Artist,
   Projects,
-  Messages,
   Applications,
-  Portfolios,
   Reviews,
+  CommissionRequest,
 };
 
 // Setup associations for all models that have an associate method
@@ -31,10 +29,9 @@ export {
   sequelize,
   Users,
   Clients,
-  Freelancers,
+  Artist,
   Projects,
-  Messages,
   Applications,
-  Portfolios,
   Reviews,
+  CommissionRequest,
 };
