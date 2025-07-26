@@ -4,6 +4,7 @@ import {
     getAllFreelancers,
     getFreelancerById,
     getFreelancerBySlug,
+    getFreelancerByUserId,
     updateFreelancer,
     updateFreelancerBySlug,
     deleteFreelancer,
@@ -31,5 +32,12 @@ router.delete('/id/:id(\\d+)', authenticate, deleteFreelancer);
 router.get('/:slug', validateSlug, getFreelancerBySlug);
 router.put('/:slug', authenticate, validateSlug, updateFreelancerBySlug);
 router.delete('/:slug', authenticate, validateSlug, deleteFreelancerBySlug);
+// Freelancer CRUD operations
+router.post('/',  createFreelancer);
+router.get('/', getAllFreelancers); // Public route for browsing freelancers
+router.get('/user/:userId', getFreelancerByUserId); // Get freelancer by user ID
+router.get('/:id', getFreelancerById); // Public route for freelancer profiles
+router.put('/:id',  updateFreelancer);
+router.delete('/:id',  deleteFreelancer);
 
 export default router;

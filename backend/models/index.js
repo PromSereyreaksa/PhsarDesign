@@ -36,4 +36,5 @@ export {
   Messages,
   Applications,
   Portfolios,
+  Reviews,
 };

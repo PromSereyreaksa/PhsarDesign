@@ -1,15 +1,24 @@
 "use client"
 
 import { useState } from "react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
+import { useSelector, useDispatch } from "react-redux"
 import { Search, Menu, X, User, Bell, MessageSquare } from 'lucide-react'
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu"
+import { logout } from "../../store/slices/authSlice"
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const { isAuthenticated, user } = useSelector((state) => state.auth)
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    dispatch(logout())
+    navigate("/")
+  }
 
   return (
     <nav className="bg-[#202020]/95 backdrop-blur-sm border-b border-white/10 sticky top-0 z-50">
@@ -46,6 +55,12 @@ export default function Navbar() {
               Browse Jobs
             </Link>
             <Link
+              to="/browse-freelancers"
+              className="text-white hover:text-[#A95BAB] px-3 py-2 transition-colors duration-500 ease-out"
+            >
+              Browse Freelancers
+            </Link>
+            <Link
               to="/post-job/client"
               className="text-white hover:text-[#A95BAB] px-3 py-2 transition-colors duration-500 ease-out"
             >
@@ -64,7 +79,7 @@ export default function Navbar() {
               About
             </Link>
 
-            {isLoggedIn ? (
+            {isAuthenticated ? (
               <div className="flex items-center space-x-3">
                 <Button variant="ghost" size="sm" className="text-white hover:text-[#A95BAB] hover:bg-white/10">
                   <Bell className="h-4 w-4" />
@@ -80,7 +95,7 @@ export default function Navbar() {
                       <User className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="bg-black border-gray-600">
+                  <DropdownMenuContent align="end" className="bg-black border-gray-600 z-[100]">
                     <DropdownMenuItem className="text-white hover:text-[#A95BAB] hover:bg-white/10">
                       <Link to="/profile">Profile</Link>
                     </DropdownMenuItem>
@@ -91,7 +106,7 @@ export default function Navbar() {
                       <Link to="/messages">Messages</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => setIsLoggedIn(false)}
+                      onClick={handleLogout}
                       className="text-white hover:text-[#A95BAB] hover:bg-white/10"
                     >
                       Logout
@@ -101,19 +116,21 @@ export default function Navbar() {
               </div>
             ) : (
               <div className="flex items-center space-x-2">
-                <Button
-                  variant="ghost"
-                  onClick={() => setIsLoggedIn(true)}
-                  className="text-white hover:text-[#A95BAB] hover:bg-white/10 transform hover:scale-105 transition-all duration-500 ease-out"
-                >
-                  <span className="text-white">Sign In</span>
-                </Button>
-                <Button
-                  onClick={() => setIsLoggedIn(true)}
-                  className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 text-white transform hover:scale-105 transition-all duration-500 ease-out"
-                >
-                  <span className="text-white">Join</span>
-                </Button>
+                <Link to="/login">
+                  <Button
+                    variant="ghost"
+                    className="text-white hover:text-[#A95BAB] hover:bg-white/10 transform hover:scale-105 transition-all duration-500 ease-out"
+                  >
+                    Sign In
+                  </Button>
+                </Link>
+                <Link to="/register">
+                  <Button
+                    className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 text-white transform hover:scale-105 transition-all duration-500 ease-out"
+                  >
+                    Get Started
+                  </Button>
+                </Link>
               </div>
             )}
           </div>
@@ -145,6 +162,9 @@ export default function Navbar() {
               <Link to="/browse-jobs" className="block px-3 py-2 text-white hover:text-[#A95BAB]">
                 Browse Jobs
               </Link>
+              <Link to="/browse-freelancers" className="block px-3 py-2 text-white hover:text-[#A95BAB]">
+                Browse Freelancers
+              </Link>
               <Link to="/post-job/client" className="block px-3 py-2 text-white hover:text-[#A95BAB]">
                 Hire Talent
               </Link>
@@ -154,19 +174,22 @@ export default function Navbar() {
               <Link to="/about" className="block px-3 py-2 text-white hover:text-[#A95BAB]">
                 About
               </Link>
-              {!isLoggedIn && (
+              {!isAuthenticated && (
                 <div className="flex space-x-2 px-3 py-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsLoggedIn(true)}
-                    className="text-white hover:text-[#A95BAB]"
-                  >
-                    <span className="text-white">Sign In</span>
-                  </Button>
-                  <Button size="sm" onClick={() => setIsLoggedIn(true)} className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 text-white">
-                    <span className="text-white">Join</span>
-                  </Button>
+                  <Link to="/login">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-white hover:text-[#A95BAB]"
+                    >
+                      Sign In
+                    </Button>
+                  </Link>
+                  <Link to="/register">
+                    <Button size="sm" className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 text-white">
+                      Get Started
+                    </Button>
+                  </Link>
                 </div>
               )}
             </div>

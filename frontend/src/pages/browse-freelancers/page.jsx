@@ -11,98 +11,103 @@ import { Input } from "../../components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
 import { Badge } from "../../components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select"
-import { fetchAllProjects, searchProjects } from "../../store/actions"
+import { freelancersAPI } from "../../services/api"
 
-export default function BrowseJobs() {
-  const dispatch = useDispatch()
-  const { projects = [], isLoading, error } = useSelector((state) => state.api)
+export default function BrowseFreelancers() {
+  const [freelancers, setFreelancers] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
   
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("All Categories")
-  const [selectedBudget, setSelectedBudget] = useState("Any Budget")
-  const [filteredJobs, setFilteredJobs] = useState([])
+  const [selectedExperience, setSelectedExperience] = useState("Any Experience")
+  const [filteredFreelancers, setFilteredFreelancers] = useState([])
 
-  // Fetch projects on component mount
+  // Fetch freelancers on component mount
   useEffect(() => {
-    const loadProjects = async () => {
+    const loadFreelancers = async () => {
+      setIsLoading(true)
       try {
-        await dispatch(fetchAllProjects())
+        const response = await freelancersAPI.getAll()
+        setFreelancers(response.data || [])
       } catch (error) {
-        console.error('Error fetching projects:', error)
+        console.error('Error fetching freelancers:', error)
+        setError('Failed to load freelancers')
+      } finally {
+        setIsLoading(false)
       }
     }
-    loadProjects()
-  }, [dispatch])
+    loadFreelancers()
+  }, [])
 
   // Filter and search logic
   useEffect(() => {
-    let filtered = projects.projects || []
+    let filtered = freelancers || []
 
     // Apply search filter
     if (searchQuery.trim()) {
-      filtered = filtered.filter(job => 
-        job.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        job.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        job.skills?.some(skill => skill.toLowerCase().includes(searchQuery.toLowerCase()))
+      filtered = filtered.filter(freelancer => 
+        freelancer.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        freelancer.bio?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        freelancer.skills?.some(skill => skill.toLowerCase().includes(searchQuery.toLowerCase()))
       )
     }
 
     // Apply category filter
     if (selectedCategory !== "All Categories") {
-      filtered = filtered.filter(job => 
-        job.category === selectedCategory ||
-        job.skills?.includes(selectedCategory)
+      filtered = filtered.filter(freelancer => 
+        freelancer.category === selectedCategory ||
+        freelancer.skills?.includes(selectedCategory)
       )
     }
 
-    // Apply budget filter
-    if (selectedBudget !== "Any Budget") {
-      // This would need more sophisticated budget filtering based on your data structure
-      // For now, just a basic implementation
+    // Apply experience filter
+    if (selectedExperience !== "Any Experience") {
+      filtered = filtered.filter(freelancer => 
+        freelancer.experience_level === selectedExperience
+      )
     }
 
-    setFilteredJobs(filtered)
-  }, [projects, searchQuery, selectedCategory, selectedBudget])
+    setFilteredFreelancers(filtered)
+  }, [freelancers, searchQuery, selectedCategory, selectedExperience])
 
   const categories = ["Digital Art", "Logo Design", "Graphic Design", "3D Design", "Character Design"]
 
   // Handle search input
   const handleSearch = async () => {
     if (searchQuery.trim()) {
+      setIsLoading(true)
       try {
-        await dispatch(searchProjects({ 
-          search: searchQuery,
-          category: selectedCategory !== "All Categories" ? selectedCategory : undefined,
-          budget: selectedBudget !== "Any Budget" ? selectedBudget : undefined
-        }))
+        // If there's a search endpoint for freelancers, use it here
+        // For now, we'll use client-side filtering
+        setIsLoading(false)
       } catch (error) {
         console.error('Search error:', error)
+        setIsLoading(false)
       }
-    } else {
-      await dispatch(fetchAllProjects())
     }
   }
 
-  // Format project data to match the expected structure
-  const formatProjectForDisplay = (project) => ({
-    id: project.id,
-    title: project.title || 'Untitled Project',
-    description: project.description || 'No description available',
-    budget: project.budget || 'Budget not specified',
-    budgetType: project.budget_type || 'Fixed Price',
-    skills: project.skills ? project.skills.split(',').map(s => s.trim()) : [],
-    postedBy: project.Client?.name || project.client_name || 'Anonymous Client',
-    clientRating: 4.5, // Default rating - would need to calculate from reviews
-    clientReviews: 0, // Default - would need to count reviews
-    location: project.location || 'Remote',
-    bids: 0, // Would need to count applications
-    timeLeft: 'Active', // Would need to calculate based on deadline
-    postedTime: project.createdAt ? new Date(project.createdAt).toLocaleDateString() : 'Recently',
+  // Format freelancer data to match the expected structure
+  const formatFreelancerForDisplay = (freelancer) => ({
+    id: freelancer.id,
+    name: freelancer.User?.name || freelancer.name || 'Anonymous Freelancer',
+    title: freelancer.title || 'Creative Professional',
+    bio: freelancer.bio || 'No bio available',
+    hourlyRate: freelancer.hourly_rate || 'Rate not specified',
+    skills: freelancer.skills ? freelancer.skills.split(',').map(s => s.trim()) : [],
+    rating: 4.5, // Default rating - would need to calculate from reviews
+    reviewCount: 0, // Default - would need to count reviews
+    location: freelancer.location || 'Remote',
+    completedProjects: 0, // Would need to count completed projects
+    portfolioItems: freelancer.portfolio_items || 0,
+    joinedDate: freelancer.createdAt ? new Date(freelancer.createdAt).toLocaleDateString() : 'Recently',
     verified: true, // Default - would need verification system
-    status: project.status
+    status: freelancer.status || 'available',
+    experienceLevel: freelancer.experience_level || 'intermediate'
   })
 
-  const displayJobs = (filteredJobs.length > 0 ? filteredJobs : (projects.projects || [])).map(formatProjectForDisplay)
+  const displayFreelancers = (filteredFreelancers.length > 0 ? filteredFreelancers : freelancers).map(formatFreelancerForDisplay)
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000]">
@@ -120,9 +125,9 @@ export default function BrowseJobs() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-[#A95BAB] bg-clip-text text-transparent mb-4">
-            Browse Creative Jobs
+            Browse Creative Freelancers
           </h1>
-          <p className="text-xl text-gray-300">Find your next creative opportunity from amazing clients</p>
+          <p className="text-xl text-gray-300">Find talented creative professionals for your projects</p>
         </div>
 
         {/* Error State */}
@@ -139,7 +144,7 @@ export default function BrowseJobs() {
               <div className="relative">
                 <Input
                   type="text"
-                  placeholder="Search for creative jobs..."
+                  placeholder="Search for creative freelancers..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -179,40 +184,34 @@ export default function BrowseJobs() {
               </SelectContent>
             </Select>
 
-            <Select value={selectedBudget} onValueChange={setSelectedBudget}>
+            <Select value={selectedExperience} onValueChange={setSelectedExperience}>
               <SelectTrigger className="bg-gray-800 border-[#A95BAB]/50 text-white">
-                <SelectValue placeholder="Budget" />
+                <SelectValue placeholder="Experience" />
               </SelectTrigger>
               <SelectContent className="bg-gray-800 border-[#A95BAB]/50">
                 <SelectItem
-                  value="Any Budget"
+                  value="Any Experience"
                   className="text-white hover:bg-[#A95BAB]/20 focus:bg-[#A95BAB]/20 focus:text-white"
                 >
-                  Any Budget
+                  Any Experience
                 </SelectItem>
                 <SelectItem
-                  value="0-500"
+                  value="entry"
                   className="text-white hover:bg-[#A95BAB]/20 focus:bg-[#A95BAB]/20 focus:text-white"
                 >
-                  $0 - $500
+                  Entry Level
                 </SelectItem>
                 <SelectItem
-                  value="500-1000"
+                  value="intermediate"
                   className="text-white hover:bg-[#A95BAB]/20 focus:bg-[#A95BAB]/20 focus:text-white"
                 >
-                  $500 - $1,000
+                  Intermediate
                 </SelectItem>
                 <SelectItem
-                  value="1000-5000"
+                  value="expert"
                   className="text-white hover:bg-[#A95BAB]/20 focus:bg-[#A95BAB]/20 focus:text-white"
                 >
-                  $1,000 - $5,000
-                </SelectItem>
-                <SelectItem
-                  value="5000+"
-                  className="text-white hover:bg-[#A95BAB]/20 focus:bg-[#A95BAB]/20 focus:text-white"
-                >
-                  $5,000+
+                  Expert
                 </SelectItem>
               </SelectContent>
             </Select>
@@ -220,7 +219,7 @@ export default function BrowseJobs() {
 
           <div className="flex justify-between items-center mt-4">
             <div className="text-sm text-gray-300">
-              Showing {displayJobs.length} creative jobs
+              Showing {displayFreelancers.length} creative freelancers
               {isLoading && <span className="ml-2">Loading...</span>}
             </div>
             <Button
@@ -238,61 +237,62 @@ export default function BrowseJobs() {
         {isLoading && (
           <div className="flex justify-center items-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-[#A95BAB]" />
-            <span className="ml-2 text-gray-300">Loading creative jobs...</span>
+            <span className="ml-2 text-gray-300">Loading creative freelancers...</span>
           </div>
         )}
 
         {/* Empty State */}
-        {!isLoading && displayJobs.length === 0 && (
+        {!isLoading && displayFreelancers.length === 0 && (
           <div className="text-center py-12">
-            <div className="text-gray-400 mb-4">No creative jobs found</div>
-            <p className="text-gray-500">Try adjusting your search criteria or check back later for new opportunities.</p>
+            <div className="text-gray-400 mb-4">No creative freelancers found</div>
+            <p className="text-gray-500">Try adjusting your search criteria or check back later for new talent.</p>
           </div>
         )}
 
-        {/* Job Listings */}
-        {!isLoading && displayJobs.length > 0 && (
+        {/* Freelancer Listings */}
+        {!isLoading && displayFreelancers.length > 0 && (
           <div className="space-y-6">
-            {displayJobs.map((job) => (
+            {displayFreelancers.map((freelancer) => (
               <Card
-                key={job.id}
+                key={freelancer.id}
                 className="bg-white/5 border-white/10 hover:bg-[#A95BAB]/5 hover:border-[#A95BAB]/30 transition-all duration-500 ease-out"
               >
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <CardTitle className="text-xl mb-2 text-white hover:text-[#A95BAB] cursor-pointer">
-                        {job.title}
+                        {freelancer.name}
                       </CardTitle>
+                      <div className="text-lg text-[#A95BAB] mb-2">{freelancer.title}</div>
                       <div className="flex items-center space-x-4 text-sm text-gray-400 mb-3">
                         <span className="flex items-center">
                           <Clock className="h-4 w-4 mr-1" />
-                          {job.postedTime}
+                          Joined {freelancer.joinedDate}
                         </span>
                         <span className="flex items-center">
                           <MapPin className="h-4 w-4 mr-1" />
-                          {job.location}
+                          {freelancer.location}
                         </span>
                         <span className="flex items-center">
                           <Users className="h-4 w-4 mr-1" />
-                          {job.bids} bids
+                          {freelancer.completedProjects} completed
                         </span>
-                        {job.verified && <Badge className="bg-green-500 text-white border-0">Verified Client</Badge>}
+                        {freelancer.verified && <Badge className="bg-green-500 text-white border-0">Verified</Badge>}
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-lg font-semibold text-[#A95BAB] mb-1">{job.budget}</div>
-                      <div className="text-sm text-gray-400">{job.budgetType}</div>
-                      <div className="text-sm text-orange-400 font-medium mt-1">{job.timeLeft}</div>
+                      <div className="text-lg font-semibold text-[#A95BAB] mb-1">${freelancer.hourlyRate}/hr</div>
+                      <div className="text-sm text-gray-400">Hourly Rate</div>
+                      <div className="text-sm text-green-400 font-medium mt-1 capitalize">{freelancer.status}</div>
                     </div>
                   </div>
                 </CardHeader>
 
                 <CardContent>
-                  <p className="text-gray-300 mb-4 line-clamp-3">{job.description}</p>
+                  <p className="text-gray-300 mb-4 line-clamp-3">{freelancer.bio}</p>
 
                   <div className="flex flex-wrap gap-2 mb-4">
-                    {job.skills.map((skill, index) => (
+                    {freelancer.skills.map((skill, index) => (
                       <Badge key={index} variant="outline" className="border-white/20 text-gray-300">
                         {skill}
                       </Badge>
@@ -302,11 +302,13 @@ export default function BrowseJobs() {
                   <div className="flex justify-between items-center">
                     <div className="flex items-center space-x-4">
                       <div>
-                        <div className="font-medium text-white">{job.postedBy}</div>
                         <div className="flex items-center text-sm text-gray-400">
                           <Star className="h-4 w-4 text-yellow-400 fill-current mr-1" />
-                          <span>{job.clientRating}</span>
-                          <span className="ml-1">({job.clientReviews} reviews)</span>
+                          <span>{freelancer.rating}</span>
+                          <span className="ml-1">({freelancer.reviewCount} reviews)</span>
+                        </div>
+                        <div className="text-sm text-gray-400 mt-1">
+                          {freelancer.portfolioItems} portfolio items • {freelancer.experienceLevel} level
                         </div>
                       </div>
                     </div>
@@ -317,10 +319,10 @@ export default function BrowseJobs() {
                         size="sm"
                         className="border-[#A95BAB]/50 text-white hover:bg-[#A95BAB]/30 hover:border-[#A95BAB] bg-gray-800"
                       >
-                        Save Job
+                        View Portfolio
                       </Button>
                       <Button size="sm" className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 text-white">
-                        Submit Proposal
+                        Hire Now
                       </Button>
                     </div>
                   </div>
@@ -331,14 +333,14 @@ export default function BrowseJobs() {
         )}
 
         {/* Load More */}
-        {!isLoading && displayJobs.length > 0 && (
+        {!isLoading && displayFreelancers.length > 0 && (
           <div className="text-center mt-12">
             <Button
               variant="outline"
               size="lg"
               className="border-[#A95BAB]/50 text-white hover:bg-[#A95BAB]/30 hover:border-[#A95BAB] bg-gray-800"
             >
-              Load More Jobs
+              Load More Freelancers
             </Button>
           </div>
         )}

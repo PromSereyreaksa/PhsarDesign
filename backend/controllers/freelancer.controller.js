@@ -1,4 +1,4 @@
-import Freelancers from "../models/freelancer.model.js";
+import { Freelancers } from "../models/index.js";
 
 export const createFreelancer = async (req, res) => {
     try {
@@ -39,13 +39,20 @@ export const getFreelancerBySlug = async (req, res) => {
     try {
         const freelancer = await Freelancers.findOne({
             where: { slug: req.params.slug }
+
+export const getFreelancerByUserId = async (req, res) => {
+    try {
+        const freelancer = await Freelancers.findOne({
+            where: { userId: req.params.userId }
         });
         if (!freelancer) {
             return res.status(404).json({ error: "Freelancer not found" });
         }
         res.status(200).json(freelancer);
     } catch (error) {
+
         console.error("Error fetching freelancer by slug:", error);
+        console.error("Error fetching freelancer by user ID:", error);
         res.status(500).json({ error: "Internal server error" });
     }
 }

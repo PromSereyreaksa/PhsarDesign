@@ -256,9 +256,9 @@ export default function LandingPage() {
                   <Button
                     size="lg"
                     variant="outline"
-                    className="border-white/30 text-gray-900 bg-white hover:bg-gray-100 hover:border-[#A95BAB]/50 rounded-lg px-8 py-4 text-lg font-semibold group transform hover:scale-105 transition-all duration-500 ease-out"
+                    className="border-white/30 !text-gray-900 bg-white hover:bg-gray-100 hover:border-[#A95BAB]/50 hover:!text-gray-900 rounded-lg px-8 py-4 text-lg font-semibold group transform hover:scale-105 transition-all duration-500 ease-out"
                   >
-                    <Sparkles className="mr-2 h-5 w-5" />
+                    <Sparkles className="mr-2 h-5 w-5 !text-gray-900" />
                     Learn More
                   </Button>
                 </Link>

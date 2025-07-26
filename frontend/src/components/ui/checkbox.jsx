@@ -5,7 +5,7 @@ const Checkbox = React.forwardRef(({ className, ...props }, ref) => (
   <input
     type="checkbox"
     className={cn(
-      "peer h-4 w-4 shrink-0 rounded-sm border border-gray-600 bg-black text-white focus:outline-none focus:ring-1 focus:ring-gray-400 disabled:cursor-not-allowed disabled:opacity-50",
+      "h-4 w-4 rounded border border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50",
       className,
     )}
     ref={ref}

@@ -14,7 +14,7 @@ const cookieOptions = {
 };
 
 export const register = async (req, res) => {
-  const { email, password, firstName, lastName, userType } = req.body;
+  const { email, password, name, role, firstName, lastName, userType } = req.body;
 
   try {
     const existingUser = await Users.findOne({ where: { email } });
@@ -23,12 +23,17 @@ export const register = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const safeRole = ["user", "client", "freelancer"].includes(userType)
-      ? userType
+    
+    // Handle different input formats
+    const userName = name || (firstName && lastName ? `${firstName} ${lastName}` : 'User');
+    const userRole = role || userType || 'user';
+    
+    const safeRole = ["user", "client", "freelancer"].includes(userRole)
+      ? userRole
       : "user";
 
     const newUser = await Users.create({
-      name: `${firstName} ${lastName}`,
+      name: userName,
       email,
       password: hashedPassword,
       role: safeRole,
@@ -39,7 +44,15 @@ export const register = async (req, res) => {
     const refreshToken = generateRefreshToken(payload);
 
     res.cookie("refreshToken", refreshToken, cookieOptions);
-    res.status(201).json({ user: newUser, accessToken });
+    res.status(201).json({ 
+      user: {
+        id: newUser.userId,
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role
+      }, 
+      token: accessToken 
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Registration failed" });

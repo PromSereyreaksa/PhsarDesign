@@ -1,5 +1,4 @@
-import Clients from "../models/client.model.js";
-import Projects from "../models/project.model.js";
+import { Clients, Projects } from "../models/index.js";
 
 export const createClient = async (req, res) => {
     try {

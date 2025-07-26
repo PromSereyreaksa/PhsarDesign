@@ -1,5 +1,9 @@
+
 import Projects from '../models/project.model.js';
 import { validate as isUUID } from 'uuid';
+
+import { Projects } from '../models/index.js';
+
 
 export const createProject = async (req, res) => {
     try {

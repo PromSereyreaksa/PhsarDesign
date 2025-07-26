@@ -10,11 +10,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/ca
 import { Badge } from "../../components/ui/badge"
 import { Progress } from "../../components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs"
-import { fetchProjectsByClientId } from "../../store/actions/projectActions"
 import { 
+  fetchProjectsByClientId, 
+  fetchUserConversations, 
   fetchFreelancerByUserId,
   fetchClientByUserId 
-} from "../../store/actions/index"
+} from "../../store/actions"
 
 export default function Dashboard() {
   const dispatch = useDispatch()
@@ -43,8 +44,8 @@ export default function Dashboard() {
         }
         setProfile(userProfile)
 
-        // Load user conversations (commented out until messages API is implemented)
-        // await dispatch(fetchUserConversations(user.id))
+        // Load user conversations
+        await dispatch(fetchUserConversations(user.id))
       } catch (error) {
         console.error('Error loading dashboard data:', error)
       }
@@ -114,33 +115,14 @@ export default function Dashboard() {
 
   // Format messages for display
   const formatRecentMessages = () => {
-    // Mock data until messages API is implemented
-    return [
-      {
-        id: 1,
-        from: "John Doe",
-        message: "Great progress on the project!",
-        time: "2 hours ago",
-        unread: true
-      },
-      {
-        id: 2,
-        from: "Jane Smith", 
-        message: "Looking forward to the next update",
-        time: "1 day ago",
-        unread: false
-      }
-    ]
-    
-    // This will be used once messages API is working:
-    // return userMessages.slice(0, 5).map(conversation => ({
-    //   id: conversation.id,
-    //   from: conversation.otherUser?.name || 'Unknown User',
-    //   message: conversation.lastMessage?.content || 'No recent messages',
-    //   time: conversation.lastMessage?.createdAt ? 
-    //     new Date(conversation.lastMessage.createdAt).toLocaleDateString() : 'Recently',
-    //   unread: conversation.unreadCount > 0
-    // }))
+    return userMessages.slice(0, 5).map(conversation => ({
+      id: conversation.id,
+      from: conversation.otherUser?.name || 'Unknown User',
+      message: conversation.lastMessage?.content || 'No recent messages',
+      time: conversation.lastMessage?.createdAt ? 
+        new Date(conversation.lastMessage.createdAt).toLocaleDateString() : 'Recently',
+      unread: conversation.unreadCount > 0
+    }))
   }
 
   // Format upcoming deadlines

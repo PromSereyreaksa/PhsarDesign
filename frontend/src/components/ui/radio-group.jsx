@@ -22,7 +22,7 @@ const RadioGroupItem = React.forwardRef(({ className, value, selectedValue, onVa
     <input
       type="radio"
       className={cn(
-        "aspect-square h-4 w-4 rounded-full border border-gray-600 bg-black text-green-600 focus:outline-none focus:ring-1 focus:ring-gray-400 disabled:cursor-not-allowed disabled:opacity-50",
+        "aspect-square h-4 w-4 rounded-full border border-gray-300 text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50",
         className,
       )}
       ref={ref}

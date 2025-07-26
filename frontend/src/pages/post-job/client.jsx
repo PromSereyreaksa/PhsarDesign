@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
+import { useSelector, useDispatch } from "react-redux"
 import Navbar from "../../components/layout/Navbar"
 import Footer from "../../components/layout/Footer"
 import { Button } from "../../components/ui/button"
@@ -14,6 +15,8 @@ import { Checkbox } from "../../components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "../../components/ui/radio-group"
 import { Badge } from "../../components/ui/badge"
 import { X, Plus, DollarSign, Briefcase, ArrowLeft } from "lucide-react"
+import { projectsAPI } from "../../services/api"
+import { addItem } from "../../store/slices/apiSlice"
 
 export default function PostJobClient() {
   const [jobTitle, setJobTitle] = useState("")
@@ -25,6 +28,12 @@ export default function PostJobClient() {
   const [budgetAmount, setBudgetAmount] = useState("")
   const [projectDuration, setProjectDuration] = useState("")
   const [experienceLevel, setExperienceLevel] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+  
+  const { user } = useSelector((state) => state.auth)
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
 
   const categories = [
     "Digital Art",
@@ -67,19 +76,32 @@ export default function PostJobClient() {
     setSkills(skills.filter((skill) => skill !== skillToRemove))
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    console.log({
-      type: 'client',
-      jobTitle,
-      jobDescription,
-      category,
-      skills,
-      budgetType,
-      budgetAmount,
-      projectDuration,
-      experienceLevel,
-    })
+    setLoading(true)
+    setError("")
+
+    try {
+      const projectData = {
+        userId: user.userId, // This will be converted to clientId in the backend
+        title: jobTitle,
+        description: jobDescription,
+        budget: parseFloat(budgetAmount),
+        required_skills: skills.join(", "),
+        // Optional: we could add deadline calculation based on projectDuration
+      }
+
+      const response = await projectsAPI.create(projectData)
+      dispatch(addItem({ type: 'projects', data: response.data }))
+      
+      // Navigate to dashboard or project view
+      navigate("/dashboard")
+    } catch (error) {
+      const errorMessage = error.response?.data?.error || "Failed to create project. Please try again."
+      setError(errorMessage)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -104,6 +126,12 @@ export default function PostJobClient() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8 mb-12">
+          {error && (
+            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
+              <p className="text-red-400">{error}</p>
+            </div>
+          )}
+
           {/* Job Details */}
           <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
             <CardHeader>
@@ -328,8 +356,13 @@ export default function PostJobClient() {
               <Button type="button" variant="outline">
                 Preview Job
               </Button>
-              <Button type="submit" size="lg" className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 text-white">
-                Post Job
+              <Button 
+                type="submit" 
+                size="lg" 
+                className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 text-white"
+                disabled={loading || !jobTitle || !jobDescription || !budgetAmount}
+              >
+                {loading ? "Posting Job..." : "Post Job"}
               </Button>
             </div>
           </div>

@@ -8,6 +8,11 @@ const Select = ({ children, value, onValueChange, ...props }) => {
   const [isOpen, setIsOpen] = React.useState(false)
   const [selectedValue, setSelectedValue] = React.useState(value)
 
+  // Update internal state when external value changes
+  React.useEffect(() => {
+    setSelectedValue(value)
+  }, [value])
+
   const handleValueChange = (newValue) => {
     setSelectedValue(newValue)
     setIsOpen(false)
@@ -16,8 +21,11 @@ const Select = ({ children, value, onValueChange, ...props }) => {
     }
   }
 
+  // Filter out non-DOM props
+  const { className, ...validDOMProps } = props
+
   return (
-    <div className="relative inline-block" {...props}>
+    <div className={cn("relative inline-block", className)} {...validDOMProps}>
       {React.Children.map(children, (child) =>
         React.cloneElement(child, {
           selectedValue,
@@ -38,7 +46,7 @@ const SelectTrigger = React.forwardRef(({ className, children, selectedValue, is
     <button
       ref={ref}
       className={cn(
-        "flex h-10 w-full items-center justify-between rounded-md border border-gray-600 bg-black px-3 py-2 text-sm text-white placeholder:text-gray-300 focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 disabled:cursor-not-allowed disabled:opacity-50",
+        "flex h-10 w-full items-center justify-between rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#A95BAB]/50 focus:border-[#A95BAB]/50 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200",
         className,
       )}
       onClick={() => setIsOpen(!isOpen)}
@@ -61,7 +69,7 @@ const SelectContent = ({ className, children, isOpen, onValueChange, selectedVal
   return (
     <div
       className={cn(
-        "absolute top-full left-0 z-50 w-full mt-1 bg-black border border-gray-600 rounded-md shadow-lg max-h-60 overflow-auto",
+        "absolute top-full left-0 z-50 w-full mt-1 bg-gray-900/95 backdrop-blur-sm border border-white/20 rounded-xl shadow-xl max-h-60 overflow-auto",
         className,
       )}
       {...props}
@@ -78,7 +86,7 @@ const SelectItem = ({ className, children, value, onValueChange, ...props }) => 
   return (
     <div
       className={cn(
-        "relative flex cursor-pointer select-none items-center py-2 px-3 text-sm text-white hover:bg-gray-800 focus:bg-gray-800",
+        "relative flex cursor-pointer select-none items-center py-3 px-4 text-sm text-white hover:bg-[#A95BAB]/20 hover:text-[#A95BAB] transition-all duration-200 first:rounded-t-xl last:rounded-b-xl",
         className,
       )}
       onClick={() => onValueChange(value)}

@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
+import { useDispatch, useSelector } from "react-redux"
 import Navbar from "../../components/layout/Navbar"
 import Footer from "../../components/layout/Footer"
 import { Button } from "../../components/ui/button"
@@ -11,9 +12,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/ca
 import { Label } from "../../components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select"
 import { Badge } from "../../components/ui/badge"
-import { X, Plus, DollarSign, User, Upload, ImageIcon, ArrowLeft, Star } from "lucide-react"
+import { X, Plus, DollarSign, User, Upload, ImageIcon, ArrowLeft, Star, Loader2 } from "lucide-react"
+import { freelancersAPI, portfolioAPI, uploadAPI } from "../../services/api"
+import { addItem } from "../../store/slices/apiSlice"
 
 export default function PostJobFreelancer() {
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
+  const { user } = useSelector((state) => state.auth)
+  const { isLoading, error } = useSelector((state) => state.api)
+  
   const [serviceTitle, setServiceTitle] = useState("")
   const [serviceDescription, setServiceDescription] = useState("")
   const [category, setCategory] = useState("")
@@ -22,6 +30,8 @@ export default function PostJobFreelancer() {
   const [hourlyRate, setHourlyRate] = useState("")
   const [availability, setAvailability] = useState("")
   const [portfolioImages, setPortfolioImages] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [submitError, setSubmitError] = useState("")
   const [packages, setPackages] = useState([
     { name: "Basic", price: "", description: "", deliveryTime: "" },
     { name: "Standard", price: "", description: "", deliveryTime: "" },
@@ -56,15 +66,32 @@ export default function PostJobFreelancer() {
     setSkills(skills.filter((skill) => skill !== skillToRemove))
   }
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files)
-    // In a real app, you'd upload these to a server
-    const newImages = files.map((file) => ({
-      id: Date.now() + Math.random(),
-      name: file.name,
-      url: URL.createObjectURL(file),
-    }))
-    setPortfolioImages([...portfolioImages, ...newImages])
+    
+    // Upload images to Cloudinary
+    const uploadPromises = files.map(async (file) => {
+      const formData = new FormData()
+      formData.append('image', file)
+      formData.append('folder', 'artlink/portfolios')
+      
+      try {
+        const response = await uploadAPI.uploadPortfolio(formData)
+        return {
+          id: response.data.public_id,
+          name: file.name,
+          url: response.data.secure_url,
+          public_id: response.data.public_id
+        }
+      } catch (error) {
+        console.error('Error uploading image:', error)
+        return null
+      }
+    })
+    
+    const uploadedImages = await Promise.all(uploadPromises)
+    const successfulUploads = uploadedImages.filter(img => img !== null)
+    setPortfolioImages([...portfolioImages, ...successfulUploads])
   }
 
   const removeImage = (imageId) => {
@@ -77,19 +104,73 @@ export default function PostJobFreelancer() {
     setPackages(updatedPackages)
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // Handle service posting logic here
-    console.log({
-      serviceTitle,
-      serviceDescription,
-      category,
-      skills,
-      hourlyRate,
-      availability,
-      portfolioImages,
-      packages,
-    })
+    setLoading(true)
+    setSubmitError("")
+
+    try {
+      // First, create or update freelancer profile
+      const freelancerData = {
+        userId: user.id,
+        name: user.name,
+        title: serviceTitle,
+        description: serviceDescription,
+        hourlyRate: parseFloat(hourlyRate) || 0,
+        skills: skills.join(', '),
+        availability: availability,
+        category: category
+      }
+
+      let freelancerProfile
+      try {
+        // Try to create new freelancer profile
+        const response = await freelancersAPI.create(freelancerData)
+        freelancerProfile = response.data
+      } catch (error) {
+        if (error.response?.status === 400) {
+          // Freelancer might already exist, try to get existing profile
+          const existingResponse = await freelancersAPI.getByUserId(user.id)
+          freelancerProfile = existingResponse.data
+        } else {
+          throw error
+        }
+      }
+
+      // Create portfolio entries for uploaded images
+      if (portfolioImages.length > 0) {
+        const portfolioPromises = portfolioImages.map(async (image) => {
+          const portfolioData = {
+            freelancerId: freelancerProfile.freelancerId || freelancerProfile.id,
+            title: `${serviceTitle} - Portfolio Item`,
+            description: serviceDescription,
+            imageUrl: image.url,
+            tags: skills.join(',')
+          }
+          
+          try {
+            const response = await portfolioAPI.create(portfolioData)
+            return response.data
+          } catch (error) {
+            console.error('Error creating portfolio item:', error)
+            return null
+          }
+        })
+        
+        await Promise.all(portfolioPromises)
+      }
+
+      // Add to Redux store
+      dispatch(addItem({ type: 'freelancers', data: freelancerProfile }))
+      
+      // Navigate to profile or dashboard
+      navigate('/profile')
+    } catch (error) {
+      console.error('Error creating freelancer profile:', error)
+      setSubmitError(error.response?.data?.error || 'Failed to create freelancer profile. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -114,6 +195,23 @@ export default function PostJobFreelancer() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Error Display */}
+          {submitError && (
+            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
+              <p className="text-red-400">{submitError}</p>
+            </div>
+          )}
+
+          {/* Loading Display */}
+          {loading && (
+            <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+              <div className="flex items-center">
+                <Loader2 className="h-4 w-4 animate-spin text-blue-400 mr-2" />
+                <p className="text-blue-400">Creating your freelancer profile...</p>
+              </div>
+            </div>
+          )}
+
           {/* Service Details */}
           <Card className="bg-white/5 border-white/10">
             <CardHeader>
@@ -479,11 +577,24 @@ export default function PostJobFreelancer() {
                 type="button"
                 variant="outline"
                 className="border-[#A95BAB]/30 text-white hover:bg-[#A95BAB]/20 hover:border-[#A95BAB] bg-[#202020]"
+                disabled={loading}
               >
                 Preview Service
               </Button>
-              <Button type="submit" size="lg" className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 text-white">
-                Publish Service
+              <Button 
+                type="submit" 
+                size="lg" 
+                className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 text-white"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Creating Profile...
+                  </>
+                ) : (
+                  'Publish Service'
+                )}
               </Button>
             </div>
           </div>
