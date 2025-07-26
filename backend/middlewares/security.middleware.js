@@ -1,6 +1,7 @@
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
-import { body, validationResult } from 'express-validator';
+import { body, param, validationResult } from 'express-validator';
+import { validate as isUUID } from 'uuid';
 
 // Rate limiting configurations
 export const generalLimiter = rateLimit({
@@ -163,6 +164,7 @@ export const validateLogin = [
   handleValidationErrors
 ];
 
+// Updated project validation with UUID support
 export const validateProject = [
   body('title')
     .trim()
@@ -176,12 +178,21 @@ export const validateProject = [
     .isFloat({ min: 0 })
     .withMessage('Budget must be a positive number'),
   body('deadline')
+    .optional()
     .isISO8601()
     .withMessage('Deadline must be a valid date'),
   body('category')
+    .optional()
     .trim()
     .isLength({ min: 2, max: 50 })
     .withMessage('Category must be between 2 and 50 characters'),
+  body('clientId')
+    .isInt({ min: 1 })
+    .withMessage('Client ID must be a valid positive integer'),
+  body('freelancerId')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Freelancer ID must be a valid positive integer'),
   handleValidationErrors
 ];
 
@@ -216,6 +227,100 @@ export const validatePortfolioUpdate = [
     .trim()
     .isLength({ min: 1, max: 30 })
     .withMessage('Each skill must be between 1 and 30 characters'),
+  handleValidationErrors
+];
+
+// UUID validation middleware
+export const validateUUID = [
+  param('id')
+    .custom((value) => {
+      if (!isUUID(value)) {
+        throw new Error('Invalid UUID format');
+      }
+      return true;
+    }),
+  handleValidationErrors
+];
+
+// Slug validation middleware
+export const validateSlug = [
+  param('slug')
+    .matches(/^[a-z0-9-]+$/i)
+    .withMessage('Slug can only contain letters, numbers, and hyphens')
+    .isLength({ min: 1, max: 110 })
+    .withMessage('Slug must be between 1 and 110 characters'),
+  handleValidationErrors
+];
+
+
+// Client validation with slug generation
+export const validateClient = [
+  body('name')
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Name must be between 2 and 100 characters'),
+  body('organization')
+    .optional()
+    .trim()
+    .isLength({ max: 255 })
+    .withMessage('Organization name must not exceed 255 characters'),
+  body('userId')
+    .isInt({ min: 1 })
+    .withMessage('User ID must be a valid positive integer'),
+  body('avatarUrl')
+    .optional()
+    .isURL()
+    .withMessage('Avatar URL must be a valid URL'),
+  handleValidationErrors
+];
+
+// Freelancer validation with slug generation
+export const validateFreelancer = [
+  body('name')
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Name must be between 2 and 100 characters'),
+  body('skills')
+    .optional()
+    .trim()
+    .isLength({ max: 1000 })
+    .withMessage('Skills must not exceed 1000 characters'),
+  body('availability')
+    .optional()
+    .trim()
+    .isLength({ max: 50 })
+    .withMessage('Availability must not exceed 50 characters'),
+  body('userId')
+    .isInt({ min: 1 })
+    .withMessage('User ID must be a valid positive integer'),
+  body('avatarUrl')
+    .optional()
+    .isURL()
+    .withMessage('Avatar URL must be a valid URL'),
+  handleValidationErrors
+];
+
+// Application validation with UUID project support
+export const validateApplication = [
+  body('projectId')
+    .custom((value) => {
+      if (!isUUID(value)) {
+        throw new Error('Project ID must be a valid UUID');
+      }
+      return true;
+    }),
+  body('freelancerId')
+    .isInt({ min: 1 })
+    .withMessage('Freelancer ID must be a valid positive integer'),
+  body('message')
+    .optional()
+    .trim()
+    .isLength({ min: 10, max: 5000 })
+    .withMessage('Message must be between 10 and 5000 characters'),
+  body('status')
+    .optional()
+    .isIn(['pending', 'accepted', 'rejected'])
+    .withMessage('Status must be either pending, accepted, or rejected'),
   handleValidationErrors
 ];
 

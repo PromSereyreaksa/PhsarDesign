@@ -1,20 +1,20 @@
 import Reviews from "../models/review.model.js";
-import Freelancers from "../models/freelancer.model.js";
+import { Artist } from "../models/index.js";
 
 export const createReview = async (req, res) => {
   try {
     const review = await Reviews.create(req.body);
 
-    // Calculate average rating for the freelancer
-    const freelancerId = req.body.freelancerId;
-    const reviews = await Reviews.findAll({ where: { freelancerId } });
+    // Calculate average rating for the artist
+    const artistId = req.body.artistId;
+    const reviews = await Reviews.findAll({ where: { artistId } });
     const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
     const avgRating = totalRating / reviews.length;
 
-    // Update freelancer rating
-    await Freelancers.update(
+    // Update artist rating
+    await Artist.update(
       { rating: avgRating },
-      { where: { freelancerId } }
+      { where: { artistId } }
     );
 
     res.status(201).json(review);
@@ -26,10 +26,10 @@ export const createReview = async (req, res) => {
 
 export const getAllReviews = async (req, res) => {
   try {
-    const { freelancerId } = req.query;
+    const { artistId } = req.query;
     let reviews;
-    if (freelancerId) {
-      reviews = await Reviews.findAll({ where: { freelancerId } });
+    if (artistId) {
+      reviews = await Reviews.findAll({ where: { artistId } });
     } else {
       reviews = await Reviews.findAll();
     }
@@ -69,15 +69,15 @@ export const updateReview = async (req, res) => {
     }
     
     const updatedReview = await Reviews.findByPk(reviewId);
-    const freelancerId = updatedReview.freelancerId;
+    const artistId = updatedReview.artistId;
     
-    const reviews = await Reviews.findAll({ where: { freelancerId } });
+    const reviews = await Reviews.findAll({ where: { artistId } });
     const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
     const avgRating = totalRating / reviews.length;
     
-    await Freelancers.update(
+    await Artist.update(
       { rating: avgRating },
-      { where: { freelancerId } }
+      { where: { artistId } }
     );
     
     res.status(200).json(updatedReview);
@@ -94,34 +94,34 @@ export const deleteReview = async (req, res) => {
       return res.status(400).json({ error: "Invalid review ID" });
     }
     
-    // CRITICAL FIX: Get freelancer ID before deletion
+    // CRITICAL FIX: Get artist ID before deletion
     const reviewToDelete = await Reviews.findByPk(reviewId);
     if (!reviewToDelete) {
       return res.status(404).json({ error: "Review not found" });
     }
     
-    const freelancerId = reviewToDelete.freelancerId;
+    const artistId = reviewToDelete.artistId;
     
     const deleted = await Reviews.destroy({
       where: { reviewId },
     });
     
-    // Recalculate freelancer rating after deletion
-    const remainingReviews = await Reviews.findAll({ where: { freelancerId } });
+    // Recalculate artist rating after deletion
+    const remainingReviews = await Reviews.findAll({ where: { artistId } });
     
     if (remainingReviews.length > 0) {
       const totalRating = remainingReviews.reduce((sum, r) => sum + r.rating, 0);
       const avgRating = totalRating / remainingReviews.length;
       
-      await Freelancers.update(
+      await Artist.update(
         { rating: avgRating },
-        { where: { freelancerId } }
+        { where: { artistId } }
       );
     } else {
       // No reviews left, set rating to null or 0
-      await Freelancers.update(
+      await Artist.update(
         { rating: null }, // or 0, depending on your business logic
-        { where: { freelancerId } }
+        { where: { artistId } }
       );
     }
     
