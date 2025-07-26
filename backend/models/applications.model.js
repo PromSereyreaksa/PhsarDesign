@@ -9,7 +9,7 @@ const Applications = sequelize.define("Applications", {
     allowNull: false
   },
   projectId: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.UUID, 
     allowNull: false,
     references: {
       model: "projects", 

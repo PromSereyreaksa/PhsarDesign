@@ -1,5 +1,6 @@
 import { DataTypes, Model } from "sequelize";
 import { sequelize } from "../config/database.js";
+import { v4 as uuidv4 } from 'uuid';
 
 class Projects extends Model {
   static associate(models) {
@@ -11,16 +12,16 @@ class Projects extends Model {
 Projects.init(
   {
     projectId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
+      defaultValue: uuidv4,
       primaryKey: true,
-      autoIncrement: true,
       allowNull: false,
     },
     clientId: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: "clients", // Table name in the database
+        model: "clients",
         key: "clientId",
       },
       onDelete: "CASCADE",
@@ -88,14 +89,8 @@ Projects.init(
     sequelize,
     modelName: "Projects",
     tableName: "projects",
-    timestamps: false, // You manually defined createdAt, no updatedAt here
+    timestamps: false,
   }
 );
-
-// Associations setup
-Projects.associate = (models) => {
-  Projects.belongsTo(models.Clients, { foreignKey: "clientId", as: "client" });
-  Projects.hasMany(models.Applications, { foreignKey: "projectId", as: "applications" });
-};
 
 export default Projects;

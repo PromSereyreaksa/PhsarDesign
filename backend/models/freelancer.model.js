@@ -1,8 +1,6 @@
 import { DataTypes, Model } from "sequelize";
 import { sequelize } from "../config/database.js";
 
-import Reviews from "./review.model.js";
-
 class Freelancers extends Model {
   static associate(models) {
     Freelancers.belongsTo(models.Users, {
@@ -19,6 +17,54 @@ class Freelancers extends Model {
       foreignKey: "freelancerId",
       as: "reviews",
       onDelete: "CASCADE",
+    });
+  }
+
+  // Method to generate slug from name
+  generateSlug() {
+    return this.name
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '') // Remove special characters
+      .replace(/[\s_-]+/g, '-') // Replace spaces and underscores with hyphens
+      .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+  }
+
+  // Hook to generate slug before save
+  static addHooks() {
+    this.addHook('beforeCreate', async (freelancer) => {
+      let baseSlug = freelancer.generateSlug();
+      let slug = baseSlug;
+      let counter = 1;
+
+      // Check for existing slugs and append number if needed
+      while (await Freelancers.findOne({ where: { slug } })) {
+        slug = `${baseSlug}-${counter}`;
+        counter++;
+      }
+      
+      freelancer.slug = slug;
+    });
+
+    this.addHook('beforeUpdate', async (freelancer) => {
+      if (freelancer.changed('name')) {
+        let baseSlug = freelancer.generateSlug();
+        let slug = baseSlug;
+        let counter = 1;
+
+        // Check for existing slugs (excluding current record)
+        while (await Freelancers.findOne({ 
+          where: { 
+            slug,
+            freelancerId: { [sequelize.Sequelize.Op.ne]: freelancer.freelancerId }
+          } 
+        })) {
+          slug = `${baseSlug}-${counter}`;
+          counter++;
+        }
+        
+        freelancer.slug = slug;
+      }
     });
   }
 }
@@ -42,6 +88,14 @@ Freelancers.init(
     name: {
       type: DataTypes.STRING(100),
       allowNull: false,
+    },
+    slug: {
+      type: DataTypes.STRING(110),
+      allowNull: false,
+      unique: true,
+      validate: {
+        is: /^[a-z0-9-]+$/i, // Only letters, numbers, and hyphens
+      },
     },
     skills: {
       type: DataTypes.TEXT,
@@ -79,5 +133,8 @@ Freelancers.init(
     timestamps: true,
   }
 );
+
+// Add hooks after model initialization
+Freelancers.addHooks();
 
 export default Freelancers;

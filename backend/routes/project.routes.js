@@ -7,15 +7,15 @@ import {
     deleteProject
 } from '../controllers/project.controller.js';
 import { authenticate } from '../middlewares/auth.middleware.js';
-import { validateProject } from '../middlewares/security.middleware.js';
+import { validateProject, validateUUID } from '../middlewares/security.middleware.js';
 
 const router = express.Router();
 
-// Project CRUD operations
+// Project CRUD operations (all using UUID)
 router.post('/', authenticate, validateProject, createProject);
-router.get('/', getAllProjects); // Public route for browsing projects
-router.get('/:id', getProjectById); // Public route for project details
-router.put('/:id', authenticate, validateProject, updateProject);
-router.delete('/:id', authenticate, deleteProject);
+router.get('/', getAllProjects);
+router.get('/:id', validateUUID, getProjectById);
+router.put('/:id', authenticate, validateUUID, validateProject, updateProject);
+router.delete('/:id', authenticate, validateUUID, deleteProject);
 
 export default router;
