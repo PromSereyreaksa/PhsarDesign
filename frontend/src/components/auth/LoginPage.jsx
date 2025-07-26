@@ -2,46 +2,42 @@
 
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
+import { useDispatch, useSelector } from "react-redux"
 import { Eye, EyeOff, ArrowLeft } from "lucide-react"
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 import { Label } from "../ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
+import { authAPI } from "../../services/api"
+import { loginStart, loginSuccess, loginFailure } from "../../store/slices/authSlice"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
+  
+  const dispatch = useDispatch()
   const navigate = useNavigate()
-
-  // Mock admin credentials
-  const ADMIN_EMAIL = "admin@phsardesign.com"
-  const ADMIN_PASSWORD = "admin123"
+  const { loading } = useSelector((state) => state.auth)
 
   const handleLogin = async (e) => {
     e.preventDefault()
-    setIsLoading(true)
+    setError("")
+    
+    dispatch(loginStart())
 
-    // Simulate API call
-    setTimeout(() => {
-      if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-        // Mock successful login
-        localStorage.setItem(
-          "user",
-          JSON.stringify({
-            id: 1,
-            email: ADMIN_EMAIL,
-            role: "admin",
-            name: "Admin User",
-          }),
-        )
-        navigate("/home")
-      } else {
-        alert("Invalid credentials. Use admin@phsardesign.com / admin123")
-      }
-      setIsLoading(false)
-    }, 1000)
+    try {
+      const response = await authAPI.login({ email, password })
+      const { user, token } = response.data
+      
+      dispatch(loginSuccess({ user, token }))
+      navigate("/dashboard")
+    } catch (error) {
+      const errorMessage = error.response?.data?.error || "Login failed. Please try again."
+      setError(errorMessage)
+      dispatch(loginFailure(errorMessage))
+    }
   }
 
   return (
@@ -63,6 +59,12 @@ export default function LoginPage() {
 
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-6">
+              {error && (
+                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
+                  <p className="text-red-400 text-sm">{error}</p>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-white">
                   Email
@@ -115,9 +117,9 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 className="w-full bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-xl py-3 font-semibold"
-                disabled={isLoading}
+                disabled={loading}
               >
-                {isLoading ? "Signing in..." : "Sign In"}
+                {loading ? "Signing in..." : "Sign In"}
               </Button>
             </form>
 
@@ -130,12 +132,6 @@ export default function LoginPage() {
               </p>
             </div>
 
-            {/* Demo Credentials */}
-            <div className="mt-6 p-4 bg-[#A95BAB]/10 rounded-xl border border-[#A95BAB]/20">
-              <p className="text-sm text-gray-300 mb-2">Demo Credentials:</p>
-              <p className="text-xs text-gray-400">Email: admin@phsardesign.com</p>
-              <p className="text-xs text-gray-400">Password: admin123</p>
-            </div>
           </CardContent>
         </Card>
       </div>

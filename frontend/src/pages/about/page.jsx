@@ -383,7 +383,7 @@ export default function AboutPage() {
               <Button
                 size="lg"
                 variant="outline"
-                className="border-white/30 text-gray-900 bg-white hover:bg-gray-100 hover:border-[#A95BAB]/50 rounded-lg px-8 py-4 text-lg font-semibold group transform hover:scale-105 transition-all duration-500 ease-out"
+                className="border-white/30 text-white hover:text-[#A95BAB] bg-transparent hover:bg-white/10 hover:border-[#A95BAB]/50 rounded-lg px-8 py-4 text-lg font-semibold group transform hover:scale-105 transition-all duration-500 ease-out"
               >
                 Browse Talent
               </Button>
