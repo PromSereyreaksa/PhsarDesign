@@ -62,6 +62,15 @@ Freelancers.init(
         isUrl: true,
       },
     },
+    rating: {
+      type: DataTypes.FLOAT,
+      allowNull: true,
+      defaultValue: null,
+      validate: {
+        min: 1,
+        max: 5,
+      },
+    },
   },
   {
     sequelize,

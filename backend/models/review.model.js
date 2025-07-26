@@ -59,6 +59,13 @@ Reviews.init(
     modelName: "Reviews",
     tableName: "reviews",
     timestamps: true,
+    indexes: [
+      {
+        unique: true,
+        fields: ['userId', 'freelancerId'],
+        name: 'unique_user_freelancer_review'
+      }
+    ]
   }
 );
 
