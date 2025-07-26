@@ -26,7 +26,8 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
       passport.authenticate("google", { failureRedirect: "/login" }),
       (req, res) => {
         const token = generateAccessToken({
-          id: req.user.id,
+          userId: req.user.userId,
+          email: req.user.email,
           role: req.user.role,
         });
 

@@ -1,8 +1,7 @@
 // controllers/payment.controller.js
 import Stripe from 'stripe';
 import { Op } from 'sequelize';
-import Projects from '../models/project.model.js';
-import Users from '../models/user.model.js';
+import { Projects, Users } from '../models/index.js';
 import { validate as isUUID } from 'uuid';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
+import { useNavigate } from "react-router-dom"
 import Navbar from "../../components/layout/Navbar"
 import Footer from "../../components/layout/Footer"
 import { TrendingUp, DollarSign, Briefcase, MessageSquare, Calendar, Star, Clock, Loader2 } from "lucide-react"
@@ -20,6 +21,14 @@ export default function Dashboard() {
   const dispatch = useDispatch()
   const { user } = useSelector((state) => state.auth)
   const { projects = [], conversations = [], isLoading, error } = useSelector((state) => state.api)
+  const navigate = useNavigate()
+  
+  // Extra safety check - redirect non-artists directly from component
+  useEffect(() => {
+    if (user && user.role !== 'artist' && user.role !== 'freelancer') {
+      navigate('/home');
+    }
+  }, [user, navigate]);
   
   const [activeTab, setActiveTab] = useState("overview")
   const [profile, setProfile] = useState(null)
@@ -34,7 +43,7 @@ export default function Dashboard() {
       try {
         // Load user profile based on role
         let userProfile = null
-        if (user.role === 'freelancer') {
+        if (user.role === 'artist' || user.role === 'freelancer') { // Support both role types for compatibility
           userProfile = await dispatch(fetchFreelancerByUserId(user.id))
         } else if (user.role === 'client') {
           userProfile = await dispatch(fetchClientByUserId(user.id))

@@ -1,5 +1,4 @@
-import CommissionRequest from "../models/commissionRequest.model.js";
-import { Users, Artist, Clients } from "../models/index.js";
+import { CommissionRequest, Users, Artist, Clients } from "../models/index.js";
 
 export const createCommissionRequest = async (req, res) => {
   try {

@@ -4,14 +4,11 @@ import {
     getAllClients,
     getClientById,
     getClientBySlug,
-
     getClientByUserId,
-
     updateClient,
     updateClientBySlug,
     deleteClient,
     deleteClientBySlug,
-    getClientByUserId,
     getClientsWithProjects,
     getClientProjects,
     getClientByOrganization,
@@ -34,24 +31,16 @@ router.get('/organization/:organization', getClientByOrganization);
 router.get('/name/:name', getClientsByName);
 
 // ID-based routes for backward compatibility (numeric IDs only)
-router.get('/id/:id(\\d+)', getClientById);
-router.put('/id/:id(\\d+)', authenticate, updateClient);
-router.delete('/id/:id(\\d+)', authenticate, deleteClient);
+router.get('/id/:id', getClientById);
+router.put('/id/:id', authenticate, updateClient);
+router.delete('/id/:id', authenticate, deleteClient);
 
 // Project-related routes
-router.get('/:clientId(\\d+)/projects', getClientProjects);
+router.get('/:clientId/projects', getClientProjects);
 
 // Slug-based routes (must come last to catch everything else)
 router.get('/:slug', validateSlug, getClientBySlug);
 router.put('/:slug', authenticate, validateSlug, updateClientBySlug);
 router.delete('/:slug', authenticate, validateSlug, deleteClientBySlug);
-
-// Client CRUD operations
-router.post('/',  createClient);
-router.get('/',  getAllClients);
-router.get('/user/:userId',  getClientByUserId);
-router.get('/:id',  getClientById);
-router.put('/:id',  updateClient);
-router.delete('/:id',  deleteClient);
 
 export default router;

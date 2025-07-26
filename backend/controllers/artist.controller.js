@@ -177,3 +177,72 @@ export const searchArtists = async (req, res) => {
         res.status(500).json({ error: "Internal server error" });
     }
 }
+
+export const getArtistBySlug = async (req, res) => {
+    try {
+        const { slug } = req.params;
+        const artist = await Artist.findOne({
+            where: { slug },
+            include: [
+                { model: Users, as: "user", attributes: ['email'] }
+            ]
+        });
+        if (!artist) {
+            return res.status(404).json({ error: "Artist not found" });
+        }
+        res.status(200).json(artist);
+    } catch (error) {
+        console.error("Error fetching artist by slug:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+}
+
+export const updateArtistBySlug = async (req, res) => {
+    try {
+        const { slug } = req.params;
+        const artist = await Artist.findOne({ where: { slug } });
+        
+        if (!artist) {
+            return res.status(404).json({ error: "Artist not found" });
+        }
+
+        if (req.user.userId !== artist.userId && req.user.role !== 'admin') {
+            return res.status(403).json({ error: "Access denied" });
+        }
+
+        await artist.update(req.body);
+        
+        const updatedArtist = await Artist.findOne({
+            where: { slug },
+            include: [
+                { model: Users, as: "user", attributes: ['email'] }
+            ]
+        });
+        
+        res.status(200).json(updatedArtist);
+    } catch (error) {
+        console.error("Error updating artist by slug:", error);
+        res.status(400).json({ error: error.message });
+    }
+}
+
+export const deleteArtistBySlug = async (req, res) => {
+    try {
+        const { slug } = req.params;
+        const artist = await Artist.findOne({ where: { slug } });
+        
+        if (!artist) {
+            return res.status(404).json({ error: "Artist not found" });
+        }
+
+        if (req.user.userId !== artist.userId && req.user.role !== 'admin') {
+            return res.status(403).json({ error: "Access denied" });
+        }
+
+        await artist.destroy();
+        res.status(200).json({ message: "Artist deleted successfully" });
+    } catch (error) {
+        console.error("Error deleting artist by slug:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+}

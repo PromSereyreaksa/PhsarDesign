@@ -1,4 +1,4 @@
-import { DataTypes, Model } from "sequelize";
+import { DataTypes, Model, Op } from "sequelize";
 import { sequelize } from "../config/database.js";
 import Users from "./user.model.js";
 
@@ -44,7 +44,7 @@ class Clients extends Model {
         while (await Clients.findOne({ 
           where: { 
             slug,
-            clientId: { [sequelize.Sequelize.Op.ne]: client.clientId }
+            clientId: { [Op.ne]: client.clientId }
           } 
         })) {
           slug = `${baseSlug}-${counter}`;

@@ -144,12 +144,12 @@ export const validateRegistration = [
     .isLength({ min: 2, max: 50 })
     .withMessage('Last name must be between 2 and 50 characters'),
   body('role')
-    .isIn(['freelancer', 'client'])
-    .withMessage('Role must be either freelancer or client'),
+    .isIn(['artist', 'client'])
+    .withMessage('Role must be either artist or client'),
   body('userType')
     .optional()
-    .isIn(['freelancer', 'client'])
-    .withMessage('User type must be either freelancer or client'),
+    .isIn(['artist', 'client'])
+    .withMessage('User type must be either artist or client'),
   handleValidationErrors
 ];
 
@@ -368,6 +368,65 @@ export const adminOnly = (req, res, next) => {
   
   next();
 };
+
+// Availability post validation
+export const validateAvailabilityPost = [
+  body('title')
+    .trim()
+    .isLength({ min: 5, max: 255 })
+    .withMessage('Title must be between 5 and 255 characters'),
+  body('description')
+    .trim()
+    .isLength({ min: 20, max: 5000 })
+    .withMessage('Description must be between 20 and 5000 characters'),
+  body('category')
+    .isIn(['illustration', 'design', 'photography', 'writing', 'video', 'music', 'animation', 'web-development', 'other'])
+    .withMessage('Invalid category'),
+  body('availabilityType')
+    .optional()
+    .isIn(['immediate', 'within-week', 'within-month', 'flexible'])
+    .withMessage('Invalid availability type'),
+  body('duration')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('Duration must not exceed 100 characters'),
+  body('budget')
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage('Budget must be a positive number'),
+  body('location')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('Location must not exceed 100 characters'),
+  body('skills')
+    .optional()
+    .trim()
+    .isLength({ max: 1000 })
+    .withMessage('Skills must not exceed 1000 characters'),
+  body('portfolioSamples')
+    .optional()
+    .isArray()
+    .withMessage('Portfolio samples must be an array'),
+  body('portfolioSamples.*')
+    .optional()
+    .isURL()
+    .withMessage('Each portfolio sample must be a valid URL'),
+  body('contactPreference')
+    .optional()
+    .isIn(['platform', 'email', 'direct'])
+    .withMessage('Invalid contact preference'),
+  body('status')
+    .optional()
+    .isIn(['active', 'paused', 'closed', 'draft'])
+    .withMessage('Invalid status'),
+  body('expiresAt')
+    .optional()
+    .isISO8601()
+    .withMessage('Expires at must be a valid date'),
+  handleValidationErrors
+];
 
 // Request logging middleware
 export const requestLogger = (req, res, next) => {

@@ -2,7 +2,8 @@ import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
   projects: [],
-  freelancers: [],
+  artists: [],
+  freelancers: [], // Legacy field for backward compatibility
   clients: [],
   portfolios: [],
   reviews: [],
@@ -66,7 +67,8 @@ const getIdField = (type) => {
   const idMap = {
     users: 'userId',
     clients: 'clientId',
-    freelancers: 'freelancerId',
+    artists: 'artistId',
+    freelancers: 'artistId', // Legacy mapping
     projects: 'projectId',
     portfolios: 'portfolioId',
     reviews: 'reviewId',

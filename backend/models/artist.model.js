@@ -1,4 +1,4 @@
-import { DataTypes, Model } from "sequelize";
+import { DataTypes, Model, Op } from "sequelize";
 import { sequelize } from "../config/database.js";
 
 class Artist extends Model {
@@ -23,6 +23,11 @@ class Artist extends Model {
       as: "commissions",
       onDelete: "CASCADE",
     });
+    Artist.hasMany(models.AvailabilityPost, {
+      foreignKey: "artistId",
+      as: "availabilityPosts",
+      onDelete: "CASCADE",
+    });
   }
 
   // Method to generate slug from name
@@ -43,7 +48,7 @@ class Artist extends Model {
       let counter = 1;
 
       // Check for existing slugs and append number if needed
-      while (await Freelancers.findOne({ where: { slug } })) {
+      while (await Artist.findOne({ where: { slug } })) {
         slug = `${baseSlug}-${counter}`;
         counter++;
       }
@@ -58,10 +63,10 @@ class Artist extends Model {
         let counter = 1;
 
         // Check for existing slugs (excluding current record)
-        while (await Freelancers.findOne({ 
+        while (await Artist.findOne({ 
           where: { 
             slug,
-            freelancerId: { [sequelize.Sequelize.Op.ne]: freelancer.freelancerId }
+            artistId: { [Op.ne]: freelancer.artistId }
           } 
         })) {
           slug = `${baseSlug}-${counter}`;
@@ -155,5 +160,7 @@ Artist.init(
     timestamps: true,
   }
 );
+
+Artist.addHooks();
 
 export default Artist;

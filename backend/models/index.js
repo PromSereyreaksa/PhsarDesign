@@ -7,6 +7,7 @@ import Projects from "./project.model.js";
 import Applications from "./applications.model.js";
 import Reviews from "./review.model.js";
 import CommissionRequest from "./commissionRequest.model.js";
+import AvailabilityPost from "./availabilityPost.model.js";
 
 const models = {
   Users,
@@ -16,6 +17,7 @@ const models = {
   Applications,
   Reviews,
   CommissionRequest,
+  AvailabilityPost,
 };
 
 // Setup associations for all models that have an associate method
@@ -34,4 +36,5 @@ export {
   Applications,
   Reviews,
   CommissionRequest,
+  AvailabilityPost,
 };

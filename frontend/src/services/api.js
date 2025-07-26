@@ -2,7 +2,7 @@ import axios from 'axios';
 import store from '../store/store';
 import { logout } from '../store/slices/authSlice';
 
-const API_BASE_URL = 'http://127.0.0.1:5000';
+const API_BASE_URL = 'http://localhost:5000';
 
 // Create axios instance
 const api = axios.create({
@@ -71,16 +71,19 @@ export const clientsAPI = {
   delete: (id) => api.delete(`/api/clients/${id}`),
 };
 
-// Freelancers API
-export const freelancersAPI = {
-  getAll: () => api.get('/api/freelancers'),
-  getById: (id) => api.get(`/api/freelancers/${id}`),
-  getByUserId: (userId) => api.get(`/api/freelancers/user/${userId}`),
-  getByCategory: (category) => api.get(`/api/freelancers/category/${category}`),
-  create: (freelancerData) => api.post('/api/freelancers', freelancerData),
-  update: (id, freelancerData) => api.put(`/api/freelancers/${id}`, freelancerData),
-  delete: (id) => api.delete(`/api/freelancers/${id}`),
+// Artists API (formerly Freelancers)
+export const artistsAPI = {
+  getAll: () => api.get('/api/artists'),
+  getById: (id) => api.get(`/api/artists/${id}`),
+  getByUserId: (userId) => api.get(`/api/artists/user/${userId}`),
+  getByCategory: (category) => api.get(`/api/artists/category/${category}`),
+  create: (artistData) => api.post('/api/artists', artistData),
+  update: (id, artistData) => api.put(`/api/artists/${id}`, artistData),
+  delete: (id) => api.delete(`/api/artists/${id}`),
 };
+
+// Legacy alias for backward compatibility
+export const freelancersAPI = artistsAPI;
 
 // Projects API
 export const projectsAPI = {
@@ -98,7 +101,8 @@ export const projectsAPI = {
 export const portfolioAPI = {
   getAll: () => api.get('/api/portfolio'),
   getById: (id) => api.get(`/api/portfolio/${id}`),
-  getByFreelancerId: (freelancerId) => api.get(`/api/portfolio/freelancer/${freelancerId}`),
+  getByArtistId: (artistId) => api.get(`/api/portfolio/artist/${artistId}`),
+  getByFreelancerId: (freelancerId) => api.get(`/api/portfolio/artist/${freelancerId}`), // Legacy alias
   getByTag: (tag) => api.get(`/api/portfolio/tag/${tag}`),
   create: (portfolioData) => api.post('/api/portfolio', portfolioData),
   update: (id, portfolioData) => api.put(`/api/portfolio/${id}`, portfolioData),
@@ -110,7 +114,8 @@ export const reviewsAPI = {
   getAll: () => api.get('/api/reviews'),
   getById: (id) => api.get(`/api/reviews/${id}`),
   getByProjectId: (projectId) => api.get(`/api/reviews/project/${projectId}`),
-  getByFreelancerId: (freelancerId) => api.get(`/api/reviews/freelancer/${freelancerId}`),
+  getByArtistId: (artistId) => api.get(`/api/reviews/artist/${artistId}`),
+  getByFreelancerId: (freelancerId) => api.get(`/api/reviews/artist/${freelancerId}`), // Legacy alias
   getByClientId: (clientId) => api.get(`/api/reviews/client/${clientId}`),
   create: (reviewData) => api.post('/api/reviews', reviewData),
   update: (id, reviewData) => api.put(`/api/reviews/${id}`, reviewData),
@@ -122,7 +127,8 @@ export const applicationsAPI = {
   getAll: () => api.get('/api/applications'),
   getById: (id) => api.get(`/api/applications/${id}`),
   getByProjectId: (projectId) => api.get(`/api/applications/project/${projectId}`),
-  getByFreelancerId: (freelancerId) => api.get(`/api/applications/freelancer/${freelancerId}`),
+  getByArtistId: (artistId) => api.get(`/api/applications/artist/${artistId}`),
+  getByFreelancerId: (freelancerId) => api.get(`/api/applications/artist/${freelancerId}`), // Legacy alias
   create: (applicationData) => api.post('/api/applications', applicationData),
   update: (id, applicationData) => api.put(`/api/applications/${id}`, applicationData),
   delete: (id) => api.delete(`/api/applications/${id}`),
@@ -171,6 +177,21 @@ export const messagesAPI = {
   create: (messageData) => api.post('/api/messages', messageData),
   markAsRead: (id) => api.patch(`/api/messages/${id}/read`),
   delete: (id) => api.delete(`/api/messages/${id}`),
+};
+
+// Availability Posts API
+export const availabilityPostsAPI = {
+  getAll: (params) => api.get('/api/availability-posts', { params }),
+  getById: (id) => api.get(`/api/availability-posts/${id}`),
+  getBySlug: (slug) => api.get(`/api/availability-posts/slug/${slug}`),
+  getByArtist: (artistId, params) => api.get(`/api/availability-posts/artist/${artistId}`, { params }),
+  getMyPosts: (params) => api.get('/api/availability-posts/my-posts', { params }),
+  search: (params) => api.get('/api/availability-posts/search', { params }),
+  create: (postData) => api.post('/api/availability-posts', postData),
+  update: (id, postData) => api.put(`/api/availability-posts/${id}`, postData),
+  updateBySlug: (slug, postData) => api.put(`/api/availability-posts/slug/${slug}`, postData),
+  delete: (id) => api.delete(`/api/availability-posts/${id}`),
+  deleteBySlug: (slug) => api.delete(`/api/availability-posts/slug/${slug}`),
 };
 
 export default api;

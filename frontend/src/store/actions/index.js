@@ -8,9 +8,10 @@ export * from './messageActions';
 export * from './applicationActions';
 export * from './reviewActions';
 
-// Generic actions for other APIs (freelancers, clients, portfolios, reviews, applications, messages)
+// Generic actions for other APIs (artists, clients, portfolios, reviews, applications, messages)
 import { 
-  freelancersAPI, 
+  artistsAPI, 
+  freelancersAPI, // For backwards compatibility
   clientsAPI, 
   portfolioAPI, 
   reviewsAPI, 
@@ -26,36 +27,41 @@ import {
   deleteItem 
 } from '../slices/apiSlice';
 
-// Freelancer actions
-export const fetchAllFreelancers = () => async (dispatch) => {
+// Artist actions (formerly Freelancer)
+export const fetchAllArtists = () => async (dispatch) => {
   try {
     dispatch(fetchStart());
-    const response = await freelancersAPI.getAll();
-    dispatch(fetchSuccess({ type: 'freelancers', data: response.data }));
+    const response = await artistsAPI.getAll();
+    dispatch(fetchSuccess({ type: 'artists', data: response.data }));
     return response.data;
   } catch (error) {
-    dispatch(fetchFailure(error.response?.data?.message || 'Failed to fetch freelancers'));
+    dispatch(fetchFailure(error.response?.data?.message || 'Failed to fetch artists'));
     throw error;
   }
 };
 
-export const fetchFreelancerById = (id) => async () => {
+export const fetchArtistById = (id) => async () => {
   try {
-    const response = await freelancersAPI.getById(id);
+    const response = await artistsAPI.getById(id);
     return response.data;
   } catch (error) {
     throw error;
   }
 };
 
-export const fetchFreelancerByUserId = (userId) => async () => {
+export const fetchArtistByUserId = (userId) => async () => {
   try {
-    const response = await freelancersAPI.getByUserId(userId);
+    const response = await artistsAPI.getByUserId(userId);
     return response.data;
   } catch (error) {
     throw error;
   }
 };
+
+// Legacy aliases for backwards compatibility
+export const fetchAllFreelancers = fetchAllArtists;
+export const fetchFreelancerById = fetchArtistById;
+export const fetchFreelancerByUserId = fetchArtistByUserId;
 
 export const fetchFreelancersBySkills = (skills) => async (dispatch) => {
   try {

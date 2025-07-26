@@ -55,23 +55,27 @@ export default function Navbar() {
               Browse Jobs
             </Link>
             <Link
-              to="/browse-freelancers"
+              to="/browse-artists"
               className="text-white hover:text-[#A95BAB] px-3 py-2 transition-colors duration-500 ease-out"
             >
-              Browse Freelancers
+              Browse Artists
             </Link>
-            <Link
-              to="/post-job/client"
-              className="text-white hover:text-[#A95BAB] px-3 py-2 transition-colors duration-500 ease-out"
-            >
-              Hire Talent
-            </Link>
-            <Link
-              to="/post-job/freelancer"
-              className="text-white hover:text-[#A95BAB] px-3 py-2 transition-colors duration-500 ease-out"
-            >
-              Offer Services
-            </Link>
+            {user?.role === 'client' && (
+              <Link
+                to="/post-job/client"
+                className="text-white hover:text-[#A95BAB] px-3 py-2 transition-colors duration-500 ease-out"
+              >
+                Hire Talent
+              </Link>
+            )}
+            {user?.role === 'artist' && (
+              <Link
+                to="/post-job/artist"
+                className="text-white hover:text-[#A95BAB] px-3 py-2 transition-colors duration-500 ease-out"
+              >
+                Offer Services
+              </Link>
+            )}
             <Link
               to="/about"
               className="text-white hover:text-[#A95BAB] px-3 py-2 transition-colors duration-500 ease-out"
@@ -99,9 +103,11 @@ export default function Navbar() {
                     <DropdownMenuItem className="text-white hover:text-[#A95BAB] hover:bg-white/10">
                       <Link to="/profile">Profile</Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="text-white hover:text-[#A95BAB] hover:bg-white/10">
-                      <Link to="/dashboard">Dashboard</Link>
-                    </DropdownMenuItem>
+                    {user?.role === 'artist' && (
+                      <DropdownMenuItem className="text-white hover:text-[#A95BAB] hover:bg-white/10">
+                        <Link to="/dashboard">Dashboard</Link>
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem className="text-white hover:text-[#A95BAB] hover:bg-white/10">
                       <Link to="/messages">Messages</Link>
                     </DropdownMenuItem>
@@ -162,15 +168,19 @@ export default function Navbar() {
               <Link to="/browse-jobs" className="block px-3 py-2 text-white hover:text-[#A95BAB]">
                 Browse Jobs
               </Link>
-              <Link to="/browse-freelancers" className="block px-3 py-2 text-white hover:text-[#A95BAB]">
-                Browse Freelancers
+              <Link to="/browse-artists" className="block px-3 py-2 text-white hover:text-[#A95BAB]">
+                Browse Artists
               </Link>
-              <Link to="/post-job/client" className="block px-3 py-2 text-white hover:text-[#A95BAB]">
-                Hire Talent
-              </Link>
-              <Link to="/post-job/freelancer" className="block px-3 py-2 text-white hover:text-[#A95BAB]">
-                Offer Services
-              </Link>
+              {user?.role === 'client' && (
+                <Link to="/post-job/client" className="block px-3 py-2 text-white hover:text-[#A95BAB]">
+                  Hire Talent
+                </Link>
+              )}
+              {user?.role === 'artist' && (
+                <Link to="/post-job/artist" className="block px-3 py-2 text-white hover:text-[#A95BAB]">
+                  Offer Services
+                </Link>
+              )}
               <Link to="/about" className="block px-3 py-2 text-white hover:text-[#A95BAB]">
                 About
               </Link>

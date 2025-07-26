@@ -18,7 +18,8 @@ router.use(authenticate);
 // Commission CRUD operations
 router.post('/', createCommissionRequest);
 router.get('/', getAllCommissions); // Admin endpoint
-router.get('/artist/:artistId?', getCommissionsByArtist);
+router.get('/artist', getCommissionsByArtist); // Get current user's commissions as artist
+router.get('/artist/:artistId', getCommissionsByArtist); // Get specific artist's commissions
 router.get('/client', getCommissionsByClient);
 router.get('/:id', getCommissionById);
 router.patch('/:id/status', updateCommissionStatus);

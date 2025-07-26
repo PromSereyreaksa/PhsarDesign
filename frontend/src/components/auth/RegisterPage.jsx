@@ -34,53 +34,80 @@ export default function RegisterPage() {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  const handleRegister = async (e) => {
-    e.preventDefault()
-    setError("")
+  // Add a submission tracker to prevent duplicate form submissions
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-    console.log('Form data before validation:', formData); // Debug log
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    
+    // Prevent multiple submissions
+    if (loading || isSubmitting) {
+      console.log('Form submission prevented - already submitting');
+      return;
+    }
+    
+    setError("");
+    setIsSubmitting(true);
+
+    console.log('Form data before validation:', formData);
+
+    // Validate form
+    if (!formData.email || !formData.email.includes('@')) {
+      setError("Please enter a valid email address");
+      setIsSubmitting(false);
+      return;
+    }
 
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords don't match")
-      return
+      setError("Passwords don't match");
+      setIsSubmitting(false);
+      return;
     }
 
     if (formData.password.length < 6) {
-      setError("Password must be at least 6 characters long")
-      return
+      setError("Password must be at least 6 characters long");
+      setIsSubmitting(false);
+      return;
     }
 
     if (!formData.role) {
-      setError("Please select your role")
-      return
+      setError("Please select your role");
+      setIsSubmitting(false);
+      return;
     }
 
     if (!acceptedTerms) {
-      setError("Please accept the terms and conditions")
-      return
+      setError("Please accept the terms and conditions");
+      setIsSubmitting(false);
+      return;
     }
 
-    dispatch(loginStart())
+    dispatch(loginStart());
 
     try {
+      // Convert 'freelancer' role to 'artist' if needed (backward compatibility)
+      const role = formData.role === 'freelancer' ? 'artist' : formData.role;
+      
       const requestData = {
         name: formData.name || 'User',
         email: formData.email,
         password: formData.password,
-        role: formData.role
+        role: role
       };
       
-      console.log('Sending registration request with data:', requestData); // Debug log
+      console.log('Sending registration request with data:', requestData);
       
-      const response = await authAPI.register(requestData)
+      const response = await authAPI.register(requestData);
       
-      const { user, token } = response.data
-      dispatch(loginSuccess({ user, token }))
-      navigate("/profile-setup")
+      const { user, token } = response.data;
+      dispatch(loginSuccess({ user, token }));
+      navigate("/profile-setup");
     } catch (error) {
-      const errorMessage = error.response?.data?.error || "Registration failed. Please try again."
-      setError(errorMessage)
-      dispatch(loginFailure(errorMessage))
+      console.error('Registration error:', error);
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || "Registration failed. Please try again.";
+      setError(errorMessage);
+      dispatch(loginFailure(errorMessage));
+      setIsSubmitting(false);
     }
   }
 
@@ -151,16 +178,16 @@ export default function RegisterPage() {
                   </SelectTrigger>
                   <SelectContent className="bg-gray-800 border-gray-600">
                     <SelectItem value="client" className="text-white hover:bg-gray-700">
-                      🏢 Hire freelancers
+                      🏢 Hire artists
                     </SelectItem>
-                    <SelectItem value="freelancer" className="text-white hover:bg-gray-700">
-                      🎨 Work as a freelancer
+                    <SelectItem value="artist" className="text-white hover:bg-gray-700">
+                      🎨 Work as an artist
                     </SelectItem>
                   </SelectContent>
                 </Select>
                 {formData.role && (
                   <p className="text-sm text-gray-400">
-                    Selected: {formData.role === 'client' ? '🏢 Hire freelancers' : '🎨 Work as a freelancer'}
+                    Selected: {formData.role === 'client' ? '🏢 Hire artists' : '🎨 Work as an artist'}
                   </p>
                 )}
               </div>
@@ -237,6 +264,13 @@ export default function RegisterPage() {
                 type="submit"
                 className="w-full bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-xl py-3 font-semibold"
                 disabled={loading}
+                onClick={(e) => {
+                  // This prevents any possible double submission
+                  if (loading) {
+                    e.preventDefault();
+                    return;
+                  }
+                }}
               >
                 {loading ? "Creating Account..." : "Create Account"}
               </Button>

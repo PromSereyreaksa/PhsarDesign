@@ -16,6 +16,7 @@ import projectRoutes from './routes/project.routes.js';
 import reviewRoutes from './routes/review.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
 import paymentRoutes from './routes/payment.routes.js';
+import availabilityPostRoutes from './routes/availabilityPost.routes.js';
 
 // Import middleware
 import errorHandler from './middlewares/error.middleware.js';
@@ -78,6 +79,7 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/availability-posts', availabilityPostRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

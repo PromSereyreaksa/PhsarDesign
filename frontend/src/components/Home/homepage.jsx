@@ -42,8 +42,8 @@ export default function HomePage() {
 
   // Format project data for display
   const formatClientPosts = () => {
-    if (projects.projects && projects.projects.length > 0) {
-      return projects.projects.slice(0, 6).map(project => ({
+    if (projects && projects.length > 0) {
+      return projects.slice(0, 6).map(project => ({
         id: project.id,
         title: project.title || 'Untitled Project',
         description: project.description || 'No description available',
@@ -65,33 +65,33 @@ export default function HomePage() {
     return []
   }
 
-  // Format freelancer data for display
-  const formatFreelancerPosts = () => {
-    if (freelancers.freelancers && freelancers.freelancers.length > 0) {
-      return freelancers.freelancers.slice(0, 6).map(freelancer => ({
-        id: freelancer.id,
-        name: freelancer.name || 'Unknown Freelancer',
-        title: freelancer.title || freelancer.specialization || 'Creative Professional',
-        description: freelancer.description || freelancer.bio || 'Experienced creative professional',
-        hourlyRate: freelancer.hourlyRate ? `$${freelancer.hourlyRate}/hr` : '$50/hr',
-        skills: freelancer.skills ? freelancer.skills.split(',').map(s => s.trim()) : [],
-        rating: freelancer.rating || 4.5,
-        reviews: freelancer.reviews || 0,
-        completedJobs: freelancer.completedJobs || 0,
-        responseTime: freelancer.responseTime || '1 hour',
-        location: freelancer.location || 'Remote',
+  // Format artist data for display
+  const formatArtistPosts = () => {
+    if (freelancers && freelancers.length > 0) {
+      return freelancers.slice(0, 6).map(artist => ({
+        id: artist.artistId || artist.id,
+        name: artist.name || 'Unknown Artist',
+        title: artist.specialties || 'Creative Professional',
+        description: artist.skills || 'Experienced creative professional',
+        hourlyRate: artist.hourlyRate ? `$${artist.hourlyRate}/hr` : '$50/hr',
+        skills: artist.skills ? artist.skills.split(',').map(s => s.trim()) : [],
+        rating: artist.rating || 4.5,
+        reviews: artist.totalCommissions || 0,
+        completedJobs: artist.totalCommissions || 0,
+        responseTime: '1 hour',
+        location: 'Remote',
         verified: true,
-        topRated: freelancer.rating >= 4.8,
-        available: true,
-        avatar: "/DigitalArt.jpg",
-        portfolio: "/DigitalArt.jpg",
+        topRated: (artist.rating || 4.5) >= 4.8,
+        available: artist.availability === 'available',
+        avatar: artist.avatarUrl || "/DigitalArt.jpg",
+        portfolio: artist.portfolioUrl || "/DigitalArt.jpg",
       }))
     }
     return []
   }
 
   const clientPosts = formatClientPosts()
-  const freelancerPosts = formatFreelancerPosts()
+  const artistPosts = formatArtistPosts()
 
   // Use real data if available, otherwise use mock data
   const displayClientPosts = clientPosts.length > 0 ? clientPosts : [
@@ -133,7 +133,7 @@ export default function HomePage() {
     }
   ]
 
-  const displayFreelancerPosts = freelancerPosts.length > 0 ? freelancerPosts : [
+  const displayArtistPosts = artistPosts.length > 0 ? artistPosts : [
     {
       id: 1,
       name: "vicky gujjar",
@@ -278,7 +278,7 @@ export default function HomePage() {
                 className="text-white data-[state=active]:bg-[#A95BAB] data-[state=active]:text-white"
               >
                 <Users className="h-4 w-4 mr-2" />
-                Available Artists ({displayFreelancerPosts.length})
+                Available Artists ({displayArtistPosts.length})
               </TabsTrigger>
             </TabsList>
 
@@ -353,31 +353,31 @@ export default function HomePage() {
               </div>
             </TabsContent>
 
-            {/* Freelancer Posts */}
+            {/* Artist Posts */}
             <TabsContent value="freelancer-posts">
               <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
-                {displayFreelancerPosts.map((freelancer) => (
+                {displayArtistPosts.map((artist) => (
                   <Card
-                    key={freelancer.id}
+                    key={artist.id}
                     className="bg-white/5 border-white/10 hover:bg-white/10 hover:border-[#A95BAB]/50 backdrop-blur-sm transition-all duration-300 cursor-pointer group overflow-hidden transform hover:scale-105"
                   >
                     <CardContent className="p-6">
                       <div className="flex items-start space-x-4 mb-4">
                         <div className="w-16 h-16 bg-gradient-to-br from-[#A95BAB] to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                          {freelancer.name.charAt(0)}
+                          {artist.name.charAt(0)}
                         </div>
                         <div className="flex-1">
                           <h3 className="text-lg font-semibold text-white mb-1 group-hover:text-[#A95BAB] transition-colors">
-                            {freelancer.name}
+                            {artist.name}
                           </h3>
-                          <p className="text-[#A95BAB] text-sm mb-2">{freelancer.title}</p>
+                          <p className="text-[#A95BAB] text-sm mb-2">{artist.title}</p>
                           <div className="flex items-center space-x-2">
                             <div className="flex items-center">
                               {[...Array(5)].map((_, i) => (
                                 <Star
                                   key={i}
                                   className={`h-4 w-4 ${
-                                    i < Math.floor(freelancer.rating)
+                                    i < Math.floor(artist.rating)
                                       ? "text-yellow-400 fill-current"
                                       : "text-gray-400"
                                   }`}
@@ -385,28 +385,28 @@ export default function HomePage() {
                               ))}
                             </div>
                             <span className="text-sm text-gray-300">
-                              {freelancer.rating} ({freelancer.reviews} reviews)
+                              {artist.rating} ({artist.reviews} reviews)
                             </span>
                           </div>
                         </div>
-                        {freelancer.topRated && (
+                        {artist.topRated && (
                           <Badge className="bg-yellow-500 text-black">
                             Top Rated
                           </Badge>
                         )}
                       </div>
 
-                      <p className="text-gray-300 text-sm line-clamp-3 mb-4">{freelancer.description}</p>
+                      <p className="text-gray-300 text-sm line-clamp-3 mb-4">{artist.description}</p>
 
                       <div className="flex flex-wrap gap-2 mb-4">
-                        {freelancer.skills.slice(0, 3).map((skill) => (
+                        {artist.skills.slice(0, 3).map((skill) => (
                           <Badge key={skill} variant="secondary" className="text-xs">
                             {skill}
                           </Badge>
                         ))}
-                        {freelancer.skills.length > 3 && (
+                        {artist.skills.length > 3 && (
                           <Badge variant="outline" className="text-xs text-gray-400">
-                            +{freelancer.skills.length - 3}
+                            +{artist.skills.length - 3}
                           </Badge>
                         )}
                       </div>
@@ -414,18 +414,18 @@ export default function HomePage() {
                       <div className="flex items-center justify-between text-sm text-gray-300 mb-4">
                         <div className="flex items-center">
                           <MapPin className="h-4 w-4 mr-1" />
-                          {freelancer.location}
+                          {artist.location}
                         </div>
                         <div className="flex items-center">
                           <Clock className="h-4 w-4 mr-1" />
-                          Response: {freelancer.responseTime}
+                          Response: {artist.responseTime}
                         </div>
                       </div>
 
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="text-lg font-bold text-[#A95BAB]">{freelancer.hourlyRate}</div>
-                          <div className="text-xs text-gray-400">{freelancer.completedJobs} jobs completed</div>
+                          <div className="text-lg font-bold text-[#A95BAB]">{artist.hourlyRate}</div>
+                          <div className="text-xs text-gray-400">{artist.completedJobs} jobs completed</div>
                         </div>
                         <Button
                           size="sm"
