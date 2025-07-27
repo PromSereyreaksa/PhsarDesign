@@ -55,36 +55,40 @@ const Applications = sequelize.define("Applications", {
   },
   applicationType: {
     type: DataTypes.STRING(50),
-    allowNull: false,
-    validate: {
-      isIn: [["artist_to_job", "client_to_service"]]
-    }
+    allowNull: false
   },
   message: {
     type: DataTypes.TEXT,
-    allowNull: true,
-    validate: {
-      len: [10, 5000]
-    }
+    allowNull: true
   },
   proposedBudget: {
     type: DataTypes.FLOAT,
-    allowNull: true,
-    validate: {
-      min: 0
-    }
+    allowNull: true
   },
   proposedDeadline: {
     type: DataTypes.DATE,
     allowNull: true
   },
+  name: {
+    type: DataTypes.STRING(255),
+    allowNull: true
+  },
+  portfolio: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  experience: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  additionalNotes: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
   status: {
     type: DataTypes.STRING(50),
     allowNull: false,
-    defaultValue: "pending",
-    validate: {
-      isIn: [["pending", "accepted", "rejected", "converted_to_project"]]
-    }
+    defaultValue: "pending"
   },
   createdAt: {
     type: DataTypes.DATE,

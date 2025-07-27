@@ -13,6 +13,8 @@ const initialState = {
   payments: [],
   paymentMethods: [],
   paymentHistory: [],
+  currentArtist: null,
+  currentClient: null,
   loading: false,
   error: null,
 };

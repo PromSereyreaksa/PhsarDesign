@@ -170,13 +170,13 @@ export const deleteArtist = async (req, res) => {
 
 export const searchArtists = async (req, res) => {
     try {
+        console.log('Search request received:', req.query);
         const { search, skills, minRating, maxRate, availability } = req.query;
         const where = {};
 
         if (search) {
             where[Op.or] = [
                 { name: { [Op.iLike]: `%${search}%` } },
-                { bio: { [Op.iLike]: `%${search}%` } },
                 { skills: { [Op.iLike]: `%${search}%` } },
                 { specialties: { [Op.iLike]: `%${search}%` } }
             ];
@@ -198,6 +198,8 @@ export const searchArtists = async (req, res) => {
             where.availability = availability;
         }
 
+        console.log('Where clause:', JSON.stringify(where, null, 2));
+
         const artists = await Artist.findAll({
             where,
             include: [
@@ -206,6 +208,7 @@ export const searchArtists = async (req, res) => {
             order: [['rating', 'DESC'], ['totalCommissions', 'DESC']]
         });
 
+        console.log('Found artists:', artists.length);
         res.status(200).json(artists);
     } catch (error) {
         console.error("Error searching artists:", error);

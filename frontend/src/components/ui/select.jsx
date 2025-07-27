@@ -39,18 +39,19 @@ const Select = ({ children, value, onValueChange, ...props }) => {
 }
 
 const SelectTrigger = React.forwardRef(({ className, children, selectedValue, isOpen, setIsOpen, ...props }, ref) => {
-  // Remove invalid DOM props before spreading
-  const { onValueChange, ...validProps } = props
+  // Remove all custom props that shouldn't be passed to DOM
+  const { onValueChange, required, ...domProps } = props
   
   return (
     <button
       ref={ref}
+      type="button"
       className={cn(
         "flex h-10 w-full items-center justify-between rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#A95BAB]/50 focus:border-[#A95BAB]/50 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200",
         className,
       )}
       onClick={() => setIsOpen(!isOpen)}
-      {...validProps}
+      {...domProps}
     >
       {children}
       <ChevronDown className="h-4 w-4 opacity-50" />
@@ -66,13 +67,16 @@ const SelectValue = ({ placeholder, selectedValue }) => (
 const SelectContent = ({ className, children, isOpen, onValueChange, selectedValue, setIsOpen, ...props }) => {
   if (!isOpen) return null
 
+  // Remove custom props that shouldn't be passed to DOM
+  const { required, ...domProps } = props
+
   return (
     <div
       className={cn(
         "absolute top-full left-0 z-50 w-full mt-1 bg-gray-900/95 backdrop-blur-sm border border-white/20 rounded-xl shadow-xl max-h-60 overflow-auto",
         className,
       )}
-      {...props}
+      {...domProps}
     >
       {React.Children.map(children, (child) => React.cloneElement(child, { onValueChange }))}
     </div>
@@ -81,7 +85,7 @@ const SelectContent = ({ className, children, isOpen, onValueChange, selectedVal
 
 const SelectItem = ({ className, children, value, onValueChange, ...props }) => {
   // Remove invalid DOM props before spreading
-  const { selectedValue, setIsOpen, ...validProps } = props
+  const { selectedValue, setIsOpen, required, ...domProps } = props
   
   return (
     <div
@@ -90,7 +94,7 @@ const SelectItem = ({ className, children, value, onValueChange, ...props }) => 
         className,
       )}
       onClick={() => onValueChange(value)}
-      {...validProps}
+      {...domProps}
     >
       {children}
     </div>

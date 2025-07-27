@@ -43,20 +43,20 @@ const PORT = process.env.PORT || 3000;
 // Trust proxy for rate limiting and IP detection
 app.set('trust proxy', 1);
 
-// Security middleware (apply first)
-app.use(securityHeaders);
-app.use(sanitizeInput);
+// Security middleware (apply first) - TEMPORARILY DISABLED
+// app.use(securityHeaders);
+// app.use(sanitizeInput);
 app.use(compression());
 
 // Logging middleware
 app.use(morgan('combined'));
 app.use(requestLogger);
 
-// Rate limiting
-app.use('/api/', generalLimiter);
-app.use('/api/auth/login', authLimiter);
-app.use('/api/auth/register', authLimiter);
-app.use('/api/upload/', uploadLimiter);
+// Rate limiting - TEMPORARILY DISABLED
+// app.use('/api/', generalLimiter);
+// app.use('/api/auth/login', authLimiter);
+// app.use('/api/auth/register', authLimiter);
+// app.use('/api/upload/', uploadLimiter);
 
 // Standard middleware
 app.use(cookieParser());

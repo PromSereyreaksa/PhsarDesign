@@ -193,7 +193,15 @@ export const getClientProjects = async (req, res) => {
         const { clientId } = req.params;
         const { status, limit = 20, offset = 0 } = req.query;
 
-        let whereClause = { clientId };
+        // Validate clientId parameter
+        if (!clientId || clientId === 'undefined' || clientId === 'null' || isNaN(parseInt(clientId))) {
+            return res.status(400).json({ 
+                error: "Invalid client ID. Client ID must be a valid number.",
+                received: clientId
+            });
+        }
+
+        let whereClause = { clientId: parseInt(clientId) };
         if (status && ['open', 'in_progress', 'completed', 'cancelled', 'paid'].includes(status)) {
             whereClause.status = status;
         }

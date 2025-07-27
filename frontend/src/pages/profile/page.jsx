@@ -21,7 +21,14 @@ import {
 export default function Profile() {
   const dispatch = useDispatch()
   const { user } = useSelector((state) => state.auth)
-  const { projects = [], portfolios = [], isLoading, error } = useSelector((state) => state.api)
+  const { 
+    projects, 
+    portfolios, 
+    currentArtist, 
+    currentClient, 
+    loading: isLoading, 
+    error 
+  } = useSelector((state) => state.api)
   
   const [isEditing, setIsEditing] = useState(false)
   const [userProfile, setUserProfile] = useState(null)
@@ -38,7 +45,7 @@ export default function Profile() {
         
         if (user.role === 'artist') {
           // Fetch artist profile
-          fetchedProfile = await dispatch(fetchFreelancerByUserId(user.id))
+          fetchedProfile = await dispatch(fetchFreelancerByUserId(user.userId || user.id))
           
           // Fetch artist's portfolios
           if (fetchedProfile && fetchedProfile.artistId) {
@@ -46,9 +53,9 @@ export default function Profile() {
           }
         } else if (user.role === 'client') {
           // Fetch client profile
-          fetchedProfile = await dispatch(fetchClientByUserId(user.id))
+          fetchedProfile = await dispatch(fetchClientByUserId(user.userId || user.id))
           
-          // Fetch client's projects
+          // Fetch client's projects  
           if (fetchedProfile && fetchedProfile.clientId) {
             await dispatch(fetchProjectsByClientId(fetchedProfile.clientId))
           }
@@ -57,6 +64,7 @@ export default function Profile() {
         setUserProfile(fetchedProfile)
       } catch (error) {
         console.error('Error loading user profile:', error)
+        // Don't throw the error, just continue with mock data
       }
     }
 
@@ -65,13 +73,25 @@ export default function Profile() {
 
   // Update local state when Redux state changes
   useEffect(() => {
-    if (projects.projects) {
+    if (user?.role === 'artist' && currentArtist) {
+      setUserProfile(currentArtist)
+    } else if (user?.role === 'client' && currentClient) {
+      setUserProfile(currentClient)
+    }
+  }, [currentArtist, currentClient, user])
+
+  useEffect(() => {
+    if (projects && Array.isArray(projects)) {
+      setUserProjects(projects)
+    } else if (projects && projects.projects) {
       setUserProjects(projects.projects)
     }
   }, [projects])
 
   useEffect(() => {
-    if (portfolios.portfolios) {
+    if (portfolios && Array.isArray(portfolios)) {
+      setUserPortfolios(portfolios)
+    } else if (portfolios && portfolios.portfolios) {
       setUserPortfolios(portfolios.portfolios)
     }
   }, [portfolios])
@@ -85,7 +105,7 @@ export default function Profile() {
         avatar: userProfile.avatar || "/placeholder.svg?height=120&width=120",
         location: userProfile.location || "Location not specified",
         memberSince: user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : "Recently joined",
-        hourlyRate: userProfile.hourlyRate || userProfile.rate || "$0/hr",
+        hourlyRate: userProfile.hourlyRate || userProfile.rate ? `$${userProfile.hourlyRate || userProfile.rate}/hr` : "Rate on request",
         totalEarned: userProfile.totalEarned || "$0",
         jobsCompleted: userProjects.filter(p => p.status === 'completed').length || 0,
         rating: userProfile.rating || 0,

@@ -7,7 +7,8 @@ import { Input } from "./input"
 import { Textarea } from "./textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "./card"
 import { Badge } from "./badge"
-import { applicationsAPI } from "../../services/api"
+import { applicationsAPI, clientsAPI, artistsAPI } from "../../services/api"
+import store from "../../store/store"
 
 const steps = [
   { id: 1, title: "Basic Info", icon: User },
@@ -26,6 +27,7 @@ export function MultiStepApplicationModal({
   const [currentStep, setCurrentStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState(null)
+  const [submitted, setSubmitted] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
     message: "",
@@ -71,47 +73,128 @@ export function MultiStepApplicationModal({
     try {
       if (isJobApplication) {
         // Artist applying to job
-        const applicationData = {
-          jobPostId: post.id || post.jobId,
-          artistId: 1, // TODO: Get from auth context
-          message: formData.message,
-          proposedBudget: parseFloat(formData.proposedBudget),
-          proposedDeadline: formData.proposedDeadline,
-          applicationType: "artist_to_job"
+        const state = store.getState()
+        const user = state.auth.user
+        
+        if (!user?.userId) {
+          setError('User not properly authenticated. Please log in again.');
+          setIsSubmitting(false);
+          return;
         }
+        
+        const applicationData = {
+          jobPostId: post.jobId || post.id,
+          message: formData.message,
+          proposedBudget: parseFloat(formData.proposedBudget) || null,
+          proposedDeadline: formData.proposedDeadline || null,
+          applicationType: "artist_to_job",
+          name: formData.name,
+          portfolio: formData.portfolio,
+          experience: formData.experience,
+          additionalNotes: formData.additionalNotes
+        }
+        console.log('Sending job application data:', applicationData);
         await applicationsAPI.create(applicationData)
       } else {
         // Client hiring artist
+        const state = store.getState()
+        const user = state.auth.user
+        
+        if (!user?.userId) {
+          setError('User not properly authenticated. Please log in again.');
+          setIsSubmitting(false);
+          return;
+        }
+        
         const applicationData = {
           availabilityPostId: post.postId || post.id,
-          clientId: 1, // TODO: Get from auth context
           applicationType: "client_to_service",
           message: formData.message,
           proposedBudget: formData.proposedBudget ? parseFloat(formData.proposedBudget) : null,
-          proposedDeadline: formData.proposedDeadline || null
+          proposedDeadline: formData.proposedDeadline || null,
+          name: formData.name,
+          portfolio: formData.portfolio,
+          experience: formData.experience,
+          additionalNotes: formData.additionalNotes
         }
-        console.log('Sending application data:', applicationData);
+        console.log('Sending service application data:', applicationData);
         await applicationsAPI.applyToService(applicationData)
       }
       
+      setSubmitted(true)
       onSuccess?.()
-      onClose()
-      setCurrentStep(1)
-      setFormData({
-        name: "",
-        message: "",
-        proposedBudget: "",
-        proposedDeadline: "",
-        portfolio: "",
-        experience: "",
-        additionalNotes: ""
-      })
+      
+      // Auto-close after 3 seconds or wait for user to close
+      setTimeout(() => {
+        onClose()
+        setSubmitted(false)
+        setCurrentStep(1)
+        setFormData({
+          name: "",
+          message: "",
+          proposedBudget: "",
+          proposedDeadline: "",
+          portfolio: "",
+          experience: "",
+          additionalNotes: ""
+        })
+      }, 3000)
     } catch (error) {
       console.error('Application submission error:', error)
       setError(error.response?.data?.message || error.message || 'Failed to submit application')
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  // Show confirmation screen if application was submitted
+  if (submitted) {
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="bg-gray-900 rounded-lg max-w-md w-full p-8 text-center">
+          {/* Success Icon */}
+          <div className="mx-auto w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mb-6">
+            <Check className="h-8 w-8 text-green-400" />
+          </div>
+          
+          {/* Success Message */}
+          <h2 className="text-2xl font-semibold text-white mb-4">
+            Application Submitted!
+          </h2>
+          <p className="text-gray-300 mb-6">
+            {isJobApplication 
+              ? "Your job application has been submitted successfully. The client will review your proposal and get back to you soon."
+              : "Your service request has been submitted successfully. The artist will review your requirements and respond shortly."
+            }
+          </p>
+          
+          {/* Close Button */}
+          <Button
+            onClick={() => {
+              onClose()
+              setSubmitted(false)
+              setCurrentStep(1)
+              setFormData({
+                name: "",
+                message: "",
+                proposedBudget: "",
+                proposedDeadline: "",
+                portfolio: "",
+                experience: "",
+                additionalNotes: ""
+              })
+            }}
+            className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 text-white"
+          >
+            Close
+          </Button>
+          
+          <p className="text-xs text-gray-400 mt-4">
+            This window will close automatically in a few seconds
+          </p>
+        </div>
+      </div>
+    )
   }
 
   const renderStepContent = () => {

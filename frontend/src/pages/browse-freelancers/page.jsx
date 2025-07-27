@@ -11,6 +11,7 @@ import { Input } from "../../components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
 import { Badge } from "../../components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select"
+import { MultiStepApplicationModal } from "../../components/ui/multi-step-application-modal"
 import { freelancersAPI } from "../../services/api"
 
 export default function BrowseFreelancers() {
@@ -22,6 +23,10 @@ export default function BrowseFreelancers() {
   const [selectedCategory, setSelectedCategory] = useState("All Categories")
   const [selectedExperience, setSelectedExperience] = useState("Any Experience")
   const [filteredFreelancers, setFilteredFreelancers] = useState([])
+  
+  // Hiring modal state
+  const [isHiringModalOpen, setIsHiringModalOpen] = useState(false)
+  const [selectedFreelancer, setSelectedFreelancer] = useState(null)
 
   // Fetch freelancers on component mount
   useEffect(() => {
@@ -94,7 +99,7 @@ export default function BrowseFreelancers() {
     name: freelancer.User?.name || freelancer.name || 'Anonymous Freelancer',
     title: freelancer.title || 'Creative Professional',
     bio: freelancer.bio || 'No bio available',
-    hourlyRate: freelancer.hourly_rate || 'Rate not specified',
+    hourlyRate: freelancer.hourlyRate || freelancer.hourly_rate || null,
     skills: freelancer.skills ? freelancer.skills.split(',').map(s => s.trim()) : [],
     rating: 4.5, // Default rating - would need to calculate from reviews
     reviewCount: 0, // Default - would need to count reviews
@@ -108,6 +113,18 @@ export default function BrowseFreelancers() {
   })
 
   const displayFreelancers = (filteredFreelancers.length > 0 ? filteredFreelancers : freelancers).map(formatFreelancerForDisplay)
+
+  // Handle hiring button click
+  const handleHireFreelancer = (freelancer) => {
+    setSelectedFreelancer(freelancer)
+    setIsHiringModalOpen(true)
+  }
+
+  // Handle successful application
+  const handleApplicationSuccess = () => {
+    console.log('Application sent successfully!')
+    // Could show a toast notification here
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000]">
@@ -281,7 +298,9 @@ export default function BrowseFreelancers() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-lg font-semibold text-[#A95BAB] mb-1">${freelancer.hourlyRate}/hr</div>
+                      <div className="text-lg font-semibold text-[#A95BAB] mb-1">
+                        {freelancer.hourlyRate ? `$${freelancer.hourlyRate}/hr` : 'Rate on request'}
+                      </div>
                       <div className="text-sm text-gray-400">Hourly Rate</div>
                       <div className="text-sm text-green-400 font-medium mt-1 capitalize">{freelancer.status}</div>
                     </div>
@@ -321,7 +340,11 @@ export default function BrowseFreelancers() {
                       >
                         View Portfolio
                       </Button>
-                      <Button size="sm" className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 text-white">
+                      <Button 
+                        size="sm" 
+                        className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 text-white"
+                        onClick={() => handleHireFreelancer(freelancer)}
+                      >
                         Hire Now
                       </Button>
                     </div>
@@ -345,6 +368,26 @@ export default function BrowseFreelancers() {
           </div>
         )}
       </div>
+
+      {/* Hiring Modal */}
+      {selectedFreelancer && (
+        <MultiStepApplicationModal
+          isOpen={isHiringModalOpen}
+          onClose={() => {
+            setIsHiringModalOpen(false)
+            setSelectedFreelancer(null)
+          }}
+          post={{
+            id: selectedFreelancer.id,
+            title: `Hire ${selectedFreelancer.name}`,
+            description: selectedFreelancer.bio,
+            category: selectedFreelancer.title,
+            budget: selectedFreelancer.hourlyRate ? `$${selectedFreelancer.hourlyRate}/hr` : 'Rate on request'
+          }}
+          onSuccess={handleApplicationSuccess}
+          applicationType="client_to_service"
+        />
+      )}
 
       <Footer />
     </div>

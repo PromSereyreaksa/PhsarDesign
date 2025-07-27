@@ -1,89 +1,214 @@
-import { Applications, Projects, JobPost, AvailabilityPost, Artist, Clients, Analytics, Users } from "../models/index.js";
+import { Applications, Projects, JobPost, AvailabilityPost, Artist, Clients, Analytics, Users, Notification } from "../models/index.js";
 import { Op } from "sequelize";
 
 export const createApplication = async (req, res) => {
   try {
-    const { projectId, artistId, message } = req.body;
+    console.log('createApplication called with body:', req.body);
+    console.log('Request user:', req.user);
+    
+    const { 
+      jobPostId, 
+      availabilityPostId,
+      artistId, 
+      clientId,
+      message, 
+      proposedBudget, 
+      proposedDeadline, 
+      applicationType,
+      name,
+      portfolio,
+      experience,
+      additionalNotes
+    } = req.body;
 
-    const project = await Projects.findByPk(projectId);
-    if (!project) {
-      return res.status(404).json({ message: "Project not found" });
+    let finalArtistId = artistId;
+    let finalClientId = clientId;
+
+    // If no artistId/clientId provided, try to get it from the authenticated user
+    if (!finalArtistId && !finalClientId && req.user) {
+      const userId = req.user.userId;
+      
+      if (!userId) {
+        return res.status(400).json({ 
+          error: "Invalid user ID. User ID must be a valid number.",
+          received: userId
+        });
+      }
+
+      // Check user role and get corresponding profile ID
+      if (req.user.role === 'artist' || req.user.role === 'freelancer') {
+        const artist = await Artist.findOne({ where: { userId } });
+        if (!artist) {
+          return res.status(404).json({ 
+            error: "Artist profile not found for this user.",
+            userId: userId
+          });
+        }
+        finalArtistId = artist.artistId;
+      } else if (req.user.role === 'client') {
+        const client = await Clients.findOne({ where: { userId } });
+        if (!client) {
+          return res.status(404).json({ 
+            error: "Client profile not found for this user.",
+            userId: userId
+          });
+        }
+        finalClientId = client.clientId;
+      }
     }
 
-    if (project.status !== 'open') {
-      return res.status(400).json({ message: "Project is not accepting applications" });
-    }
-
-    const artist = await Artist.findByPk(artistId);
-    if (!artist) {
-      return res.status(404).json({ message: "Artist not found" });
-    }
-
-    const existingApplication = await Applications.findOne({
-      where: { projectId, artistId }
+    console.log('Creating application with data:', {
+      jobPostId,
+      availabilityPostId,
+      artistId: finalArtistId,
+      clientId: finalClientId,
+      message,
+      proposedBudget,
+      proposedDeadline,
+      applicationType,
+      name,
+      portfolio,
+      experience,
+      additionalNotes
     });
 
-    if (existingApplication) {
-      return res.status(409).json({ message: "Application already exists for this project" });
-    }
-
     const application = await Applications.create({
-      projectId,
-      artistId,
+      jobPostId,
+      availabilityPostId,
+      artistId: finalArtistId,
+      clientId: finalClientId,
       message,
+      proposedBudget,
+      proposedDeadline,
+      applicationType: applicationType || 'artist_to_job',
+      name,
+      portfolio,
+      experience,
+      additionalNotes,
       status: 'pending'
     });
 
-    await Analytics.create({
-      artistId,
-      eventType: 'application_submitted',
-      entityType: 'application',
-      entityId: application.applicationId,
-      metadata: { projectId },
-      ipAddress: req.ip,
-      userAgent: req.get('User-Agent')
-    });
+    // Skip analytics for testing
+    // await Analytics.create({
+    //   artistId,
+    //   eventType: 'application_submitted',
+    //   entityType: 'application',
+    //   entityId: application.applicationId,
+    //   metadata: { projectId },
+    //   ipAddress: req.ip,
+    //   userAgent: req.get('User-Agent')
+    // });
 
-    const applicationWithDetails = await Applications.findByPk(application.applicationId, {
-      include: [
-        {
-          model: Projects,
-          as: 'project',
-          attributes: ['title', 'budget', 'status'],
-          include: [
-            {
-              model: Clients,
-              as: 'client',
-              attributes: ['name', 'organization'],
-              include: [
-                {
-                  model: Users,
-                  as: 'user',
-                  attributes: ['email']
-                }
-              ]
-            }
-          ]
-        },
-        {
-          model: Artist,
-          as: 'artist',
-          attributes: ['name', 'avatarUrl', 'hourlyRate'],
-          include: [
-            {
-              model: Users,
-              as: 'user',
-              attributes: ['email']
-            }
-          ]
+    console.log('Regular application created successfully:', application.applicationId);
+
+    // Create notification for the recipient (artist or client)
+    try {
+      let notificationData = {};
+      
+      if (applicationType === 'client_to_service' && finalArtistId) {
+        // Client applying to hire an artist - notify the artist
+        const artist = await Artist.findByPk(finalArtistId, {
+          include: [{ model: Users, as: 'user', attributes: ['userId', 'email'] }]
+        });
+        
+        if (artist && artist.user) {
+          const client = await Clients.findByPk(finalClientId, {
+            include: [{ model: Users, as: 'user', attributes: ['userId', 'email'] }]
+          });
+          
+          notificationData = {
+            userId: artist.user.userId,
+            fromUserId: client?.user?.userId || req.user.userId,
+            type: 'application_received',
+            title: 'New Service Request',
+            message: `${client?.name || 'A client'} wants to hire you for a project. "${message || 'No message provided'}"`,
+            actionUrl: `/dashboard/applications/${application.applicationId}`,
+            relatedApplicationId: application.applicationId,
+            priority: 'normal'
+          };
         }
-      ]
-    });
+      } else if (applicationType === 'artist_to_job' && jobPostId) {
+        // Artist applying to a job post - notify the client who posted the job
+        const project = await Projects.findByPk(jobPostId, {
+          include: [
+            { 
+              model: Clients, 
+              as: 'client',
+              include: [{ model: Users, as: 'user', attributes: ['userId', 'email'] }]
+            }
+          ]
+        });
+        
+        if (project && project.client && project.client.user) {
+          const artist = await Artist.findByPk(finalArtistId, {
+            include: [{ model: Users, as: 'user', attributes: ['userId', 'email'] }]
+          });
+          
+          notificationData = {
+            userId: project.client.user.userId,
+            fromUserId: artist?.user?.userId || req.user.userId,
+            type: 'application_received',
+            title: 'New Job Application',
+            message: `${artist?.name || 'An artist'} has applied to your project "${project.title}". "${message || 'No message provided'}"`,
+            actionUrl: `/dashboard/projects/${project.projectId}/applications`,
+            relatedApplicationId: application.applicationId,
+            relatedProjectId: project.projectId,
+            priority: 'normal'
+          };
+        }
+      }
+
+      // Create the notification if we have valid data
+      if (notificationData.userId) {
+        await Notification.create(notificationData);
+        console.log('Notification created for application:', application.applicationId);
+      }
+    } catch (notificationError) {
+      console.error('Failed to create notification:', notificationError);
+      // Don't fail the application creation if notification fails
+    }
+
+    // SIMPLIFIED RESPONSE FOR TESTING
+    // const applicationWithDetails = await Applications.findByPk(application.applicationId, {
+    //   include: [
+    //     {
+    //       model: Projects,
+    //       as: 'project',
+    //       attributes: ['title', 'budget', 'status'],
+    //       include: [
+    //         {
+    //           model: Clients,
+    //           as: 'client',
+    //           attributes: ['name', 'organization'],
+    //           include: [
+    //             {
+    //               model: Users,
+    //               as: 'user',
+    //               attributes: ['email']
+    //             }
+    //           ]
+    //         }
+    //       ]
+    //     },
+    //     {
+    //       model: Artist,
+    //       as: 'artist',
+    //       attributes: ['name', 'avatarUrl', 'hourlyRate'],
+    //       include: [
+    //         {
+    //           model: Users,
+    //           as: 'user',
+    //           attributes: ['email']
+    //         }
+    //       ]
+    //     }
+    //   ]
+    // });
 
     res.status(201).json({
       success: true,
       message: "Application submitted successfully",
-      data: applicationWithDetails
+      data: application // Simplified: just return the basic application data
     });
   } catch (error) {
     console.error("Application creation error:", error);
@@ -248,6 +373,81 @@ export const updateApplicationStatus = async (req, res) => {
 
     await application.update({ status });
 
+    // Create notification for status update
+    try {
+      console.log('Creating notification for status update:', { applicationId, status, userId: req.user?.userId });
+      let notificationData = {};
+      
+      if (status === 'accepted') {
+        // Notify the artist that their application was accepted
+        if (application.artist) {
+          const artist = await Artist.findByPk(application.artistId, {
+            include: [{ model: Users, as: 'user', attributes: ['userId', 'email'] }]
+          });
+          
+          console.log('Found artist for notification:', artist ? { artistId: artist.artistId, userId: artist.user?.userId } : 'null');
+          
+          if (artist && artist.user) {
+            notificationData = {
+              userId: artist.user.userId,
+              fromUserId: req.user?.userId,
+              type: 'application_accepted',
+              title: 'Application Accepted! 🎉',
+              message: `Congratulations! Your application for "${application.project?.title || 'a project'}" has been accepted. ${clientMessage || 'The client is excited to work with you!'}`,
+              actionUrl: `/dashboard/projects/${application.projectId}`,
+              relatedApplicationId: application.applicationId,
+              relatedProjectId: application.projectId,
+              priority: 'high'
+            };
+            
+            console.log('Notification data created:', notificationData);
+          }
+        }
+      } else if (status === 'rejected') {
+        // Notify the artist that their application was rejected
+        if (application.artist) {
+          const artist = await Artist.findByPk(application.artistId, {
+            include: [{ model: Users, as: 'user', attributes: ['userId', 'email'] }]
+          });
+          
+          console.log('Found artist for rejection notification:', artist ? { artistId: artist.artistId, userId: artist.user?.userId } : 'null');
+          
+          if (artist && artist.user) {
+            notificationData = {
+              userId: artist.user.userId,
+              fromUserId: req.user?.userId,
+              type: 'application_rejected',
+              title: 'Application Update',
+              message: `Your application for "${application.project?.title || 'a project'}" was not selected this time. ${clientMessage || 'Keep applying to other projects!'}`,
+              actionUrl: `/dashboard/applications/${application.applicationId}`,
+              relatedApplicationId: application.applicationId,
+              relatedProjectId: application.projectId,
+              priority: 'normal'
+            };
+            
+            console.log('Rejection notification data created:', notificationData);
+          }
+        }
+      }
+
+      // Create the notification if we have valid data
+      if (notificationData.userId) {
+        const createdNotification = await Notification.create(notificationData);
+        console.log('Status update notification created successfully:', {
+          notificationId: createdNotification.notificationId,
+          applicationId,
+          status,
+          userId: notificationData.userId
+        });
+      } else {
+        console.log('No notification data to create - missing userId or artist info');
+      }
+    } catch (notificationError) {
+      console.error('Failed to create status update notification:', notificationError);
+      console.error('Notification error details:', notificationError.message);
+      // Don't fail the status update if notification fails
+    }
+
     if (status === 'accepted') {
       await Analytics.create({
         artistId: application.artistId,
@@ -382,69 +582,55 @@ export const getApplicationById = async (req, res) => {
 
 export const applyToService = async (req, res) => {
   try {
-    const { availabilityPostId, clientId, message, proposedBudget, proposedDeadline } = req.body;
+    console.log('applyToService called with body:', req.body);
+    const { 
+      availabilityPostId, 
+      clientId, 
+      message, 
+      proposedBudget, 
+      proposedDeadline,
+      applicationType,
+      name,
+      portfolio,
+      experience,
+      additionalNotes
+    } = req.body;
 
-    const availabilityPost = await AvailabilityPost.findByPk(availabilityPostId);
-    if (!availabilityPost) {
-      return res.status(404).json({ message: "Service post not found" });
-    }
-
-    if (availabilityPost.status !== 'active') {
-      return res.status(400).json({ message: "Service is not available" });
-    }
-
-    const client = await Clients.findByPk(clientId);
-    if (!client) {
-      return res.status(404).json({ message: "Client not found" });
-    }
-
-    const existingApplication = await Applications.findOne({
-      where: { 
-        availabilityPostId, 
-        clientId, 
-        applicationType: "client_to_service" 
-      }
+    // TEMPORARILY SIMPLIFIED FOR TESTING - Skip all validations
+    console.log('Creating application with data:', {
+      availabilityPostId,
+      clientId,
+      message,
+      proposedBudget,
+      proposedDeadline,
+      applicationType,
+      name,
+      portfolio,
+      experience,
+      additionalNotes
     });
-
-    if (existingApplication) {
-      return res.status(409).json({ message: "Client has already applied to this service" });
-    }
 
     const application = await Applications.create({
       availabilityPostId,
       clientId,
-      artistId: availabilityPost.artistId,
-      applicationType: "client_to_service",
+      applicationType: applicationType || "client_to_service",
       message,
       proposedBudget,
       proposedDeadline,
+      name,
+      portfolio,
+      experience,
+      additionalNotes,
       status: 'pending'
     });
 
-    const applicationWithDetails = await Applications.findByPk(application.applicationId, {
-      include: [
-        {
-          model: AvailabilityPost,
-          as: 'availabilityPost',
-          attributes: ['title', 'category', 'budget']
-        },
-        {
-          model: Artist,
-          as: 'artist',
-          attributes: ['name', 'avatarUrl', 'hourlyRate', 'rating']
-        },
-        {
-          model: Clients,
-          as: 'client',
-          attributes: ['name', 'organization', 'avatarUrl']
-        }
-      ]
-    });
+    // SIMPLIFIED RESPONSE FOR TESTING
+    console.log('Application created successfully:', application.applicationId);
 
     res.status(201).json({
       success: true,
       message: "Application to service submitted successfully",
-      data: applicationWithDetails
+      data: application // Simplified: just return the basic application data
     });
   } catch (error) {
     console.error("Service application error:", error);

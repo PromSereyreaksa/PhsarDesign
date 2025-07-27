@@ -1,4 +1,5 @@
 import { Clients, Projects } from "../models/index.js";
+import { Op } from "sequelize";
 
 export const createClient = async (req, res) => {
     try {
@@ -205,8 +206,13 @@ export const getClientByOrganization = async (req, res) => {
 
 export const getClientsByName = async (req, res) => {
     try {
+        const searchName = req.params.name;
         const clients = await Clients.findAll({
-            where: { name: req.params.name }
+            where: { 
+                name: {
+                    [Op.iLike]: `%${searchName}%`
+                }
+            }
         });
         if (clients.length === 0) {
             return res.status(404).json({ error: "No clients found with this name" });

@@ -20,7 +20,7 @@ const router = express.Router();
 router.post('/', authenticate, authorize(['client']), validateProject, createProject);
 router.get('/', getAllProjects);
 router.get('/search/artists', authenticate, authorize(['client']), searchArtists);
-router.get('/client', 
+router.get('/client/:clientId', 
   authenticate,
   authorize(['client']),
   getClientProjects

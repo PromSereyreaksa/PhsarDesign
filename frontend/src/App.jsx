@@ -17,6 +17,7 @@ import PostJobArtistNew from "./pages/post-job/freelancer.jsx" // Legacy path bu
 import Messages from "./pages/messages/page.jsx"
 import Profile from "./pages/profile/page.jsx"
 import Dashboard from "./pages/dashboard/page.jsx"
+import NotificationsPage from "./pages/notifications/page.jsx"
 
 function App() {
   return (
@@ -44,6 +45,7 @@ function App() {
         <Route path="/browse-artists" element={<ProtectedRoute><BrowseArtists /></ProtectedRoute>} /> {/* Add new consistent route */}
         <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} /> {/* Add notifications route */}
         
         {/* Client only routes */}
         <Route path="/post-job-client" element={<ProtectedRoute requiredRole="client"><PostJobClient /></ProtectedRoute>} />

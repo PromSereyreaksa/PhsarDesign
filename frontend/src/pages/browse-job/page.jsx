@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/ca
 import { Badge } from "../../components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select"
 import { MultiStepApplicationModal } from "../../components/ui/multi-step-application-modal"
-import { jobPostsAPI } from "../../services/api"
+import { jobPostsAPI, projectsAPI } from "../../services/api"
 
 export default function BrowseJobs() {
   const [jobPosts, setJobPosts] = useState([])
@@ -30,7 +30,7 @@ export default function BrowseJobs() {
   const [totalCount, setTotalCount] = useState(0)
   const itemsPerPage = 10
 
-  // Fetch job posts with pagination
+  // Fetch projects instead of job posts
   const loadJobPosts = async (page = 1, filters = {}) => {
     setIsLoading(true)
     setError(null)
@@ -42,14 +42,29 @@ export default function BrowseJobs() {
         ...filters
       }
       
-      const response = await jobPostsAPI.getAll(params)
-      setJobPosts(response.data.jobPosts || [])
-      setTotalPages(response.data.totalPages || 1)
-      setTotalCount(response.data.totalCount || 0)
+      console.log('Loading projects with params:', params);
+      const response = await projectsAPI.getAll(params)
+      console.log('Projects response:', response.data);
+      
+      // Handle different response formats
+      if (response.data.success && response.data.data) {
+        setJobPosts(response.data.data.projects || [])
+        setTotalPages(response.data.data.totalPages || 1)
+        setTotalCount(response.data.data.total || 0)
+      } else if (Array.isArray(response.data)) {
+        setJobPosts(response.data)
+        setTotalPages(1)
+        setTotalCount(response.data.length)
+      } else {
+        setJobPosts([])
+        setTotalPages(1)
+        setTotalCount(0)
+      }
       setCurrentPage(page)
     } catch (error) {
-      console.error('Error fetching job posts:', error)
-      setError('Failed to load job posts')
+      console.error('Error fetching projects:', error)
+      setError('Failed to load projects')
+      setJobPosts([])
     } finally {
       setIsLoading(false)
     }

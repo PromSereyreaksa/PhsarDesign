@@ -1,5 +1,4 @@
 "use client"
-
 import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { useDispatch } from "react-redux"
@@ -14,20 +13,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/ca
 import { Label } from "../../components/ui/label"
 import { Checkbox } from "../../components/ui/checkbox"
 import { Badge } from "../../components/ui/badge"
-import { X, Plus, DollarSign, Users, Upload, ImageIcon } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select"
+import { X, Plus, DollarSign, Users, Upload, ImageIcon } from 'lucide-react'
 
 export default function PostJobClient() {
   const navigate = useNavigate()
   const dispatch = useDispatch()
-  
   const [jobTitle, setJobTitle] = useState("")
   const [jobDescription, setJobDescription] = useState("")
   const [category, setCategory] = useState("")
-  
+
   // Debug category state changes
   useEffect(() => {
     console.log('Category state changed to:', category)
   }, [category])
+
   const [skills, setSkills] = useState([])
   const [newSkill, setNewSkill] = useState("")
   const [budgetType, setBudgetType] = useState("fixed")
@@ -130,24 +130,25 @@ export default function PostJobClient() {
         title: jobTitle.trim(),
         description: jobDescription.trim(),
         budget: parseFloat(budgetAmount),
+        budgetType: budgetType,
         category: category.trim(),
-        projectDuration: projectDuration.trim(),
-        experienceLevel: experienceLevel.trim(),
+        projectDuration: projectDuration || null,
+        experienceLevel: experienceLevel || null,
+        skillsRequired: skills.length > 0 ? skills.join(', ') : null,
+        status: 'open'
       }
 
       console.log('Submitting project data:', projectData);
 
       const response = await projectsAPI.create(projectData)
-      
+
       // Backend returns {success, message, data} - access response.data.data
       if (response.data.success && response.data.data) {
         dispatch(addItem({ type: 'projects', data: response.data.data }))
         setSuccess("Project created successfully! Redirecting to dashboard...")
         setError("")
         setTimeout(() => {
-          navigate("/dashboard", { 
-            state: { message: 'Project posted successfully!' }
-          })
+          navigate("/dashboard", { state: { message: 'Project posted successfully!' } })
         }, 2000)
       } else {
         throw new Error(response.data.message || 'Failed to create project')
@@ -156,8 +157,8 @@ export default function PostJobClient() {
       console.error('Project creation error:', error)
       console.error('Error response:', error.response)
       console.error('Error response data:', error.response?.data)
+
       setSuccess("")
-      
       // Show specific validation errors
       if (error.response?.status === 400 && error.response.data.errors) {
         const validationErrors = error.response.data.errors
@@ -176,7 +177,6 @@ export default function PostJobClient() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000]">
       <Navbar />
-
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Back Button */}
         <div className="mb-6">
@@ -235,30 +235,33 @@ export default function PostJobClient() {
                 <Label htmlFor="category" className="text-white">
                   Category *
                 </Label>
-                <select 
-                  id="category"
-                  name="category"
-                  value={category} 
-                  onChange={(e) => {
-                    setCategory(e.target.value);
-                  }}
-                  className="mt-1 w-full h-10 bg-[#202020] border border-[#A95BAB]/30 text-white rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#A95BAB]/50 focus:border-[#A95BAB]/50 transition-all duration-200"
-                  required
-                >
-                  <option value="">Select a category</option>
-                  {categories.map((cat) => (
-                    <option 
-                      key={cat} 
-                      value={cat} 
-                      className="bg-[#202020] text-white py-2"
-                    >
-                      {cat}
-                    </option>
-                  ))}
-                </select>
+                <Select value={category} onValueChange={(value) => {
+                  console.log('Category selected:', value);
+                  setCategory(value);
+                }} required>
+                  <SelectTrigger className="mt-1 bg-white/10 border-white/20 text-white hover:bg-white/20 focus:border-[#A95BAB] focus:ring-[#A95BAB]">
+                    <SelectValue placeholder="Select a category" className="text-white" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#1a1a1a] border-[#A95BAB]/30 max-h-60 overflow-y-auto">
+                    {categories.map((cat) => (
+                      <SelectItem
+                        key={cat}
+                        value={cat}
+                        className="text-white hover:bg-[#A95BAB]/30 focus:bg-[#A95BAB]/30 focus:text-white cursor-pointer data-[highlighted]:bg-[#A95BAB]/30 data-[highlighted]:text-white"
+                      >
+                        {cat}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {!category && (
                   <p className="text-sm text-gray-400 mt-1">
                     Please select a category from the dropdown
+                  </p>
+                )}
+                {category && (
+                  <p className="text-sm text-green-400 mt-1">
+                    Selected: {category}
                   </p>
                 )}
               </div>
@@ -428,9 +431,9 @@ export default function PostJobClient() {
                       value="fixed"
                       checked={budgetType === "fixed"}
                       onChange={(e) => setBudgetType(e.target.value)}
-                      className="w-4 h-4 text-[#A95BAB] bg-gray-100 border-gray-300 focus:ring-[#A95BAB] focus:ring-2"
+                      className="w-4 h-4 text-[#A95BAB] bg-transparent border-white/20 focus:ring-[#A95BAB] focus:ring-2"
                     />
-                    <Label htmlFor="fixed" className="text-white">
+                    <Label htmlFor="fixed" className="text-white cursor-pointer">
                       Fixed Price - Pay a set amount for the entire project
                     </Label>
                   </div>
@@ -442,9 +445,9 @@ export default function PostJobClient() {
                       value="hourly"
                       checked={budgetType === "hourly"}
                       onChange={(e) => setBudgetType(e.target.value)}
-                      className="w-4 h-4 text-[#A95BAB] bg-gray-100 border-gray-300 focus:ring-[#A95BAB] focus:ring-2"
+                      className="w-4 h-4 text-[#A95BAB] bg-transparent border-white/20 focus:ring-[#A95BAB] focus:ring-2"
                     />
-                    <Label htmlFor="hourly" className="text-white">
+                    <Label htmlFor="hourly" className="text-white cursor-pointer">
                       Hourly Rate - Pay by the hour
                     </Label>
                   </div>
@@ -478,36 +481,50 @@ export default function PostJobClient() {
                 <Label htmlFor="duration" className="text-white">
                   Project Duration
                 </Label>
-                <select 
-                  id="duration"
-                  value={projectDuration} 
-                  onChange={(e) => setProjectDuration(e.target.value)}
-                  className="mt-1 w-full h-10 bg-[#202020] border border-[#A95BAB]/30 text-white rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#A95BAB]/50 focus:border-[#A95BAB]/50 transition-all duration-200"
-                >
-                  <option value="">Select project duration</option>
-                  <option value="less-than-1-week">Less than 1 week</option>
-                  <option value="1-4-weeks">1-4 weeks</option>
-                  <option value="1-3-months">1-3 months</option>
-                  <option value="3-6-months">3-6 months</option>
-                  <option value="more-than-6-months">More than 6 months</option>
-                </select>
+                <Select value={projectDuration} onValueChange={setProjectDuration}>
+                  <SelectTrigger className="mt-1 bg-white/10 border-white/20 text-white hover:bg-white/20 focus:border-[#A95BAB] focus:ring-[#A95BAB]">
+                    <SelectValue placeholder="Select project duration" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#1a1a1a] border-[#A95BAB]/30">
+                    <SelectItem value="less-than-1-week" className="text-white hover:bg-[#A95BAB]/30 focus:bg-[#A95BAB]/30">
+                      Less than 1 week
+                    </SelectItem>
+                    <SelectItem value="1-4-weeks" className="text-white hover:bg-[#A95BAB]/30 focus:bg-[#A95BAB]/30">
+                      1-4 weeks
+                    </SelectItem>
+                    <SelectItem value="1-3-months" className="text-white hover:bg-[#A95BAB]/30 focus:bg-[#A95BAB]/30">
+                      1-3 months
+                    </SelectItem>
+                    <SelectItem value="3-6-months" className="text-white hover:bg-[#A95BAB]/30 focus:bg-[#A95BAB]/30">
+                      3-6 months
+                    </SelectItem>
+                    <SelectItem value="more-than-6-months" className="text-white hover:bg-[#A95BAB]/30 focus:bg-[#A95BAB]/30">
+                      More than 6 months
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
                 <Label htmlFor="experience" className="text-white">
                   Experience Level
                 </Label>
-                <select 
-                  id="experience"
-                  value={experienceLevel} 
-                  onChange={(e) => setExperienceLevel(e.target.value)}
-                  className="mt-1 w-full h-10 bg-[#202020] border border-[#A95BAB]/30 text-white rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#A95BAB]/50 focus:border-[#A95BAB]/50 transition-all duration-200"
-                >
-                  <option value="">Select required experience level</option>
-                  <option value="entry">Entry Level - New to this type of work</option>
-                  <option value="intermediate">Intermediate - Some experience</option>
-                  <option value="expert">Expert - Extensive experience</option>
-                </select>
+                <Select value={experienceLevel} onValueChange={setExperienceLevel}>
+                  <SelectTrigger className="mt-1 bg-white/10 border-white/20 text-white hover:bg-white/20 focus:border-[#A95BAB] focus:ring-[#A95BAB]">
+                    <SelectValue placeholder="Select required experience level" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#1a1a1a] border-[#A95BAB]/30">
+                    <SelectItem value="entry" className="text-white hover:bg-[#A95BAB]/30 focus:bg-[#A95BAB]/30">
+                      Entry Level - New to this type of work
+                    </SelectItem>
+                    <SelectItem value="intermediate" className="text-white hover:bg-[#A95BAB]/30 focus:bg-[#A95BAB]/30">
+                      Intermediate - Some experience
+                    </SelectItem>
+                    <SelectItem value="expert" className="text-white hover:bg-[#A95BAB]/30 focus:bg-[#A95BAB]/30">
+                      Expert - Extensive experience
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </CardContent>
           </Card>
@@ -568,7 +585,6 @@ export default function PostJobClient() {
           </div>
         </form>
       </div>
-
       <Footer />
     </div>
   )

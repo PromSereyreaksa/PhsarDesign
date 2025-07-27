@@ -16,7 +16,8 @@ import {
   portfolioAPI, 
   reviewsAPI, 
   applicationsAPI, 
-  messagesAPI 
+  messagesAPI,
+  projectsAPI
 } from '../../services/api';
 import { 
   addItem, 
@@ -49,11 +50,14 @@ export const fetchArtistById = (id) => async () => {
   }
 };
 
-export const fetchArtistByUserId = (userId) => async () => {
+export const fetchArtistByUserId = (userId) => async (dispatch) => {
   try {
+    dispatch(fetchStart());
     const response = await artistsAPI.getByUserId(userId);
+    dispatch(fetchSuccess({ type: 'currentArtist', data: response.data }));
     return response.data;
   } catch (error) {
+    dispatch(fetchFailure(error.response?.data?.message || 'Failed to fetch artist profile'));
     throw error;
   }
 };
@@ -117,11 +121,14 @@ export const fetchClientById = (id) => async () => {
   }
 };
 
-export const fetchClientByUserId = (userId) => async () => {
+export const fetchClientByUserId = (userId) => async (dispatch) => {
   try {
+    dispatch(fetchStart());
     const response = await clientsAPI.getByUserId(userId);
+    dispatch(fetchSuccess({ type: 'currentClient', data: response.data }));
     return response.data;
   } catch (error) {
+    dispatch(fetchFailure(error.response?.data?.message || 'Failed to fetch client profile'));
     throw error;
   }
 };
@@ -316,6 +323,19 @@ export const markMessageAsRead = (id) => async (dispatch) => {
     dispatch(updateItem({ type: 'messages', id, data: response.data }));
     return response.data;
   } catch (error) {
+    throw error;
+  }
+};
+
+// Missing action for projects by client ID
+export const fetchProjectsByClientId = (clientId) => async (dispatch) => {
+  try {
+    dispatch(fetchStart());
+    const response = await projectsAPI.getByClientId(clientId);
+    dispatch(fetchSuccess({ type: 'projects', data: response.data }));
+    return response.data;
+  } catch (error) {
+    dispatch(fetchFailure(error.response?.data?.message || 'Failed to fetch projects'));
     throw error;
   }
 };

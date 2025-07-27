@@ -1,6 +1,6 @@
 import axios from 'axios';
 import store from '../store/store';
-import { logout } from '../store/slices/authSlice';
+import { logout, loginSuccess } from '../store/slices/authSlice';
 
 const API_BASE_URL = 'http://127.0.0.1:5000';
 
@@ -10,6 +10,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // Include cookies for refresh tokens
 });
 
 // Request interceptor to add auth token
@@ -29,18 +30,53 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle auth errors
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401 && error.response?.data?.message?.includes('token')) {
-      // Only logout if it's actually a token-related auth error
-      store.dispatch(logout());
-      window.location.href = '/login';
-    }
-    return Promise.reject(error);
-  }
-);
+// Response interceptor to handle auth errors - TEMPORARILY DISABLED
+// api.interceptors.response.use(
+//   (response) => response,
+//   async (error) => {
+//     console.log('API Error:', error.response?.status, error.response?.data);
+    
+//     const originalRequest = error.config;
+    
+//     if (error.response?.status === 401 && !originalRequest._retry) {
+//       console.log('401 error detected, attempting token refresh...');
+//       originalRequest._retry = true;
+      
+//       // Try to refresh token first
+//       try {
+//         console.log('Attempting token refresh...');
+//         const refreshResponse = await axios.post(`${API_BASE_URL}/api/auth/refresh`, {}, {
+//           withCredentials: true // Include cookies for refresh token
+//         });
+        
+//         if (refreshResponse.data.token) {
+//           console.log('Token refresh successful, retrying original request...');
+//           // Update the store with new token
+//           const state = store.getState();
+//           const user = state.auth.user;
+          
+//           store.dispatch(loginSuccess({
+//             user: user,
+//             token: refreshResponse.data.token
+//           }));
+          
+//           // Retry the original request with new token
+//           originalRequest.headers.Authorization = `Bearer ${refreshResponse.data.token}`;
+//           return api(originalRequest);
+//         }
+//       } catch (refreshError) {
+//         console.error('Token refresh failed:', refreshError);
+//         // Only logout if refresh token is invalid
+//         console.log('Logging out due to refresh token failure');
+//         store.dispatch(logout());
+//         window.location.href = '/login';
+//         return Promise.reject(refreshError);
+//       }
+//     }
+    
+//     return Promise.reject(error);
+//   }
+// );
 
 // Auth API
 export const authAPI = {
@@ -64,11 +100,15 @@ export const usersAPI = {
 // Clients API
 export const clientsAPI = {
   getAll: () => api.get('/api/clients'),
-  getById: (id) => api.get(`/api/clients/${id}`),
+  getById: (id) => api.get(`/api/clients/id/${id}`),
   getByUserId: (userId) => api.get(`/api/clients/user/${userId}`),
+  getBySlug: (slug) => api.get(`/api/clients/${slug}`),
+  getByName: (name) => api.get(`/api/clients/name/${name}`),
   create: (clientData) => api.post('/api/clients', clientData),
-  update: (id, clientData) => api.put(`/api/clients/${id}`, clientData),
-  delete: (id) => api.delete(`/api/clients/${id}`),
+  update: (id, clientData) => api.put(`/api/clients/id/${id}`, clientData),
+  updateBySlug: (slug, clientData) => api.put(`/api/clients/${slug}`, clientData),
+  delete: (id) => api.delete(`/api/clients/id/${id}`),
+  deleteBySlug: (slug) => api.delete(`/api/clients/${slug}`),
 };
 
 // Artists API (formerly Freelancers)
@@ -77,9 +117,13 @@ export const artistsAPI = {
   getById: (id) => api.get(`/api/artists/${id}`),
   getByUserId: (userId) => api.get(`/api/artists/user/${userId}`),
   getByCategory: (category) => api.get(`/api/artists/category/${category}`),
+  getBySlug: (slug) => api.get(`/api/artists/slug/${slug}`),
+  search: (params) => api.get('/api/artists/search', { params }),
   create: (artistData) => api.post('/api/artists', artistData),
   update: (id, artistData) => api.put(`/api/artists/${id}`, artistData),
+  updateBySlug: (slug, artistData) => api.put(`/api/artists/slug/${slug}`, artistData),
   delete: (id) => api.delete(`/api/artists/${id}`),
+  deleteBySlug: (slug) => api.delete(`/api/artists/slug/${slug}`),
 };
 
 // Legacy alias for backward compatibility

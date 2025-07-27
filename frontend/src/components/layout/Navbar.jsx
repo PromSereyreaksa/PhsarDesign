@@ -1,19 +1,45 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { useSelector, useDispatch } from "react-redux"
 import { Search, Menu, X, User, Bell, MessageSquare } from 'lucide-react'
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
+import { Badge } from "../ui/badge"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu"
+import { GlobalSearch } from "../ui/global-search"
 import { logout } from "../../store/slices/authSlice"
+import { notificationsAPI } from "../../services/api"
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
   const { isAuthenticated, user } = useSelector((state) => state.auth)
   const dispatch = useDispatch()
   const navigate = useNavigate()
+
+  // Fetch unread notifications count
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      fetchUnreadCount()
+      // Set up polling for notification updates every 30 seconds
+      const interval = setInterval(fetchUnreadCount, 30000)
+      return () => clearInterval(interval)
+    }
+  }, [isAuthenticated, user])
+
+  const fetchUnreadCount = async () => {
+    try {
+      const response = await notificationsAPI.getUnreadCount()
+      if (response.data.success) {
+        setUnreadCount(response.data.data.total)
+      }
+    } catch (error) {
+      console.error('Failed to fetch unread count:', error)
+    }
+  }
 
   const handleLogout = () => {
     dispatch(logout())
@@ -39,8 +65,10 @@ export default function Navbar() {
             <div className="relative w-full">
               <Input
                 type="text"
-                placeholder="Search for creative services..."
-                className="pl-10 pr-4 py-2 w-full bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                placeholder="Search for artists and clients..."
+                onClick={() => setIsSearchOpen(true)}
+                className="pl-10 pr-4 py-2 w-full bg-white/10 border-white/20 text-white placeholder:text-gray-400 cursor-pointer"
+                readOnly
               />
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             </div>
@@ -85,9 +113,19 @@ export default function Navbar() {
 
             {isAuthenticated ? (
               <div className="flex items-center space-x-3">
-                <Button variant="ghost" size="sm" className="text-white hover:text-[#A95BAB] hover:bg-white/10">
-                  <Bell className="h-4 w-4" />
-                </Button>
+                <Link to="/notifications">
+                  <Button variant="ghost" size="sm" className="text-white hover:text-[#A95BAB] hover:bg-white/10 relative">
+                    <Bell className="h-4 w-4" />
+                    {unreadCount > 0 && (
+                      <Badge 
+                        variant="destructive" 
+                        className="absolute -top-1 -right-1 h-5 w-5 text-xs flex items-center justify-center p-0 bg-red-500"
+                      >
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </Badge>
+                    )}
+                  </Button>
+                </Link>
                 <Button variant="ghost" size="sm" className="text-white hover:text-[#A95BAB] hover:bg-white/10">
                   <Link to="/messages">
                     <MessageSquare className="h-4 w-4" />
@@ -100,6 +138,9 @@ export default function Navbar() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="bg-black border-gray-600 z-[100]">
+                    <DropdownMenuItem className="text-white hover:text-[#A95BAB] hover:bg-white/10">
+                      <Link to="/notifications">Notifications</Link>
+                    </DropdownMenuItem>
                     <DropdownMenuItem className="text-white hover:text-[#A95BAB] hover:bg-white/10">
                       <Link to="/profile">Profile</Link>
                     </DropdownMenuItem>
@@ -161,8 +202,10 @@ export default function Navbar() {
               <div className="mb-3">
                 <Input
                   type="text"
-                  placeholder="Search for creative services..."
-                  className="w-full bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                  placeholder="Search for artists and clients..."
+                  onClick={() => setIsSearchOpen(true)}
+                  className="w-full bg-white/10 border-white/20 text-white placeholder:text-gray-400 cursor-pointer"
+                  readOnly
                 />
               </div>
               <Link to="/browse-jobs" className="block px-3 py-2 text-white hover:text-[#A95BAB]">
@@ -206,6 +249,12 @@ export default function Navbar() {
           </div>
         )}
       </div>
+      
+      {/* Global Search Modal */}
+      <GlobalSearch 
+        isOpen={isSearchOpen} 
+        onClose={() => setIsSearchOpen(false)} 
+      />
     </nav>
   )
 }
