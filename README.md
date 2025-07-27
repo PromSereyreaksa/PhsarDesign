@@ -1,4 +1,4 @@
-# ArtLink - Creative Freelancing Platform
+# PhsarDesign - Creative Freelancing Platform
 
 A modern platform connecting clients with talented artists for creative projects and services. Built with Node.js, Express, React, and PostgreSQL.
 
