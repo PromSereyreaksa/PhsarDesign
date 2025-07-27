@@ -186,9 +186,7 @@ export const validateProject = [
     .trim()
     .isLength({ min: 2, max: 50 })
     .withMessage('Category must be between 2 and 50 characters'),
-  body('clientId')
-    .isInt({ min: 1 })
-    .withMessage('Client ID must be a valid positive integer'),
+  // Note: clientId is extracted from authenticated user, not from request body
   body('freelancerId')
     .optional()
     .isInt({ min: 1 })
@@ -239,6 +237,16 @@ export const validateUUID = [
       }
       return true;
     }),
+  handleValidationErrors
+];
+
+// User ID validation middleware
+export const validateUserId = [
+  param('userId')
+    .isInt({ min: 1 })
+    .withMessage('User ID must be a positive integer')
+    .notEmpty()
+    .withMessage('User ID is required'),
   handleValidationErrors
 ];
 
@@ -445,8 +453,8 @@ export const requestLogger = (req, res, next) => {
     };
     
     if (req.user) {
-      logData.userId = req.user.id;
-      logData.userType = req.user.userType;
+      logData.userId = req.user.userId;
+      logData.userType = req.user.role;
     }
     
     // Log suspicious activity

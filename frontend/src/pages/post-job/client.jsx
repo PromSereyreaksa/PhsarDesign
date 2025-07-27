@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { useSelector, useDispatch } from "react-redux"
+import { useDispatch } from "react-redux"
 import Navbar from "../../components/layout/Navbar"
 import Footer from "../../components/layout/Footer"
 import { Button } from "../../components/ui/button"
@@ -31,7 +31,6 @@ export default function PostJobClient() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   
-  const { user } = useSelector((state) => state.auth)
   const dispatch = useDispatch()
   const navigate = useNavigate()
 
@@ -83,21 +82,27 @@ export default function PostJobClient() {
 
     try {
       const projectData = {
-        userId: user.userId, // This will be converted to clientId in the backend
+        // Remove userId - backend extracts this from auth token
         title: jobTitle,
         description: jobDescription,
         budget: parseFloat(budgetAmount),
-        required_skills: skills.join(", "),
+        category: skills.join(", "), // Use category instead of required_skills
         // Optional: we could add deadline calculation based on projectDuration
       }
 
       const response = await projectsAPI.create(projectData)
-      dispatch(addItem({ type: 'projects', data: response.data }))
       
-      // Navigate to dashboard or project view
-      navigate("/dashboard")
+      // Backend returns {success, message, data} - use response.data.data for the actual project
+      if (response.data.success && response.data.data) {
+        dispatch(addItem({ type: 'projects', data: response.data.data }))
+        // Navigate to dashboard or project view
+        navigate("/dashboard")
+      } else {
+        throw new Error(response.data.message || 'Failed to create project')
+      }
     } catch (error) {
-      const errorMessage = error.response?.data?.error || "Failed to create project. Please try again."
+      console.error('Project creation error:', error.response?.data || error.message)
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || "Failed to create project. Please try again."
       setError(errorMessage)
     } finally {
       setLoading(false)

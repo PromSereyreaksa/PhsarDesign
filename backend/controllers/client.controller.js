@@ -2,7 +2,22 @@ import { Clients, Projects } from "../models/index.js";
 
 export const createClient = async (req, res) => {
     try {
-        const client = await Clients.create(req.body);
+        // Extract userId from authenticated user
+        const userId = req.user.userId;
+        
+        // Check if user already has a client profile
+        const existingClient = await Clients.findOne({ where: { userId } });
+        if (existingClient) {
+            return res.status(400).json({ error: "User already has a client profile" });
+        }
+        
+        // Create client with userId from authenticated user
+        const clientData = {
+            ...req.body,
+            userId: userId
+        };
+        
+        const client = await Clients.create(clientData);
         res.status(201).json(client);
     } catch (error) {
         console.error("Error creating client:", error);
@@ -118,12 +133,24 @@ export const deleteClientBySlug = async (req, res) => {
 
 export const getClientByUserId = async (req, res) => {
     try {
+        const userId = req.params.userId;
+        
+        // Validate userId parameter
+        if (!userId || userId === 'undefined' || userId === 'null' || isNaN(parseInt(userId))) {
+            return res.status(400).json({ 
+                error: "Invalid user ID. User ID must be a valid number.",
+                received: userId
+            });
+        }
+        
         const client = await Clients.findOne({
-            where: { userId: req.params.userId }
+            where: { userId: parseInt(userId) }
         });
+        
         if (!client) {
             return res.status(404).json({ error: "Client not found" });
         }
+        
         res.status(200).json(client);
     } catch (error) {
         console.error("Error fetching client by user ID:", error);

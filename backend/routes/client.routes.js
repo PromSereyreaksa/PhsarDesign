@@ -15,17 +15,17 @@ import {
     getClientsByName
 } from '../controllers/client.controller.js';
 import { authenticate } from '../middlewares/auth.middleware.js';
-import { validateSlug } from '../middlewares/security.middleware.js';
+import { validateSlug, validateUserId } from '../middlewares/security.middleware.js';
 
 const router = express.Router();
 
 
 // Client CRUD operations with slug support
-router.post('/', createClient);
+router.post('/', authenticate, createClient);
 router.get('/', getAllClients);
 
 // Special routes that need to come before slug/ID matching
-router.get('/user/:userId', getClientByUserId);
+router.get('/user/:userId', validateUserId, getClientByUserId);
 router.get('/with-projects', getClientsWithProjects);
 router.get('/organization/:organization', getClientByOrganization);
 router.get('/name/:name', getClientsByName);

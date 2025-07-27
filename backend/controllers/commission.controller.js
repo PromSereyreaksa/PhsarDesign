@@ -3,23 +3,23 @@ import { CommissionRequest, Users, Artist, Clients } from "../models/index.js";
 export const createCommissionRequest = async (req, res) => {
   try {
     const { artistId, description, price } = req.body;
-    const clientId = req.user.userId;
+    const clientUserId = req.user.userId;
 
     // Validate that the requester is a client
-    const clientProfile = await Clients.findOne({ where: { userId: clientId } });
+    const clientProfile = await Clients.findOne({ where: { userId: clientUserId } });
     if (!clientProfile) {
       return res.status(403).json({ error: "Only clients can create commission requests" });
     }
 
-    // Validate that the artist exists
-    const artist = await Artist.findByPk(artistId);
+    // Validate that the artist exists and get their userId
+    const artist = await Artist.findOne({ where: { artistId: artistId } });
     if (!artist) {
       return res.status(404).json({ error: "Artist not found" });
     }
 
     const commission = await CommissionRequest.create({
-      artistId,
-      clientId,
+      artistId: artist.userId, // Use the artist's userId, not artistId
+      clientId: clientUserId,
       description,
       price,
       status: 'pending'
@@ -41,16 +41,29 @@ export const createCommissionRequest = async (req, res) => {
 
 export const getCommissionsByArtist = async (req, res) => {
   try {
-    const artistId = req.params.artistId || req.user.userId;
+    const userId = req.params.artistId || req.user.userId;
     
-    // Validate that the artist exists
-    const artist = await Artist.findOne({ where: { userId: artistId } });
-    if (!artist) {
-      return res.status(404).json({ error: "Artist not found" });
+    // If artistId param is provided, it might be the Artist model's artistId
+    // We need to convert it to userId
+    let artistUserId = userId;
+    
+    if (req.params.artistId) {
+      // Check if this is an Artist.artistId (numeric ID from Artist table)
+      const artist = await Artist.findOne({ where: { artistId: req.params.artistId } });
+      if (artist) {
+        artistUserId = artist.userId;
+      } else {
+        // Maybe it's already a userId, validate that user exists
+        const user = await Users.findByPk(req.params.artistId);
+        if (!user) {
+          return res.status(404).json({ error: "Artist not found" });
+        }
+        artistUserId = req.params.artistId;
+      }
     }
 
     const commissions = await CommissionRequest.findAll({
-      where: { artistId: artist.artistId },
+      where: { artistId: artistUserId }, // Use userId in artistId field
       include: [
         { model: Users, as: "client" }
       ],
@@ -97,7 +110,7 @@ export const updateCommissionStatus = async (req, res) => {
     // Check permissions - only artist can accept/reject, only client can mark as completed
     if (status === 'accepted' || status === 'rejected') {
       const artist = await Artist.findOne({ where: { userId } });
-      if (!artist || commission.artistId !== artist.artistId) {
+      if (!artist || commission.artistId !== artist.userId) {
         return res.status(403).json({ error: "Only the assigned artist can accept or reject commissions" });
       }
     } else if (status === 'completed') {
@@ -135,7 +148,7 @@ export const addProgressUpdate = async (req, res) => {
 
     // Check that the user is the assigned artist
     const artist = await Artist.findOne({ where: { userId } });
-    if (!artist || commission.artistId !== artist.artistId) {
+    if (!artist || commission.artistId !== artist.userId) {
       return res.status(403).json({ error: "Only the assigned artist can add progress updates" });
     }
 
@@ -166,7 +179,7 @@ export const getCommissionById = async (req, res) => {
 
     // Check permissions - only client or artist involved can view
     const artist = await Artist.findOne({ where: { userId } });
-    const isArtist = artist && commission.artistId === artist.artistId;
+    const isArtist = artist && commission.artistId === artist.userId;
     const isClient = commission.clientId === userId;
 
     if (!isArtist && !isClient) {

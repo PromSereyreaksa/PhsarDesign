@@ -1,9 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { useSelector } from "react-redux"
-import { jobPostsAPI, clientsAPI } from "../../services/api"
+import { useDispatch } from "react-redux"
+import { projectsAPI } from "../../services/api"
+import { addItem } from "../../store/slices/apiSlice"
 import Navbar from "../../components/layout/Navbar"
 import Footer from "../../components/layout/Footer"
 import { Button } from "../../components/ui/button"
@@ -11,19 +12,22 @@ import { Input } from "../../components/ui/input"
 import { Textarea } from "../../components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
 import { Label } from "../../components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select"
 import { Checkbox } from "../../components/ui/checkbox"
-import { RadioGroup, RadioGroupItem } from "../../components/ui/radio-group"
 import { Badge } from "../../components/ui/badge"
 import { X, Plus, DollarSign, Users, Upload, ImageIcon } from "lucide-react"
 
 export default function PostJobClient() {
   const navigate = useNavigate()
-  const { user } = useSelector(state => state.auth)
+  const dispatch = useDispatch()
   
   const [jobTitle, setJobTitle] = useState("")
   const [jobDescription, setJobDescription] = useState("")
   const [category, setCategory] = useState("")
+  
+  // Debug category state changes
+  useEffect(() => {
+    console.log('Category state changed to:', category)
+  }, [category])
   const [skills, setSkills] = useState([])
   const [newSkill, setNewSkill] = useState("")
   const [budgetType, setBudgetType] = useState("fixed")
@@ -33,8 +37,22 @@ export default function PostJobClient() {
   const [referenceImages, setReferenceImages] = useState([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
 
-  const categories = ["Digital Art", "Logo Design", "Graphic Design", "3D Design", "Character Design"]
+  const categories = [
+    "Digital Art",
+    "Logo Design", 
+    "Graphic Design",
+    "3D Design",
+    "Character Design",
+    "Web Development",
+    "UI/UX Design",
+    "Illustration",
+    "Animation",
+    "Photography",
+    "Brand Identity",
+    "Concept Art"
+  ]
 
   const suggestedSkills = [
     "Digital Art",
@@ -83,40 +101,73 @@ export default function PostJobClient() {
     setError("")
 
     try {
-      // First, get the client ID from the user
-      if (!user) {
-        setError("You must be logged in to post a project")
+      // Validate frontend data before sending
+      if (!jobTitle?.trim() || jobTitle.trim().length < 3) {
+        setError("Project title must be at least 3 characters long")
+        setIsSubmitting(false)
         return
       }
 
-      // Get client profile
-      const clientResponse = await clientsAPI.getByUserId(user.userId)
-      const clientId = clientResponse.data.clientId
-
-      const jobPostData = {
-        title: jobTitle,
-        description: jobDescription,
-        category: category.toLowerCase().replace(/ /g, '-'),
-        budget: parseFloat(budgetAmount),
-        budgetType,
-        skillsRequired: skills.join(', '),
-        experienceLevel,
-        deadline: null, // You might want to add this to the form
-        location: 'Remote', // You might want to add this to the form
-        attachments: referenceImages.map(img => img.name) // Store just names for now
+      if (!jobDescription?.trim() || jobDescription.trim().length < 10) {
+        setError("Project description must be at least 10 characters long")
+        setIsSubmitting(false)
+        return
       }
 
-      const response = await jobPostsAPI.create(clientId, jobPostData)
+      if (!budgetAmount || parseFloat(budgetAmount) <= 0) {
+        setError("Budget must be a positive number")
+        setIsSubmitting(false)
+        return
+      }
+
+      if (!category || category.trim() === "") {
+        setError("Please select a category from the dropdown")
+        setIsSubmitting(false)
+        return
+      }
+
+      const projectData = {
+        title: jobTitle.trim(),
+        description: jobDescription.trim(),
+        budget: parseFloat(budgetAmount),
+        category: category.trim(),
+        projectDuration: projectDuration.trim(),
+        experienceLevel: experienceLevel.trim(),
+      }
+
+      console.log('Submitting project data:', projectData);
+
+      const response = await projectsAPI.create(projectData)
       
-      if (response.data) {
-        // Redirect to dashboard or job browsing page
-        navigate('/browse-job', { 
-          state: { message: 'Job posted successfully!' }
-        })
+      // Backend returns {success, message, data} - access response.data.data
+      if (response.data.success && response.data.data) {
+        dispatch(addItem({ type: 'projects', data: response.data.data }))
+        setSuccess("Project created successfully! Redirecting to dashboard...")
+        setError("")
+        setTimeout(() => {
+          navigate("/dashboard", { 
+            state: { message: 'Project posted successfully!' }
+          })
+        }, 2000)
+      } else {
+        throw new Error(response.data.message || 'Failed to create project')
       }
     } catch (error) {
-      console.error('Error posting job:', error)
-      setError(error.response?.data?.message || 'Failed to post job. Please try again.')
+      console.error('Project creation error:', error)
+      console.error('Error response:', error.response)
+      console.error('Error response data:', error.response?.data)
+      setSuccess("")
+      
+      // Show specific validation errors
+      if (error.response?.status === 400 && error.response.data.errors) {
+        const validationErrors = error.response.data.errors
+          .map(err => `${err.field}: ${err.message}`)
+          .join('. ')
+        console.error('Validation errors:', validationErrors)
+        setError(validationErrors)
+      } else {
+        setError(error.response?.data?.message || "Failed to create project. Please try again.")
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -142,6 +193,12 @@ export default function PostJobClient() {
           </h1>
           <p className="text-lg text-gray-300">Find the perfect artist for your creative project</p>
         </div>
+
+        {success && (
+          <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4 mb-6">
+            <p className="text-green-400">{success}</p>
+          </div>
+        )}
 
         {error && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-6">
@@ -178,22 +235,32 @@ export default function PostJobClient() {
                 <Label htmlFor="category" className="text-white">
                   Category *
                 </Label>
-                <Select value={category} onValueChange={setCategory} required>
-                  <SelectTrigger className="mt-1 bg-[#202020] border-[#A95BAB]/30 text-white">
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#202020] border-[#A95BAB]/30">
-                    {categories.map((cat) => (
-                      <SelectItem
-                        key={cat}
-                        value={cat}
-                        className="text-white hover:bg-[#A95BAB]/20 focus:bg-[#A95BAB]/20 focus:text-white"
-                      >
-                        {cat}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <select 
+                  id="category"
+                  name="category"
+                  value={category} 
+                  onChange={(e) => {
+                    setCategory(e.target.value);
+                  }}
+                  className="mt-1 w-full h-10 bg-[#202020] border border-[#A95BAB]/30 text-white rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#A95BAB]/50 focus:border-[#A95BAB]/50 transition-all duration-200"
+                  required
+                >
+                  <option value="">Select a category</option>
+                  {categories.map((cat) => (
+                    <option 
+                      key={cat} 
+                      value={cat} 
+                      className="bg-[#202020] text-white py-2"
+                    >
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+                {!category && (
+                  <p className="text-sm text-gray-400 mt-1">
+                    Please select a category from the dropdown
+                  </p>
+                )}
               </div>
 
               <div>
@@ -352,20 +419,36 @@ export default function PostJobClient() {
             <CardContent className="space-y-6">
               <div>
                 <Label className="text-white">Budget Type *</Label>
-                <RadioGroup value={budgetType} onValueChange={setBudgetType} className="mt-2">
+                <div className="mt-2 space-y-3">
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="fixed" id="fixed" />
+                    <input 
+                      type="radio" 
+                      id="fixed" 
+                      name="budgetType"
+                      value="fixed"
+                      checked={budgetType === "fixed"}
+                      onChange={(e) => setBudgetType(e.target.value)}
+                      className="w-4 h-4 text-[#A95BAB] bg-gray-100 border-gray-300 focus:ring-[#A95BAB] focus:ring-2"
+                    />
                     <Label htmlFor="fixed" className="text-white">
                       Fixed Price - Pay a set amount for the entire project
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="hourly" id="hourly" />
+                    <input 
+                      type="radio" 
+                      id="hourly" 
+                      name="budgetType"
+                      value="hourly"
+                      checked={budgetType === "hourly"}
+                      onChange={(e) => setBudgetType(e.target.value)}
+                      className="w-4 h-4 text-[#A95BAB] bg-gray-100 border-gray-300 focus:ring-[#A95BAB] focus:ring-2"
+                    />
                     <Label htmlFor="hourly" className="text-white">
                       Hourly Rate - Pay by the hour
                     </Label>
                   </div>
-                </RadioGroup>
+                </div>
               </div>
 
               <div>
@@ -395,74 +478,36 @@ export default function PostJobClient() {
                 <Label htmlFor="duration" className="text-white">
                   Project Duration
                 </Label>
-                <Select value={projectDuration} onValueChange={setProjectDuration}>
-                  <SelectTrigger className="mt-1 bg-[#202020] border-[#A95BAB]/30 text-white">
-                    <SelectValue placeholder="Select project duration" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#202020] border-[#A95BAB]/30">
-                    <SelectItem
-                      value="less-than-1-week"
-                      className="text-white hover:bg-[#A95BAB]/20 focus:bg-[#A95BAB]/20 focus:text-white"
-                    >
-                      Less than 1 week
-                    </SelectItem>
-                    <SelectItem
-                      value="1-4-weeks"
-                      className="text-white hover:bg-[#A95BAB]/20 focus:bg-[#A95BAB]/20 focus:text-white"
-                    >
-                      1-4 weeks
-                    </SelectItem>
-                    <SelectItem
-                      value="1-3-months"
-                      className="text-white hover:bg-[#A95BAB]/20 focus:bg-[#A95BAB]/20 focus:text-white"
-                    >
-                      1-3 months
-                    </SelectItem>
-                    <SelectItem
-                      value="3-6-months"
-                      className="text-white hover:bg-[#A95BAB]/20 focus:bg-[#A95BAB]/20 focus:text-white"
-                    >
-                      3-6 months
-                    </SelectItem>
-                    <SelectItem
-                      value="more-than-6-months"
-                      className="text-white hover:bg-[#A95BAB]/20 focus:bg-[#A95BAB]/20 focus:text-white"
-                    >
-                      More than 6 months
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                <select 
+                  id="duration"
+                  value={projectDuration} 
+                  onChange={(e) => setProjectDuration(e.target.value)}
+                  className="mt-1 w-full h-10 bg-[#202020] border border-[#A95BAB]/30 text-white rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#A95BAB]/50 focus:border-[#A95BAB]/50 transition-all duration-200"
+                >
+                  <option value="">Select project duration</option>
+                  <option value="less-than-1-week">Less than 1 week</option>
+                  <option value="1-4-weeks">1-4 weeks</option>
+                  <option value="1-3-months">1-3 months</option>
+                  <option value="3-6-months">3-6 months</option>
+                  <option value="more-than-6-months">More than 6 months</option>
+                </select>
               </div>
 
               <div>
                 <Label htmlFor="experience" className="text-white">
                   Experience Level
                 </Label>
-                <Select value={experienceLevel} onValueChange={setExperienceLevel}>
-                  <SelectTrigger className="mt-1 bg-[#202020] border-[#A95BAB]/30 text-white">
-                    <SelectValue placeholder="Select required experience level" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#202020] border-[#A95BAB]/30">
-                    <SelectItem
-                      value="entry"
-                      className="text-white hover:bg-[#A95BAB]/20 focus:bg-[#A95BAB]/20 focus:text-white"
-                    >
-                      Entry Level - New to this type of work
-                    </SelectItem>
-                    <SelectItem
-                      value="intermediate"
-                      className="text-white hover:bg-[#A95BAB]/20 focus:bg-[#A95BAB]/20 focus:text-white"
-                    >
-                      Intermediate - Some experience
-                    </SelectItem>
-                    <SelectItem
-                      value="expert"
-                      className="text-white hover:bg-[#A95BAB]/20 focus:bg-[#A95BAB]/20 focus:text-white"
-                    >
-                      Expert - Extensive experience
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                <select 
+                  id="experience"
+                  value={experienceLevel} 
+                  onChange={(e) => setExperienceLevel(e.target.value)}
+                  className="mt-1 w-full h-10 bg-[#202020] border border-[#A95BAB]/30 text-white rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#A95BAB]/50 focus:border-[#A95BAB]/50 transition-all duration-200"
+                >
+                  <option value="">Select required experience level</option>
+                  <option value="entry">Entry Level - New to this type of work</option>
+                  <option value="intermediate">Intermediate - Some experience</option>
+                  <option value="expert">Expert - Extensive experience</option>
+                </select>
               </div>
             </CardContent>
           </Card>

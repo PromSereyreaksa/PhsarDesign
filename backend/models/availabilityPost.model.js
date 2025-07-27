@@ -87,7 +87,7 @@ AvailabilityPost.init(
     },
     slug: {
       type: DataTypes.STRING(265),
-      allowNull: false,
+      allowNull: true, // Allow null during migration
       unique: true,
       validate: {
         is: /^[a-z0-9-]+$/i,

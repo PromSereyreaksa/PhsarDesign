@@ -93,7 +93,7 @@ Clients.init(
     },
     slug: {
       type: DataTypes.STRING(110),
-      allowNull: false,
+      allowNull: true, // Allow null during migration
       unique: true,
       validate: {
         is: /^[a-z0-9-]+$/i, // Only letters, numbers, and hyphens
