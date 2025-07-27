@@ -3,8 +3,31 @@ import { Op } from "sequelize";
 
 export const createArtist = async (req, res) => {
     try {
-        const artist = await Artist.create(req.body);
-        res.status(201).json(artist);
+        // Extract userId from authenticated user
+        const userId = req.user.userId;
+        
+        // Check if user already has an artist profile
+        const existingArtist = await Artist.findOne({ where: { userId } });
+        if (existingArtist) {
+            return res.status(400).json({ error: "User already has an artist profile" });
+        }
+        
+        // Create artist with userId from authenticated user
+        const artistData = {
+            ...req.body,
+            userId: userId
+        };
+        
+        const artist = await Artist.create(artistData);
+        
+        // Return artist with user details
+        const newArtist = await Artist.findByPk(artist.artistId, {
+            include: [
+                { model: Users, as: "user", attributes: ['email'] }
+            ]
+        });
+        
+        res.status(201).json(newArtist);
     } catch (error) {
         console.error("Error creating artist:", error);
         res.status(400).json({ error: error.message });
@@ -45,15 +68,27 @@ export const getArtistById = async (req, res) => {
 
 export const getArtistByUserId = async (req, res) => {
     try {
+        const userId = req.params.userId;
+        
+        // Validate userId parameter  
+        if (!userId || userId === 'undefined' || userId === 'null' || isNaN(parseInt(userId))) {
+            return res.status(400).json({ 
+                error: "Invalid user ID. User ID must be a valid number.",
+                received: userId
+            });
+        }
+        
         const artist = await Artist.findOne({
-            where: { userId: req.params.userId },
+            where: { userId: parseInt(userId) },
             include: [
                 { model: Users, as: "user", attributes: ['email'] }
             ]
         });
+        
         if (!artist) {
             return res.status(404).json({ error: "Artist not found" });
         }
+        
         res.status(200).json(artist);
     } catch (error) {
         console.error("Error fetching artist by user ID:", error);

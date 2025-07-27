@@ -13,7 +13,7 @@ import {
   deleteArtistBySlug
 } from '../controllers/artist.controller.js';
 import { authenticate } from '../middlewares/auth.middleware.js';
-import { validateSlug } from '../middlewares/security.middleware.js';
+import { validateSlug, validateUserId } from '../middlewares/security.middleware.js';
 
 const router = express.Router();
 
@@ -22,7 +22,7 @@ router.get('/', getAllArtists);
 router.get('/search', searchArtists);
 router.get('/category/:category', getArtistByCategory);
 router.get('/:id', getArtistById);
-router.get('/user/:userId', getArtistByUserId);
+router.get('/user/:userId', validateUserId, getArtistByUserId);
 
 // Protected routes (authentication required)
 router.post('/', authenticate, createArtist);

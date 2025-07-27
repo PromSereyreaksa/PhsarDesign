@@ -20,12 +20,9 @@ const router = express.Router();
 router.post('/', authenticate, authorize(['client']), validateProject, createProject);
 router.get('/', getAllProjects);
 router.get('/search/artists', authenticate, authorize(['client']), searchArtists);
-router.get('/client/:clientId', 
+router.get('/client', 
   authenticate,
-  [
-    param('clientId').isInt({ min: 1 }).withMessage('Client ID must be a valid integer'),
-    handleValidationErrors
-  ],
+  authorize(['client']),
   getClientProjects
 );
 router.get('/:id', validateUUID, getProjectById);
