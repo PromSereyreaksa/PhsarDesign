@@ -6,6 +6,11 @@ class Clients extends Model {
   static associate(models) {
     Clients.belongsTo(models.Users, { foreignKey: "userId", as: "user" });
     Clients.hasMany(models.Projects, { foreignKey: "clientId", as: "projects" });
+    Clients.hasMany(models.JobPost, { 
+      foreignKey: "clientId", 
+      as: "jobPosts",
+      onDelete: "CASCADE" 
+    });
   }
 
   // Method to generate slug from name

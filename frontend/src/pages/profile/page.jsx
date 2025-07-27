@@ -36,13 +36,13 @@ export default function Profile() {
       try {
         let fetchedProfile = null
         
-        if (user.role === 'freelancer') {
-          // Fetch freelancer profile
+        if (user.role === 'artist') {
+          // Fetch artist profile
           fetchedProfile = await dispatch(fetchFreelancerByUserId(user.id))
           
-          // Fetch freelancer's portfolios
-          if (fetchedProfile && fetchedProfile.freelancerId) {
-            await dispatch(fetchPortfoliosByFreelancerId(fetchedProfile.freelancerId))
+          // Fetch artist's portfolios
+          if (fetchedProfile && fetchedProfile.artistId) {
+            await dispatch(fetchPortfoliosByFreelancerId(fetchedProfile.artistId))
           }
         } else if (user.role === 'client') {
           // Fetch client profile
@@ -81,7 +81,7 @@ export default function Profile() {
     if (userProfile && user) {
       return {
         name: userProfile.name || user.name || "Unknown User",
-        title: userProfile.title || (user.role === 'freelancer' ? "Freelancer" : "Client"),
+        title: userProfile.title || (user.role === 'artist' ? "Artist" : "Client"),
         avatar: userProfile.avatar || "/placeholder.svg?height=120&width=120",
         location: userProfile.location || "Location not specified",
         memberSince: user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : "Recently joined",

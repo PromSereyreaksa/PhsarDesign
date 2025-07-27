@@ -1,7 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
+import { useSelector } from "react-redux"
+import { jobPostsAPI, clientsAPI } from "../../services/api"
 import Navbar from "../../components/layout/Navbar"
 import Footer from "../../components/layout/Footer"
 import { Button } from "../../components/ui/button"
@@ -16,6 +18,9 @@ import { Badge } from "../../components/ui/badge"
 import { X, Plus, DollarSign, Users, Upload, ImageIcon } from "lucide-react"
 
 export default function PostJobClient() {
+  const navigate = useNavigate()
+  const { user } = useSelector(state => state.auth)
+  
   const [jobTitle, setJobTitle] = useState("")
   const [jobDescription, setJobDescription] = useState("")
   const [category, setCategory] = useState("")
@@ -26,6 +31,8 @@ export default function PostJobClient() {
   const [projectDuration, setProjectDuration] = useState("")
   const [experienceLevel, setExperienceLevel] = useState("")
   const [referenceImages, setReferenceImages] = useState([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState("")
 
   const categories = ["Digital Art", "Logo Design", "Graphic Design", "3D Design", "Character Design"]
 
@@ -70,20 +77,49 @@ export default function PostJobClient() {
     setReferenceImages(referenceImages.filter((img) => img.id !== imageId))
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // Handle job posting logic here
-    console.log({
-      jobTitle,
-      jobDescription,
-      category,
-      skills,
-      budgetType,
-      budgetAmount,
-      projectDuration,
-      experienceLevel,
-      referenceImages,
-    })
+    setIsSubmitting(true)
+    setError("")
+
+    try {
+      // First, get the client ID from the user
+      if (!user) {
+        setError("You must be logged in to post a project")
+        return
+      }
+
+      // Get client profile
+      const clientResponse = await clientsAPI.getByUserId(user.userId)
+      const clientId = clientResponse.data.clientId
+
+      const jobPostData = {
+        title: jobTitle,
+        description: jobDescription,
+        category: category.toLowerCase().replace(/ /g, '-'),
+        budget: parseFloat(budgetAmount),
+        budgetType,
+        skillsRequired: skills.join(', '),
+        experienceLevel,
+        deadline: null, // You might want to add this to the form
+        location: 'Remote', // You might want to add this to the form
+        attachments: referenceImages.map(img => img.name) // Store just names for now
+      }
+
+      const response = await jobPostsAPI.create(clientId, jobPostData)
+      
+      if (response.data) {
+        // Redirect to dashboard or job browsing page
+        navigate('/browse-job', { 
+          state: { message: 'Job posted successfully!' }
+        })
+      }
+    } catch (error) {
+      console.error('Error posting job:', error)
+      setError(error.response?.data?.message || 'Failed to post job. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -106,6 +142,12 @@ export default function PostJobClient() {
           </h1>
           <p className="text-lg text-gray-300">Find the perfect artist for your creative project</p>
         </div>
+
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-6">
+            <p className="text-red-400">{error}</p>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Project Details */}
@@ -469,8 +511,13 @@ export default function PostJobClient() {
               >
                 Preview Project
               </Button>
-              <Button type="submit" size="lg" className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 text-white">
-                Post Project
+              <Button 
+                type="submit" 
+                size="lg" 
+                className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 text-white"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Posting Project..." : "Post Project"}
               </Button>
             </div>
           </div>

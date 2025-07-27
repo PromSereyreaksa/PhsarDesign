@@ -23,7 +23,7 @@ router.get('/search', searchAvailabilityPosts);
 router.get('/artist/:artistId', getAvailabilityPostsByArtist);
 
 // Protected routes (authentication required)
-router.use(authenticate);
+// router.use(authenticate);
 
 // CRUD operations with UUID
 router.post('/', validateAvailabilityPost, createAvailabilityPost);

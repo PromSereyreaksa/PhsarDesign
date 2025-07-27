@@ -4,18 +4,42 @@ import {
     getAllProjects,
     getProjectById,
     updateProject,
-    deleteProject
+    deleteProject,
+    getClientProjects,
+    updateProjectStatus,
+    searchArtists
 } from '../controllers/project.controller.js';
-import { authenticate } from '../middlewares/auth.middleware.js';
+import { authenticate, authorize } from '../middlewares/auth.middleware.js';
 import { validateProject, validateUUID } from '../middlewares/security.middleware.js';
+import { param, body } from "express-validator";
+import { handleValidationErrors } from "../middlewares/security.middleware.js";
 
 const router = express.Router();
 
 // Project CRUD operations (all using UUID)
-router.post('/', authenticate, validateProject, createProject);
+router.post('/', authenticate, authorize(['client']), validateProject, createProject);
 router.get('/', getAllProjects);
+router.get('/search/artists', authenticate, authorize(['client']), searchArtists);
+router.get('/client/:clientId', 
+  authenticate,
+  [
+    param('clientId').isInt({ min: 1 }).withMessage('Client ID must be a valid integer'),
+    handleValidationErrors
+  ],
+  getClientProjects
+);
 router.get('/:id', validateUUID, getProjectById);
-router.put('/:id', authenticate, validateUUID, validateProject, updateProject);
-router.delete('/:id', authenticate, validateUUID, deleteProject);
+router.put('/:id', authenticate, authorize(['client']), validateUUID, validateProject, updateProject);
+router.patch('/:id/status', 
+  authenticate, 
+  authorize(['client']),
+  [
+    validateUUID,
+    body('status').isIn(['open', 'in_progress', 'completed', 'cancelled', 'paid']).withMessage('Invalid status'),
+    handleValidationErrors
+  ],
+  updateProjectStatus
+);
+router.delete('/:id', authenticate, authorize(['client']), validateUUID, deleteProject);
 
 export default router;

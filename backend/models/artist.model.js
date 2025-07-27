@@ -28,6 +28,16 @@ class Artist extends Model {
       as: "availabilityPosts",
       onDelete: "CASCADE",
     });
+    Artist.hasMany(models.Portfolio, {
+      foreignKey: "artistId",
+      as: "portfolio",
+      onDelete: "CASCADE",
+    });
+    Artist.hasMany(models.Analytics, {
+      foreignKey: "artistId",
+      as: "analytics",
+      onDelete: "CASCADE",
+    });
   }
 
   // Method to generate slug from name

@@ -17,6 +17,12 @@ import reviewRoutes from './routes/review.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
 import paymentRoutes from './routes/payment.routes.js';
 import availabilityPostRoutes from './routes/availabilityPost.routes.js';
+import jobPostRoutes from './routes/jobPost.routes.js';
+import analyticsRoutes from './routes/analytics.routes.js';
+import portfolioRoutes from './routes/portfolio.routes.js';
+import applicationsRoutes from './routes/applications.routes.js';
+import messageRoutes from './routes/message.routes.js';
+import notificationRoutes from './routes/notification.routes.js';
 
 // Import middleware
 import errorHandler from './middlewares/error.middleware.js';
@@ -80,6 +86,12 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/availability-posts', availabilityPostRoutes);
+app.use('/api/job-posts', jobPostRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/portfolio', portfolioRoutes);
+app.use('/api/applications', applicationsRoutes);
+app.use('/api/messages', messageRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

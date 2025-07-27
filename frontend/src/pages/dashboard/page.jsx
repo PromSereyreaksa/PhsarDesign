@@ -16,6 +16,7 @@ import {
   fetchFreelancerByUserId,
   fetchClientByUserId 
 } from "../../store/actions/index"
+import { projectsAPI, applicationsAPI, analyticsAPI, clientsAPI, artistsAPI } from "../../services/api"
 
 export default function Dashboard() {
   const dispatch = useDispatch()
@@ -23,17 +24,14 @@ export default function Dashboard() {
   const { projects = [], conversations = [], isLoading, error } = useSelector((state) => state.api)
   const navigate = useNavigate()
   
-  // Extra safety check - redirect non-artists directly from component
-  useEffect(() => {
-    if (user && user.role !== 'artist' && user.role !== 'freelancer') {
-      navigate('/home');
-    }
-  }, [user, navigate]);
+  // Remove role restriction - dashboard supports both clients and artists
   
   const [activeTab, setActiveTab] = useState("overview")
   const [profile, setProfile] = useState(null)
   const [userProjects, setUserProjects] = useState([])
   const [userMessages, setUserMessages] = useState([])
+  const [applications, setApplications] = useState([])
+  const [analytics, setAnalytics] = useState(null)
 
   // Fetch user data on component mount
   useEffect(() => {
@@ -43,24 +41,42 @@ export default function Dashboard() {
       try {
         // Load user profile based on role
         let userProfile = null
-        if (user.role === 'artist' || user.role === 'freelancer') { // Support both role types for compatibility
-          userProfile = await dispatch(fetchFreelancerByUserId(user.id))
-        } else if (user.role === 'client') {
-          userProfile = await dispatch(fetchClientByUserId(user.id))
-          // Load client's projects
-          await dispatch(fetchProjectsByClientId(userProfile.id))
-        }
-        setProfile(userProfile)
+        if (user.role === 'artist' || user.role === 'freelancer') {
+          // Get artist profile
+          const artistResponse = await artistsAPI.getByUserId(user.userId)
+          userProfile = artistResponse.data
+          setProfile(userProfile)
 
-        // Load user conversations (commented out until messages API is implemented)
-        // await dispatch(fetchUserConversations(user.id))
+          // Load artist applications
+          const applicationsResponse = await applicationsAPI.getByArtistId(userProfile.artistId)
+          setApplications(applicationsResponse.data.applications || [])
+
+          // Load artist analytics
+          const analyticsResponse = await analyticsAPI.getArtistAnalytics(userProfile.artistId)
+          setAnalytics(analyticsResponse.data)
+
+        } else if (user.role === 'client') {
+          // Get client profile
+          const clientResponse = await clientsAPI.getByUserId(user.userId)
+          userProfile = clientResponse.data
+          setProfile(userProfile)
+
+          // Load client projects
+          const projectsResponse = await projectsAPI.getByClientId(userProfile.clientId)
+          setUserProjects(projectsResponse.data.projects || [])
+
+          // Load client analytics
+          const analyticsResponse = await analyticsAPI.getClientAnalytics(userProfile.clientId)
+          setAnalytics(analyticsResponse.data)
+        }
+
       } catch (error) {
         console.error('Error loading dashboard data:', error)
       }
     }
 
     loadUserData()
-  }, [dispatch, user])
+  }, [user])
 
   // Update local state when Redux state changes
   useEffect(() => {
@@ -75,31 +91,34 @@ export default function Dashboard() {
     }
   }, [conversations])
 
-  // Calculate stats from real data
+  // Calculate stats from real data based on user role
   const calculateStats = () => {
-    const activeProjectsCount = userProjects.filter(p => p.status === 'active' || p.status === 'in_progress').length
-    const completedProjectsCount = userProjects.filter(p => p.status === 'completed').length
-    const totalEarnings = userProjects
-      .filter(p => p.status === 'completed')
-      .reduce((total, p) => total + (parseFloat(p.budget?.replace(/[^0-9.-]+/g, "")) || 0), 0)
-    
-    const currentMonth = new Date().getMonth()
-    const currentYear = new Date().getFullYear()
-    const monthlyEarnings = userProjects
-      .filter(p => {
-        if (p.status !== 'completed' || !p.completedAt) return false
-        const completedDate = new Date(p.completedAt)
-        return completedDate.getMonth() === currentMonth && completedDate.getFullYear() === currentYear
-      })
-      .reduce((total, p) => total + (parseFloat(p.budget?.replace(/[^0-9.-]+/g, "")) || 0), 0)
-
-    return {
-      totalEarnings,
-      monthlyEarnings,
-      activeProjects: activeProjectsCount,
-      completedJobs: completedProjectsCount,
-      clientRating: 4.9, // This would need to be calculated from reviews
-      responseTime: "1 hour", // This would need to be calculated from message data
+    if (user?.role === 'client') {
+      const activeProjectsCount = userProjects.filter(p => p.status === 'open' || p.status === 'in_progress').length
+      const completedProjectsCount = userProjects.filter(p => p.status === 'completed').length
+      const totalSpent = userProjects
+        .filter(p => p.status === 'completed')
+        .reduce((total, p) => total + (parseFloat(p.budget) || 0), 0)
+      
+      return {
+        totalSpent,
+        monthlySpent: analytics?.overview?.totalSpent || 0,
+        activeProjects: activeProjectsCount,
+        completedProjects: completedProjectsCount,
+        totalApplications: analytics?.overview?.totalApplications || 0,
+        averageCompletionTime: analytics?.overview?.averageCompletionTime || 0,
+      }
+    } else {
+      // Artist stats
+      return {
+        totalEarnings: 0, // Would come from completed projects
+        monthlyEarnings: 0,
+        profileViews: analytics?.overview?.profileViews || 0,
+        portfolioViews: analytics?.overview?.portfolioViews || 0,
+        totalApplications: analytics?.overview?.totalApplications || 0,
+        acceptedApplications: analytics?.overview?.acceptedApplications || 0,
+        successRate: analytics?.successRate || 0,
+      }
     }
   }
 
@@ -202,65 +221,131 @@ export default function Dashboard() {
         {/* Stats Cards */}
         {!isLoading && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Total Earnings</p>
-                    <p className="text-2xl font-bold text-gray-900">${stats.totalEarnings.toLocaleString()}</p>
-                  </div>
-                  <TrendingUp className="h-8 w-8 text-green-600" />
-                </div>
-                <div className="mt-4 flex items-center text-sm">
-                  <span className="text-gray-600">Lifetime earnings</span>
-                </div>
-              </CardContent>
-            </Card>
+            {user?.role === 'client' ? (
+              <>
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Total Spent</p>
+                        <p className="text-2xl font-bold text-gray-900">${stats.totalSpent?.toLocaleString() || 0}</p>
+                      </div>
+                      <DollarSign className="h-8 w-8 text-green-600" />
+                    </div>
+                    <div className="mt-4 flex items-center text-sm">
+                      <span className="text-gray-600">Lifetime spending</span>
+                    </div>
+                  </CardContent>
+                </Card>
 
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">This Month</p>
-                    <p className="text-2xl font-bold text-gray-900">${stats.monthlyEarnings.toLocaleString()}</p>
-                  </div>
-                  <Calendar className="h-8 w-8 text-blue-600" />
-                </div>
-                <div className="mt-4 flex items-center text-sm">
-                  <span className="text-gray-600">Goal: $10,000</span>
-                </div>
-              </CardContent>
-            </Card>
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Active Projects</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.activeProjects || 0}</p>
+                      </div>
+                      <Briefcase className="h-8 w-8 text-blue-600" />
+                    </div>
+                    <div className="mt-4 flex items-center text-sm">
+                      <span className="text-gray-600">{stats.completedProjects || 0} completed</span>
+                    </div>
+                  </CardContent>
+                </Card>
 
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Active Projects</p>
-                    <p className="text-2xl font-bold text-gray-900">{stats.activeProjects}</p>
-                  </div>
-                  <Briefcase className="h-8 w-8 text-purple-600" />
-                </div>
-                <div className="mt-4 flex items-center text-sm">
-                  <span className="text-gray-600">{stats.completedJobs} completed</span>
-                </div>
-              </CardContent>
-            </Card>
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Applications</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.totalApplications || 0}</p>
+                      </div>
+                      <MessageSquare className="h-8 w-8 text-purple-600" />
+                    </div>
+                    <div className="mt-4 flex items-center text-sm">
+                      <span className="text-gray-600">Total received</span>
+                    </div>
+                  </CardContent>
+                </Card>
 
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Client Rating</p>
-                    <p className="text-2xl font-bold text-gray-900">{stats.clientRating}</p>
-                  </div>
-                  <Star className="h-8 w-8 text-yellow-500" />
-                </div>
-                <div className="mt-4 flex items-center text-sm">
-                  <span className="text-gray-600">Response: {stats.responseTime}</span>
-                </div>
-              </CardContent>
-            </Card>
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Avg Completion</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.averageCompletionTime || 0} days</p>
+                      </div>
+                      <Clock className="h-8 w-8 text-yellow-500" />
+                    </div>
+                    <div className="mt-4 flex items-center text-sm">
+                      <span className="text-gray-600">Project duration</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            ) : (
+              <>
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Profile Views</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.profileViews || 0}</p>
+                      </div>
+                      <TrendingUp className="h-8 w-8 text-green-600" />
+                    </div>
+                    <div className="mt-4 flex items-center text-sm">
+                      <span className="text-gray-600">Portfolio: {stats.portfolioViews || 0}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Applications</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.totalApplications || 0}</p>
+                      </div>
+                      <MessageSquare className="h-8 w-8 text-blue-600" />
+                    </div>
+                    <div className="mt-4 flex items-center text-sm">
+                      <span className="text-gray-600">{stats.acceptedApplications || 0} accepted</span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Success Rate</p>
+                        <p className="text-2xl font-bold text-gray-900">{Math.round(stats.successRate || 0)}%</p>
+                      </div>
+                      <Star className="h-8 w-8 text-purple-600" />
+                    </div>
+                    <div className="mt-4 flex items-center text-sm">
+                      <span className="text-gray-600">Application success</span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Total Earnings</p>
+                        <p className="text-2xl font-bold text-gray-900">${stats.totalEarnings?.toLocaleString() || 0}</p>
+                      </div>
+                      <DollarSign className="h-8 w-8 text-yellow-500" />
+                    </div>
+                    <div className="mt-4 flex items-center text-sm">
+                      <span className="text-gray-600">Lifetime earnings</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            )}
           </div>
         )}
 

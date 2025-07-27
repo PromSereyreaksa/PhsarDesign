@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "setup": "./setup-cloudinary.sh"
+    "setup": "./setup-cloudinary.sh",
+    "resync": "node scripts/runSeed.js",
+    "seed": "node scripts/runSeed.js"
   },
   "keywords": [],
   "author": "",

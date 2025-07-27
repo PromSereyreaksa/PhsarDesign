@@ -1,10 +1,129 @@
-# ArtLink - Commission-Based Art Platform
+# ArtLink - Creative Freelancing Platform
 
-A modern platform connecting clients with talented artists for custom art commissions. Built with Node.js, Express, React, and PostgreSQL.
+A modern platform connecting clients with talented artists for creative projects and services. Built with Node.js, Express, React, and PostgreSQL.
+
+## 🚨 HIGH PRIORITY TODO
+
+### Critical Issues to Fix (Top Priority)
+1. **Authentication System** - Currently empty/non-functional
+   - Fix empty `auth.controller.js` - implement login/register endpoints
+   - Implement JWT token generation/validation in `utils/jwt.js`
+   - Add input validation in `utils/validator.js`
+   - Fix authentication middleware for proper token handling
+
+2. **Database Issues**
+   - Fix `Projects` import typo (`Projectss` → `Projects`) in project controller
+   - Reorder routes in `user.routes.js` (specific routes before `:id`)
+   - Ensure all model associations are properly configured
+
+3. **API Endpoints Missing**
+   - Complete availability posts controller methods
+   - Fix job posts API integration
+   - Implement proper error handling across all controllers
+   - Add proper validation middleware
+
+4. **Frontend Integration**
+   - Connect authentication state to actual API calls
+   - Fix user context in application forms (remove hardcoded IDs)
+   - Implement proper error handling and loading states
+   - Add proper route protection based on authentication
+
+5. **File Upload System**
+   - Configure and test Cloudinary integration
+   - Implement proper image upload for portfolios
+   - Add file validation and error handling
+
+6. **Payment Integration**
+   - Configure Stripe integration for project payments
+   - Implement payment flow for completed projects
+   - Add payment status tracking
+
+### Development Tasks (Medium Priority)
+- [ ] Implement comprehensive form validation
+- [ ] Add proper error boundaries in React components
+- [ ] Implement proper logout functionality
+- [ ] Add pagination to all list views
+- [ ] Implement real-time notifications
+- [ ] Add comprehensive testing suite
+- [ ] Implement proper SEO optimization
+- [ ] Add accessibility features (ARIA labels, keyboard navigation)
+- [ ] Implement email verification system
+- [ ] Add password reset functionality
+
+### Feature Enhancements (Low Priority)
+- [ ] Add advanced search and filtering
+- [ ] Implement messaging system between users
+- [ ] Add project collaboration features
+- [ ] Implement portfolio showcase galleries
+- [ ] Add social media integration
+- [ ] Implement rating and review system improvements
+- [ ] Add project milestone tracking
+- [ ] Implement advanced analytics dashboard
+
+---
 
 ## 🎨 Platform Overview
 
-ArtLink has been transformed from a traditional freelancing platform into a streamlined commission-based art marketplace. The platform facilitates direct connections between clients seeking custom artwork and skilled artists ready to bring their visions to life.
+ArtLink is a comprehensive freelancing platform that facilitates connections between clients and creative professionals. The platform supports both:
+
+- **Service-Based Work**: Artists post their availability and services, clients hire them
+- **Project-Based Work**: Clients post job requirements, artists apply to work on them  
+- **Application System**: Comprehensive application flow for both service hiring and job applications
+- **Portfolio Management**: Artists showcase their work and manage their profiles
+- **Review System**: Clients and artists can leave reviews after project completion
+
+## 🔄 Platform Flow & Architecture
+
+### Current System Architecture
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│     CLIENTS     │    │    PLATFORM     │    │    ARTISTS      │
+│                 │    │                 │    │                 │
+│ - Post Jobs     │◄──►│ - Applications  │◄──►│ - Post Services │
+│ - Hire Artists  │    │ - Reviews       │    │ - Apply to Jobs │
+│ - Leave Reviews │    │ - Portfolios    │    │ - Manage Work   │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+### Two-Way Application System
+
+#### 1. **Client-to-Service Flow** (Client hires Artist)
+```
+Client browses services → Selects artist service → Submits application → Artist accepts/rejects
+```
+
+#### 2. **Artist-to-Job Flow** (Artist applies to Client job)
+```  
+Artist browses jobs → Finds suitable job → Submits proposal → Client accepts/rejects
+```
+
+### Key Models & Relationships
+
+```
+Users (role: client|artist)
+  ├── Clients (client profiles)
+  ├── Artists (artist profiles)  
+  ├── JobPosts (posted by clients)
+  ├── AvailabilityPosts (posted by artists)
+  ├── Applications (bidirectional - connects everything)
+  ├── Projects (work containers)
+  ├── Portfolio (artist showcases)
+  ├── Reviews (feedback system)
+  └── Messages (communication)
+```
+
+### Database Structure Overview
+
+- **Users**: Base authentication layer (email, password, role)
+- **Clients**: Client-specific data (organization, etc.)
+- **Artists**: Artist-specific data (skills, rates, portfolio)
+- **JobPosts**: Client job postings with requirements
+- **AvailabilityPosts**: Artist service offerings
+- **Applications**: Central connection system (artist↔client)
+- **Projects**: Active work sessions
+- **Portfolio**: Artist work showcases
+- **Reviews**: Rating and feedback system
 
 ---
 
@@ -58,126 +177,278 @@ cp .env.example .env
 # Configure your environment variables
 ```
 
-4. **Database Setup**
+4. **Database Setup & Seeding**
 ```bash
 # Create PostgreSQL database
 createdb artlink_dev
 
-# Run migration (transforms old schema to commission flow)
+# Seed the database with sample data
 cd backend
-node scripts/migrateToCommissionFlow.js
+node scripts/resyncAndSeed.js
 ```
 
 5. **Start Development Servers**
 ```bash
-# Backend (Terminal 1)
+# Backend (Terminal 1) - Port 5000
 cd backend
-npm run dev
+node server.js
 
-# Frontend (Terminal 2)  
+# Frontend (Terminal 2) - Port 5173
 cd frontend
 npm run dev
 ```
 
-The backend runs on `http://localhost:3000` and frontend on `http://localhost:5173`.
+**Important**: Backend runs on `http://localhost:5000` and frontend on `http://localhost:5173`
+
+### Current Development Status
+
+⚠️ **Authentication is currently disabled for development**
+- Authentication controllers are empty (see TODO above)
+- Some routes have auth temporarily disabled for testing
+- Database is pre-seeded with 100 users, artists, clients, and sample data
+
+### Development Workflow for New Developers
+
+1. **First Time Setup**:
+   - Run the seeding script to populate database with test data
+   - Backend will have 50 artists and 50 clients with sample posts
+   - Frontend can immediately browse and interact with sample data
+
+2. **Working on Features**:
+   - Check the TODO list above for priority items
+   - Authentication system needs to be built first
+   - Most CRUD operations work but need proper user context
+   - Forms work but currently use hardcoded user IDs (see TODO)
+
+3. **Testing Your Changes**:
+   - Re-run seeding script to reset data: `node scripts/resyncAndSeed.js`
+   - Frontend hot-reloads automatically
+   - Backend needs restart for model changes
 
 ---
 
-## 💼 Commission Flow
+## 💼 User Flows
 
 ### 👤 Client Journey
-1. **Browse Artists** - Discover talented artists via search and categories
-2. **Select Artist** - View portfolios, ratings, and hourly rates
-3. **Create Commission** - Describe project requirements and set budget
-4. **Submit Request** - Commission enters pending status
-5. **Track Progress** - Receive updates and images from artist
-6. **Complete & Pay** - Mark commission complete when satisfied
+
+#### Option 1: Hiring an Artist (Client-to-Service)
+1. **Browse Services** (`/browse-services`) - View artist availability posts
+2. **Select Artist** - View artist profile, portfolio, and rates  
+3. **Submit Application** - Use multi-step modal to request artist services
+4. **Wait for Response** - Artist accepts/rejects the application
+5. **Work Together** - Project becomes active, track progress
+6. **Complete & Review** - Mark complete and leave review
+
+#### Option 2: Posting a Job (Traditional)
+1. **Post Job** (`/post-job-client`) - Create job posting with requirements
+2. **Receive Applications** - Artists submit proposals to your job
+3. **Review & Select** - Choose the best artist from applications
+4. **Work Together** - Project becomes active
+5. **Complete & Review** - Mark complete and leave review
 
 ### 🎨 Artist Journey
-1. **Create Profile** - Showcase skills, portfolio, and set rates
-2. **Receive Requests** - View pending commission opportunities
-3. **Accept/Reject** - Choose projects that align with expertise
-4. **Work & Update** - Send progress updates with images
-5. **Deliver & Earn** - Complete commissions and build reputation
+
+#### Option 1: Posting Availability (Service-Based)
+1. **Post Availability** (`/post-availability`) - Create service offering
+2. **Receive Applications** - Clients request your services
+3. **Accept/Reject** - Choose clients you want to work with
+4. **Work & Deliver** - Complete projects and get paid
+5. **Build Reputation** - Receive reviews and repeat clients
+
+#### Option 2: Applying to Jobs (Traditional)  
+1. **Browse Jobs** (`/browse-job`) - View client job postings
+2. **Submit Proposals** - Apply to jobs that match your skills
+3. **Wait for Selection** - Client chooses from applicants
+4. **Work & Deliver** - Complete projects if selected
+5. **Build Portfolio** - Add completed work to showcase
+
+### 🔄 Application Flow Details
+
+Both flows use the same **Applications** system:
+
+```
+Application {
+  applicationType: "client_to_service" | "artist_to_job"
+  jobPostId: UUID (if artist applying to job)
+  availabilityPostId: UUID (if client hiring artist)
+  clientId: Integer
+  artistId: Integer
+  message: String (10-5000 chars)
+  proposedBudget: Float (optional)
+  proposedDeadline: Date (optional)
+  status: "pending" | "accepted" | "rejected"
+}
+```
 
 ---
 
-## 📊 Data Models
+## 📊 Data Models (Current Implementation)
 
 ### Core Models
 
-#### **User**
+#### **Users**
 ```javascript
 {
-  userId: Integer (PK),
-  email: String (unique),
-  password: String (hashed),
-  role: 'client' | 'artist',
-  stripeCustomerId: String,
+  userId: Integer (PK, AUTO_INCREMENT),
+  email: String (UNIQUE, NOT NULL),
+  password: String (HASHED, NOT NULL),
+  role: ENUM('client', 'artist'),
+  isEmailVerified: Boolean (DEFAULT false),
   createdAt: Date,
   updatedAt: Date
 }
 ```
 
-#### **Artist** *(formerly Freelancer)*
+#### **Artists** 
 ```javascript
 {
-  artistId: Integer (PK),
-  userId: Integer (FK),
-  name: String,
-  bio: Text,
+  artistId: Integer (PK, AUTO_INCREMENT),
+  userId: Integer (FK → Users.userId),
+  name: String (NOT NULL),
+  slug: String (UNIQUE),
   skills: Text,
   specialties: Text,
-  availability: String,
+  availability: ENUM('available', 'busy', 'unavailable'),
   hourlyRate: Decimal,
   avatarUrl: String,
   portfolioUrl: String,
   rating: Float (1-5),
-  totalCommissions: Integer
-}
-```
-
-#### **Client**
-```javascript
-{
-  clientId: Integer (PK),
-  userId: Integer (FK),
-  organization: String,
-  name: String,
-  slug: String (unique),
-  avatarUrl: String
-}
-```
-
-#### **CommissionRequest** *(New)*
-```javascript
-{
-  id: UUID (PK),
-  artistId: Integer (FK),
-  clientId: Integer (FK),
-  description: Text,
-  price: Decimal,
-  status: 'pending' | 'accepted' | 'rejected' | 'completed',
-  progressUpdates: JSON,
+  totalCommissions: Integer (DEFAULT 0),
   createdAt: Date,
   updatedAt: Date
 }
 ```
 
-#### **Project** *(Legacy - for job postings)*
+#### **Clients**
 ```javascript
 {
-  projectId: Integer (PK),
-  clientId: Integer (FK),
-  artistId: Integer (FK),
-  title: String,
+  clientId: Integer (PK, AUTO_INCREMENT),
+  userId: Integer (FK → Users.userId),
+  organization: String,
+  name: String (NOT NULL),
+  slug: String (UNIQUE),
+  avatarUrl: String,
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+#### **JobPost** *(Client job postings)*
+```javascript
+{
+  jobId: UUID (PK),
+  clientId: Integer (FK → Clients.clientId),
+  title: String (NOT NULL),
+  slug: String (UNIQUE),
+  description: Text (NOT NULL),
+  category: ENUM('illustration', 'design', 'photography', etc.),
+  budget: Float,
+  budgetType: ENUM('fixed', 'hourly', 'negotiable'),
+  deadline: Date,
+  location: String,
+  skillsRequired: Text,
+  experienceLevel: ENUM('beginner', 'intermediate', 'expert', 'any'),
+  attachments: JSON,
+  status: ENUM('open', 'closed', 'in_progress'),
+  applicationsCount: Integer (DEFAULT 0),
+  viewCount: Integer (DEFAULT 0),
+  expiresAt: Date,
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+#### **AvailabilityPost** *(Artist service offerings)*
+```javascript
+{
+  postId: UUID (PK),
+  artistId: Integer (FK → Artists.artistId),
+  title: String (NOT NULL),
+  slug: String (UNIQUE),
+  description: Text (NOT NULL),
+  category: ENUM('illustration', 'design', 'photography', etc.),
+  availabilityType: ENUM('immediate', 'within-week', 'within-month', 'flexible'),
+  duration: String,
+  budget: Float,
+  location: String,
+  skills: Text,
+  portfolioSamples: JSON,
+  contactPreference: ENUM('platform', 'email', 'direct'),
+  status: ENUM('active', 'paused', 'closed'),
+  expiresAt: Date,
+  viewCount: Integer (DEFAULT 0),
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+#### **Applications** *(Central connection system)*
+```javascript
+{
+  applicationId: Integer (PK, AUTO_INCREMENT),
+  projectId: UUID (FK → Projects.projectId, NULLABLE),
+  jobPostId: UUID (FK → JobPost.jobId, NULLABLE),
+  availabilityPostId: UUID (FK → AvailabilityPost.postId, NULLABLE),
+  artistId: Integer (FK → Artists.artistId, NULLABLE),
+  clientId: Integer (FK → Clients.clientId, NULLABLE),
+  applicationType: ENUM('artist_to_job', 'client_to_service') NOT NULL,
+  message: Text (10-5000 chars),
+  proposedBudget: Float (NULLABLE),
+  proposedDeadline: Date (NULLABLE),
+  status: ENUM('pending', 'accepted', 'rejected', 'converted_to_project'),
+  createdAt: Date
+}
+```
+
+#### **Projects** *(Active work sessions)*
+```javascript
+{
+  projectId: UUID (PK),
+  clientId: Integer (FK → Clients.clientId),
+  artistId: Integer (FK → Artists.artistId, NULLABLE),
+  title: String (NOT NULL),
   description: Text,
   budget: Float,
-  status: String,
-  paymentStatus: String,
-  paymentIntentId: String,
+  status: ENUM('open', 'in_progress', 'completed', 'cancelled'),
+  paymentStatus: ENUM('pending', 'processing', 'completed', 'failed'),
+  paymentIntentId: String (NULLABLE),
   createdAt: Date,
-  completedAt: Date
+  completedAt: Date (NULLABLE)
+}
+```
+
+#### **Portfolio** *(Artist showcases)*
+```javascript
+{
+  portfolioId: Integer (PK, AUTO_INCREMENT),
+  artistId: Integer (FK → Artists.artistId),
+  title: String (NOT NULL),
+  description: Text,
+  category: String,
+  imageUrl: String,
+  tags: JSON,
+  projectUrl: String (NULLABLE),
+  completionDate: Date,
+  likes: Integer (DEFAULT 0),
+  views: Integer (DEFAULT 0),
+  featured: Boolean (DEFAULT false),
+  isPublic: Boolean (DEFAULT true),
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+#### **Reviews** *(Rating system)*
+```javascript
+{
+  reviewId: Integer (PK, AUTO_INCREMENT),
+  artistId: Integer (FK → Artists.artistId),
+  userId: Integer (FK → Users.userId),
+  projectId: UUID (FK → Projects.projectId, NULLABLE),
+  rating: Integer (1-5),
+  reviewText: Text,
+  createdAt: Date,
+  updatedAt: Date
 }
 ```
 

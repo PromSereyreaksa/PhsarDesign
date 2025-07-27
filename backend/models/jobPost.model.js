@@ -2,15 +2,15 @@ import { DataTypes, Model, Op } from "sequelize";
 import { sequelize } from "../config/database.js";
 import { v4 as uuidv4 } from 'uuid';
 
-class AvailabilityPost extends Model {
+class JobPost extends Model {
   static associate(models) {
-    AvailabilityPost.belongsTo(models.Artist, { 
-      foreignKey: "artistId", 
-      as: "artist",
+    JobPost.belongsTo(models.Clients, { 
+      foreignKey: "clientId", 
+      as: "client",
       onDelete: "CASCADE" 
     });
-    AvailabilityPost.hasMany(models.Applications, { 
-      foreignKey: "availabilityPostId", 
+    JobPost.hasMany(models.Applications, { 
+      foreignKey: "jobPostId", 
       as: "applications",
       onDelete: "CASCADE" 
     });
@@ -31,7 +31,7 @@ class AvailabilityPost extends Model {
       let slug = baseSlug;
       let counter = 1;
 
-      while (await AvailabilityPost.findOne({ where: { slug } })) {
+      while (await JobPost.findOne({ where: { slug } })) {
         slug = `${baseSlug}-${counter}`;
         counter++;
       }
@@ -45,10 +45,10 @@ class AvailabilityPost extends Model {
         let slug = baseSlug;
         let counter = 1;
 
-        while (await AvailabilityPost.findOne({ 
+        while (await JobPost.findOne({ 
           where: { 
             slug,
-            postId: { [Op.ne]: post.postId }
+            jobId: { [Op.ne]: post.jobId }
           } 
         })) {
           slug = `${baseSlug}-${counter}`;
@@ -61,20 +61,20 @@ class AvailabilityPost extends Model {
   }
 }
 
-AvailabilityPost.init(
+JobPost.init(
   {
-    postId: {
+    jobId: {
       type: DataTypes.UUID,
       defaultValue: uuidv4,
       primaryKey: true,
       allowNull: false,
     },
-    artistId: {
+    clientId: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: "artists",
-        key: "artistId",
+        model: "clients",
+        key: "clientId",
       },
       onDelete: "CASCADE",
     },
@@ -107,72 +107,77 @@ AvailabilityPost.init(
         isIn: [["illustration", "design", "photography", "writing", "video", "music", "animation", "web-development", "other"]],
       },
     },
-    availabilityType: {
-      type: DataTypes.STRING(50),
-      allowNull: false,
-      defaultValue: "immediate",
-      validate: {
-        isIn: [["immediate", "within-week", "within-month", "flexible"]],
-      },
-    },
-    duration: {
-      type: DataTypes.STRING(100),
-      allowNull: true,
-    },
     budget: {
       type: DataTypes.FLOAT,
-      allowNull: true,
+      allowNull: false,
       validate: {
         min: 0,
       },
+    },
+    budgetType: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+      defaultValue: "fixed",
+      validate: {
+        isIn: [["fixed", "hourly", "negotiable"]],
+      },
+    },
+    deadline: {
+      type: DataTypes.DATE,
+      allowNull: true,
     },
     location: {
       type: DataTypes.STRING(100),
       allowNull: true,
     },
-    skills: {
+    skillsRequired: {
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    portfolioSamples: {
+    experienceLevel: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+      defaultValue: "intermediate",
+      validate: {
+        isIn: [["beginner", "intermediate", "expert", "any"]],
+      },
+    },
+    attachments: {
       type: DataTypes.JSON,
       allowNull: true,
       defaultValue: [],
     },
-    contactPreference: {
-      type: DataTypes.STRING(50),
-      allowNull: false,
-      defaultValue: "platform",
-      validate: {
-        isIn: [["platform", "email", "direct"]],
-      },
-    },
     status: {
       type: DataTypes.STRING(50),
       allowNull: false,
-      defaultValue: "active",
+      defaultValue: "open",
       validate: {
-        isIn: [["active", "paused", "closed", "draft"]],
+        isIn: [["open", "in_progress", "completed", "cancelled", "closed"]],
       },
     },
-    expiresAt: {
-      type: DataTypes.DATE,
-      allowNull: true,
+    applicationsCount: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
     },
     viewCount: {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0,
     },
+    expiresAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   },
   {
     sequelize,
-    modelName: "AvailabilityPost",
-    tableName: "availability_posts",
+    modelName: "JobPost",
+    tableName: "job_posts",
     timestamps: true,
   }
 );
 
-AvailabilityPost.addHooks();
+JobPost.addHooks();
 
-export default AvailabilityPost;
+export default JobPost;

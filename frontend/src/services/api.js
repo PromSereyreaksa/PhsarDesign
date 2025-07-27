@@ -2,7 +2,7 @@ import axios from 'axios';
 import store from '../store/store';
 import { logout } from '../store/slices/authSlice';
 
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = 'http://127.0.0.1:5000';
 
 // Create axios instance
 const api = axios.create({
@@ -33,8 +33,8 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      // Token expired or invalid
+    if (error.response?.status === 401 && error.response?.data?.message?.includes('token')) {
+      // Only logout if it's actually a token-related auth error
       store.dispatch(logout());
       window.location.href = '/login';
     }
@@ -87,26 +87,29 @@ export const freelancersAPI = artistsAPI;
 
 // Projects API
 export const projectsAPI = {
-  getAll: () => api.get('/api/projects'),
+  getAll: (params) => api.get('/api/projects', { params }),
   getById: (id) => api.get(`/api/projects/${id}`),
-  getByClientId: (clientId) => api.get(`/api/projects/client/${clientId}`),
+  getByClientId: (clientId, params) => api.get(`/api/projects/client/${clientId}`, { params }),
   getByStatus: (status) => api.get(`/api/projects/status/${status}`),
   search: (params) => api.get('/api/projects/search', { params }),
+  searchArtists: (params) => api.get('/api/projects/search/artists', { params }),
   create: (projectData) => api.post('/api/projects', projectData),
   update: (id, projectData) => api.put(`/api/projects/${id}`, projectData),
+  updateStatus: (id, status) => api.patch(`/api/projects/${id}/status`, { status }),
   delete: (id) => api.delete(`/api/projects/${id}`),
 };
 
 // Portfolio API
 export const portfolioAPI = {
-  getAll: () => api.get('/api/portfolio'),
+  getAll: (params) => api.get('/api/portfolio', { params }),
   getById: (id) => api.get(`/api/portfolio/${id}`),
-  getByArtistId: (artistId) => api.get(`/api/portfolio/artist/${artistId}`),
-  getByFreelancerId: (freelancerId) => api.get(`/api/portfolio/artist/${freelancerId}`), // Legacy alias
-  getByTag: (tag) => api.get(`/api/portfolio/tag/${tag}`),
+  getByArtistId: (artistId, params) => api.get(`/api/portfolio/artist/${artistId}`, { params }),
+  getByFreelancerId: (freelancerId, params) => api.get(`/api/portfolio/artist/${freelancerId}`, { params }), // Legacy alias
+  getCategories: () => api.get('/api/portfolio/categories'),
   create: (portfolioData) => api.post('/api/portfolio', portfolioData),
   update: (id, portfolioData) => api.put(`/api/portfolio/${id}`, portfolioData),
   delete: (id) => api.delete(`/api/portfolio/${id}`),
+  like: (id) => api.post(`/api/portfolio/${id}/like`),
 };
 
 // Reviews API
@@ -124,15 +127,18 @@ export const reviewsAPI = {
 
 // Applications API
 export const applicationsAPI = {
-  getAll: () => api.get('/api/applications'),
+  getAll: (params) => api.get('/api/applications', { params }),
   getById: (id) => api.get(`/api/applications/${id}`),
-  getByProjectId: (projectId) => api.get(`/api/applications/project/${projectId}`),
-  getByArtistId: (artistId) => api.get(`/api/applications/artist/${artistId}`),
-  getByFreelancerId: (freelancerId) => api.get(`/api/applications/artist/${freelancerId}`), // Legacy alias
+  getByProjectId: (projectId, params) => api.get(`/api/applications/project/${projectId}`, { params }),
+  getByArtistId: (artistId, params) => api.get(`/api/applications/artist/${artistId}`, { params }),
+  getByFreelancerId: (freelancerId, params) => api.get(`/api/applications/artist/${freelancerId}`, { params }), // Legacy alias
+  getByType: (type, params) => api.get(`/api/applications/type/${type}`, { params }),
   create: (applicationData) => api.post('/api/applications', applicationData),
+  applyToService: (applicationData) => api.post('/api/applications/service', applicationData),
+  convertToProject: (applicationId, projectData) => api.post(`/api/applications/${applicationId}/convert-to-project`, projectData),
   update: (id, applicationData) => api.put(`/api/applications/${id}`, applicationData),
   delete: (id) => api.delete(`/api/applications/${id}`),
-  updateStatus: (id, status) => api.patch(`/api/applications/${id}/status`, { status }),
+  updateStatus: (id, statusData) => api.patch(`/api/applications/${id}/status`, statusData),
 };
 
 // Upload API
@@ -168,18 +174,17 @@ export const paymentsAPI = {
   getPaymentHistory: (params) => api.get('/api/payments/history', { params }),
 };
 
-// Messages API (if implemented)
+// Messages API
 export const messagesAPI = {
-  getAll: () => api.get('/api/messages'),
-  getById: (id) => api.get(`/api/messages/${id}`),
-  getConversation: (userId1, userId2) => api.get(`/api/messages/conversation/${userId1}/${userId2}`),
-  getUserConversations: (userId) => api.get(`/api/messages/user/${userId}`),
-  create: (messageData) => api.post('/api/messages', messageData),
-  markAsRead: (id) => api.patch(`/api/messages/${id}/read`),
-  delete: (id) => api.delete(`/api/messages/${id}`),
+  getConversations: (params) => api.get('/api/messages', { params }),
+  getConversation: (otherUserId, params) => api.get(`/api/messages/conversation/${otherUserId}`, { params }),
+  getUnreadCount: () => api.get('/api/messages/unread-count'),
+  send: (messageData) => api.post('/api/messages', messageData),
+  markAsRead: (otherUserId) => api.patch(`/api/messages/conversation/${otherUserId}/read`),
+  delete: (messageId) => api.delete(`/api/messages/${messageId}`),
 };
 
-// Availability Posts API
+// Availability Posts API (Artist Services)
 export const availabilityPostsAPI = {
   getAll: (params) => api.get('/api/availability-posts', { params }),
   getById: (id) => api.get(`/api/availability-posts/${id}`),
@@ -192,6 +197,34 @@ export const availabilityPostsAPI = {
   updateBySlug: (slug, postData) => api.put(`/api/availability-posts/slug/${slug}`, postData),
   delete: (id) => api.delete(`/api/availability-posts/${id}`),
   deleteBySlug: (slug) => api.delete(`/api/availability-posts/slug/${slug}`),
+};
+
+// Job Posts API (Client Jobs)
+export const jobPostsAPI = {
+  getAll: (params) => api.get('/api/job-posts', { params }),
+  getById: (id) => api.get(`/api/job-posts/${id}`),
+  create: (clientId, postData) => api.post(`/api/job-posts/client/${clientId}`, postData),
+  update: (id, postData) => api.put(`/api/job-posts/${id}`, postData),
+  delete: (id) => api.delete(`/api/job-posts/${id}`),
+  apply: (jobId, applicationData) => api.post(`/api/job-posts/${jobId}/apply`, applicationData),
+};
+
+// Analytics API
+export const analyticsAPI = {
+  getArtistAnalytics: (artistId, params) => api.get(`/api/analytics/artist/${artistId}`, { params }),
+  getClientAnalytics: (clientId, params) => api.get(`/api/analytics/client/${clientId}`, { params }),
+  track: (eventData) => api.post('/api/analytics/track', eventData),
+};
+
+// Notifications API
+export const notificationsAPI = {
+  getAll: (params) => api.get('/api/notifications', { params }),
+  getUnreadCount: () => api.get('/api/notifications/unread-count'),
+  getTypes: () => api.get('/api/notifications/types'),
+  markAsRead: (notificationId) => api.patch(`/api/notifications/${notificationId}/read`),
+  markAllAsRead: () => api.patch('/api/notifications/mark-all-read'),
+  delete: (notificationId) => api.delete(`/api/notifications/${notificationId}`),
+  create: (notificationData) => api.post('/api/notifications', notificationData),
 };
 
 export default api;
