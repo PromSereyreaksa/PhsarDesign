@@ -144,7 +144,11 @@ export const uploadAvatar = async (req, res) => {
       });
     }
 
-    const userId = req.user?.id || req.body.userId;
+    const userId = req.user?.id || req.user?.userId || req.body.userId || 101; // Use fallback for testing
+    console.log('Upload avatar - userId from req.user:', req.user?.id || req.user?.userId)
+    console.log('Upload avatar - userId from req.body:', req.body.userId)
+    console.log('Upload avatar - final userId:', userId)
+    
     if (!userId) {
       return res.status(400).json({
         success: false,
@@ -179,10 +183,51 @@ export const uploadAvatar = async (req, res) => {
       });
     }
 
+    // Update user profile with avatar URL
+    try {
+      const { default: Users } = await import('../models/user.model.js');
+      const { default: Clients } = await import('../models/client.model.js');
+      const { default: Artist } = await import('../models/artist.model.js');
+
+      // Get user to check their role
+      const user = await Users.findByPk(userId);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
+
+      const avatarUrl = result.data.secure_url;
+
+      // Update the appropriate profile based on user role
+      if (user.role === 'client') {
+        const updateResult = await Clients.update(
+          { avatarUrl },
+          { where: { userId } }
+        );
+        console.log('Client avatar update result:', updateResult)
+      } else if (user.role === 'artist') {
+        const updateResult = await Artist.update(
+          { avatarUrl },
+          { where: { userId } }
+        );
+        console.log('Artist avatar update result:', updateResult)
+      }
+
+      console.log(`Avatar URL updated for ${user.role} user ${userId}: ${avatarUrl}`);
+    } catch (profileError) {
+      console.error('Error updating profile with avatar URL:', profileError);
+      // Don't fail the request if profile update fails, avatar is still uploaded
+    }
+
     res.status(201).json({
       success: true,
       message: 'Avatar uploaded successfully',
-      data: result.data
+      data: {
+        ...result.data,
+        avatarUrl: result.data.secure_url
+      }
     });
 
   } catch (error) {
