@@ -47,6 +47,22 @@ const apiSlice = createSlice({
     },
     updateItem: (state, action) => {
       const { type, id, data } = action.payload;
+      
+      // Handle special cases for current profile objects
+      if (type === 'currentArtist') {
+        state.currentArtist = { ...state.currentArtist, ...data };
+        return;
+      }
+      if (type === 'currentClient') {
+        state.currentClient = { ...state.currentClient, ...data };
+        return;
+      }
+      
+      // Handle array types
+      if (!Array.isArray(state[type])) {
+        return;
+      }
+      
       // Handle different ID field names based on type
       const idField = getIdField(type);
       const index = state[type].findIndex(item => item[idField] === id);

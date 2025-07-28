@@ -1,22 +1,25 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import Navbar from "../../components/layout/Navbar"
 import Footer from "../../components/layout/Footer"
-import { Star, MapPin, Calendar, Award, Edit, Camera, Plus, Loader2 } from "lucide-react"
+import { Star, MapPin, Calendar, Award, Edit, Camera, Plus, Loader2, Upload } from "lucide-react"
 import { Button } from "../../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
 import { Badge } from "../../components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs"
 import { Progress } from "../../components/ui/progress"
+import { uploadAPI } from "../../services/api"
+import { showToast } from "../../components/ui/toast"
 import { 
   fetchFreelancerByUserId,
   fetchClientByUserId,
   fetchPortfoliosByFreelancerId,
   fetchProjectsByClientId
 } from "../../store/actions"
+import { updateItem } from "../../store/slices/apiSlice"
 
 export default function Profile() {
   const dispatch = useDispatch()
@@ -32,17 +35,25 @@ export default function Profile() {
   
   // Create a demo user if no user is logged in
   const effectiveUser = user || {
-    name: "Demo User",
+    name: "Demo Client",
     email: "demo@artlink.com",
-    role: "artist",
-    id: 1,
-    userId: 1
+    role: "client",
+    id: 101,
+    userId: 101
   }
   
   const [isEditing, setIsEditing] = useState(false)
   const [userProfile, setUserProfile] = useState(null)
   const [userProjects, setUserProjects] = useState([])
   const [userPortfolios, setUserPortfolios] = useState([])
+  
+  // Avatar upload state
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
+  const fileInputRef = useRef(null)
+  const justUploadedAvatarRef = useRef(false)
+  // Avatar loading state
+  const [avatarError, setAvatarError] = useState(false)
+  const [avatarLoading, setAvatarLoading] = useState(false)
 
   // Fetch user profile and related data on component mount
   useEffect(() => {
@@ -56,6 +67,12 @@ export default function Profile() {
         let fetchedProfile = null
         
         console.log('Loading profile for user:', effectiveUser)
+        console.log('User role check - effectiveUser.role:', effectiveUser.role)
+        console.log('Role comparison - is artist?:', effectiveUser.role === 'artist' || effectiveUser.role === 'freelancer')
+        console.log('Role comparison - is client?:', effectiveUser.role === 'client')
+        
+        // Clear any existing profile data to prevent mixing
+        setUserProfile(null)
         
         if (effectiveUser.role === 'artist' || effectiveUser.role === 'freelancer') {
           try {
@@ -73,20 +90,24 @@ export default function Profile() {
           }
         } else if (effectiveUser.role === 'client') {
           try {
+            console.log('Fetching client profile for userId:', effectiveUser.userId || effectiveUser.id)
             // Fetch client profile
             fetchedProfile = await dispatch(fetchClientByUserId(effectiveUser.userId || effectiveUser.id))
             console.log('Fetched client profile:', fetchedProfile)
+            console.log('Setting userProfile to client data:', fetchedProfile)
             
             // Fetch client's projects  
             if (fetchedProfile && fetchedProfile.clientId) {
               await dispatch(fetchProjectsByClientId(fetchedProfile.clientId))
             }
           } catch (clientError) {
-            console.warn('Failed to fetch client profile:', clientError.message)
+            console.error('Failed to fetch client profile:', clientError)
+            console.error('Client error details:', clientError.response?.data)
             // Continue with mock data
           }
         }
         
+        console.log('Final fetchedProfile before setUserProfile:', fetchedProfile)
         setUserProfile(fetchedProfile)
       } catch (error) {
         console.error('Error loading user profile:', error)
@@ -97,12 +118,27 @@ export default function Profile() {
     loadUserProfile()
   }, [dispatch, effectiveUser])
 
-  // Update local state when Redux state changes
+  // Update local state when Redux state changes (but avoid unnecessary overwrites)
   useEffect(() => {
+    console.log('Redux state effect - currentArtist:', currentArtist)
+    console.log('Redux state effect - currentClient:', currentClient)
+    console.log('Redux state effect - effectiveUser.role:', effectiveUser?.role)
+    
+    // Don't overwrite if we just uploaded an avatar
+    if (justUploadedAvatarRef.current) {
+      console.log('Skipping Redux update - just uploaded avatar')
+      justUploadedAvatarRef.current = false
+      return
+    }
+    
     if (effectiveUser?.role === 'artist' && currentArtist) {
+      console.log('Setting userProfile to artist data from Redux')
       setUserProfile(currentArtist)
     } else if (effectiveUser?.role === 'client' && currentClient) {
+      console.log('Setting userProfile to client data from Redux')
       setUserProfile(currentClient)
+    } else {
+      console.log('No matching profile data in Redux for role:', effectiveUser?.role)
     }
   }, [currentArtist, currentClient, effectiveUser])
 
@@ -122,17 +158,133 @@ export default function Profile() {
     }
   }, [portfolios])
 
+  // Avatar upload function
+  const handleAvatarUpload = async (event) => {
+    const file = event.target.files[0]
+    if (!file) return
+
+    console.log('Avatar upload started for file:', file.name, file.type, file.size)
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+      showToast('Please select a valid image file (JPEG, PNG, GIF, or WebP)', 'error')
+      return
+    }
+
+    // Validate file size (5MB max)
+    const maxSize = 5 * 1024 * 1024 // 5MB
+    if (file.size > maxSize) {
+      showToast('Image size must be less than 5MB', 'error')
+      return
+    }
+
+    setIsUploadingAvatar(true)
+
+    try {
+      const formData = new FormData()
+      formData.append('avatar', file)
+
+      console.log('Uploading avatar for user:', effectiveUser.userId || effectiveUser.id)
+      console.log('User object:', effectiveUser)
+      console.log('Current userProfile:', userProfile)
+      console.log('Current Redux state - artist:', currentArtist)
+      console.log('Current Redux state - client:', currentClient)
+      
+      const response = await uploadAPI.uploadAvatar(formData)
+      console.log('Full upload response:', response)
+      
+      if (response.data.success) {
+        const newAvatarUrl = response.data.data.avatarUrl || response.data.data.secure_url
+        console.log('New avatar URL received:', newAvatarUrl)
+        
+        // Update the profile data locally to show the new avatar immediately
+        setUserProfile(prev => {
+          const updated = {
+            ...prev,
+            avatarUrl: newAvatarUrl
+          }
+          console.log('Updated userProfile with new avatar:', updated)
+          return updated
+        })
+
+        // Reset avatar error state for new image
+        setAvatarError(false)
+        setAvatarLoading(false)
+
+        // Update Redux state to persist the change
+        if (effectiveUser.role === 'artist' || effectiveUser.role === 'freelancer') {
+          console.log('Updating Redux currentArtist with new avatar')
+          dispatch(updateItem({ 
+            type: 'currentArtist', 
+            id: currentArtist?.artistId || currentArtist?.id, 
+            data: { ...currentArtist, avatarUrl: newAvatarUrl } 
+          }))
+        } else if (effectiveUser.role === 'client') {
+          console.log('Updating Redux currentClient with new avatar')
+          dispatch(updateItem({ 
+            type: 'currentClient', 
+            id: currentClient?.clientId || currentClient?.id, 
+            data: { ...currentClient, avatarUrl: newAvatarUrl } 
+          }))
+        }
+
+        // Mark that we just uploaded an avatar to prevent overwrites
+        justUploadedAvatarRef.current = true
+
+        showToast('Profile picture updated successfully!', 'success')
+        console.log('Avatar uploaded successfully:', response.data)
+      } else {
+        throw new Error(response.data.message || 'Upload failed')
+      }
+    } catch (error) {
+      console.error('Avatar upload error:', error)
+      console.error('Error response:', error.response?.data)
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to upload profile picture'
+      showToast(errorMessage, 'error')
+    } finally {
+      setIsUploadingAvatar(false)
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
+  const triggerFileInput = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click()
+    }
+  }
+
   // Create profile object from fetched data or use mock data
   const getProfileData = () => {
+    console.log('=== getProfileData called ===')
+    console.log('userProfile:', userProfile)
+    console.log('effectiveUser:', effectiveUser)
+    console.log('currentArtist:', currentArtist)
+    console.log('currentClient:', currentClient)
+    
     // Always show mock data for now to prevent errors
     const mockName = effectiveUser?.name || effectiveUser?.email?.split('@')[0] || "Demo User"
     const mockRole = effectiveUser?.role === 'artist' ? "Creative Artist" : effectiveUser?.role === 'client' ? "Creative Client" : "User"
     
     if (userProfile && effectiveUser) {
+      let avatarUrl = userProfile.avatarUrl || userProfile.avatar || "/placeholder.svg?height=120&width=120"
+      
+      // Add timestamp to break cache for uploaded avatars (Cloudinary URLs)
+      if (avatarUrl && avatarUrl.includes('cloudinary') && !avatarUrl.includes('?')) {
+        avatarUrl += `?t=${Date.now()}`
+      }
+      
+      console.log('Profile avatar URL:', avatarUrl)
+      console.log('userProfile.avatarUrl:', userProfile.avatarUrl)
+      console.log('userProfile.avatar:', userProfile.avatar)
+      
       return {
         name: userProfile.name || mockName,
         title: userProfile.title || mockRole,
-        avatar: userProfile.avatarUrl || userProfile.avatar || "/placeholder.svg?height=120&width=120",
+        avatar: avatarUrl,
         location: userProfile.location || "Location not specified",
         memberSince: effectiveUser.createdAt ? new Date(effectiveUser.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : "Recently joined",
         hourlyRate: userProfile.hourlyRate || userProfile.rate ? `$${userProfile.hourlyRate || userProfile.rate}/hr` : "Rate on request",
@@ -264,23 +416,57 @@ export default function Profile() {
             <CardContent className="p-8">
               <div className="flex flex-col md:flex-row items-start md:items-center space-y-6 md:space-y-0 md:space-x-8">
                 <div className="relative">
-                  <Avatar className="w-32 h-32">
-                    <AvatarImage src={profileData.avatar || "/placeholder.svg"} alt={profileData.name} />
-                    <AvatarFallback className="text-2xl">
-                      {profileData.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
-                    </AvatarFallback>
+                  <Avatar className="w-32 h-32" key={profileData.avatar}>
+                    {!avatarError && profileData.avatar && profileData.avatar !== "/placeholder.svg?height=120&width=120" ? (
+                      <AvatarImage 
+                        src={profileData.avatar} 
+                        alt={profileData.name}
+                        onLoad={() => {
+                          console.log('Avatar image loaded:', profileData.avatar)
+                          setAvatarError(false)
+                          setAvatarLoading(false)
+                        }}
+                        onError={() => {
+                          console.log('Avatar image failed to load:', profileData.avatar)
+                          setAvatarError(true)
+                          setAvatarLoading(false)
+                        }}
+                        onLoadStart={() => setAvatarLoading(true)}
+                      />
+                    ) : (
+                      <AvatarFallback className="text-2xl bg-[#A95BAB] text-white">
+                        {profileData.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      </AvatarFallback>
+                    )}
                   </Avatar>
+                  
+                  {/* Hidden file input */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    className="hidden"
+                  />
+                  
+                  {/* Upload button with loading state */}
                   <Button
-                  size="sm"
-                  variant="outline"
-                  className="absolute bottom-0 right-0 rounded-full p-2 bg-transparent"
-                >
-                  <Camera className="h-4 w-4" />
-                </Button>
-              </div>
+                    size="sm"
+                    variant="outline"
+                    className="absolute bottom-0 right-0 rounded-full p-2 bg-white shadow-lg hover:bg-gray-50"
+                    onClick={triggerFileInput}
+                    disabled={isUploadingAvatar}
+                  >
+                    {isUploadingAvatar ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Camera className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
 
               <div className="flex-1">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
