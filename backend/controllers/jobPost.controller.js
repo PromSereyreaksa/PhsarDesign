@@ -64,11 +64,25 @@ export const getAllJobPosts = async (req, res) => {
       budgetMax, 
       experienceLevel,
       location,
+      search,
       status = "open" 
     } = req.query;
 
+    console.log('Job posts request params:', req.query);
+
     const offset = (page - 1) * limit;
     const where = { status };
+
+    // Add search functionality
+    if (search) {
+      where[Op.or] = [
+        { title: { [Op.iLike]: `%${search}%` } },
+        { description: { [Op.iLike]: `%${search}%` } },
+        { skillsRequired: { [Op.iLike]: `%${search}%` } },
+        { category: { [Op.iLike]: `%${search}%` } }
+      ];
+      console.log('Adding search filter for:', search);
+    }
 
     if (category) where.category = category;
     if (experienceLevel) where.experienceLevel = experienceLevel;
@@ -78,6 +92,8 @@ export const getAllJobPosts = async (req, res) => {
       if (budgetMin) where.budget[Op.gte] = parseFloat(budgetMin);
       if (budgetMax) where.budget[Op.lte] = parseFloat(budgetMax);
     }
+
+    console.log('Job posts where clause:', JSON.stringify(where, null, 2));
 
     const { count, rows: jobPosts } = await JobPost.findAndCountAll({
       where,
@@ -98,6 +114,8 @@ export const getAllJobPosts = async (req, res) => {
       offset: parseInt(offset),
       order: [["createdAt", "DESC"]]
     });
+
+    console.log(`Found ${count} job posts matching criteria`);
 
     res.json({
       jobPosts,
@@ -246,6 +264,69 @@ export const applyToJobPost = async (req, res) => {
     res.status(201).json(applicationWithDetails);
   } catch (error) {
     console.error("Error applying to job post:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// Dedicated search function for job posts
+export const searchJobPosts = async (req, res) => {
+  try {
+    console.log('Job post search request received:', req.query);
+    const { search, category, minBudget, maxBudget, experienceLevel, location } = req.query;
+    const where = { status: 'open' };
+
+    if (search) {
+      where[Op.or] = [
+        { title: { [Op.iLike]: `%${search}%` } },
+        { description: { [Op.iLike]: `%${search}%` } },
+        { skillsRequired: { [Op.iLike]: `%${search}%` } },
+        { category: { [Op.iLike]: `%${search}%` } }
+      ];
+    }
+
+    if (category) {
+      where.category = { [Op.iLike]: `%${category}%` };
+    }
+
+    if (experienceLevel) {
+      where.experienceLevel = experienceLevel;
+    }
+
+    if (location) {
+      where.location = { [Op.iLike]: `%${location}%` };
+    }
+
+    if (minBudget || maxBudget) {
+      where.budget = {};
+      if (minBudget) where.budget[Op.gte] = parseFloat(minBudget);
+      if (maxBudget) where.budget[Op.lte] = parseFloat(maxBudget);
+    }
+
+    console.log('Job post search where clause:', JSON.stringify(where, null, 2));
+
+    const jobPosts = await JobPost.findAll({
+      where,
+      include: [
+        {
+          model: Clients,
+          as: "client",
+          attributes: ["clientId", "name", "organization", "avatarUrl"]
+        },
+        {
+          model: Applications,
+          as: "applications",
+          attributes: ["applicationId", "status"],
+          required: false
+        }
+      ],
+      order: [["createdAt", "DESC"]],
+      limit: 50 // Reasonable limit for search results
+    });
+
+    console.log('Found job posts:', jobPosts.length);
+    res.status(200).json(jobPosts);
+  } catch (error) {
+    console.error("Error searching job posts:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };

@@ -5,14 +5,19 @@ import {
   getJobPostById,
   updateJobPost,
   deleteJobPost,
-  applyToJobPost
+  applyToJobPost,
+  searchJobPosts
 } from "../controllers/jobPost.controller.js";
 
 const router = express.Router();
 
-router.post("/client/:clientId", createJobPost);
+// Public routes
+router.get("/search", searchJobPosts);
 router.get("/", getAllJobPosts);
 router.get("/:jobId", getJobPostById);
+
+// Protected routes
+router.post("/client/:clientId", createJobPost);
 router.put("/:jobId", updateJobPost);
 router.delete("/:jobId", deleteJobPost);
 router.post("/:jobId/apply", applyToJobPost);

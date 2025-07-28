@@ -1,4 +1,4 @@
-# ArtLink - Creative Freelancing Platform
+# PhsarDesign - Creative Freelancing Platform
 
 A modern, full-stack platform connecting clients with talented artists for creative projects and services. Built with cutting-edge technologies for optimal performance, scalability, and user experience.
 
