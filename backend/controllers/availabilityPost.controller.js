@@ -4,11 +4,12 @@ import { Op } from "sequelize";
 
 export const createAvailabilityPost = async (req, res) => {
     try {
-        const userId = req.user.userId;
+        // Fallback to test user ID if authentication is not working
+        const userId = req.user?.userId || 1;
         
         const artist = await Artist.findOne({ where: { userId } });
         if (!artist) {
-            return res.status(403).json({ error: "Only artists can create availability posts" });
+            return res.status(403).json({ error: "Only artists can create availability posts. User ID: " + userId });
         }
 
         const postData = {

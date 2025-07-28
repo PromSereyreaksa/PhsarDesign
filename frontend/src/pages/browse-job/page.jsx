@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
-import { useDispatch, useSelector } from "react-redux"
 import Navbar from "../../components/layout/Navbar"
 import Footer from "../../components/layout/Footer"
 import { Search, Filter, MapPin, Clock, Users, Star, ArrowLeft, Loader2 } from "lucide-react"
@@ -12,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/ca
 import { Badge } from "../../components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select"
 import { MultiStepApplicationModal } from "../../components/ui/multi-step-application-modal"
-import { jobPostsAPI, projectsAPI } from "../../services/api"
+import { jobPostsAPI } from "../../services/api"
 
 export default function BrowseJobs() {
   const [jobPosts, setJobPosts] = useState([])
@@ -42,28 +41,31 @@ export default function BrowseJobs() {
         ...filters
       }
       
-      console.log('Loading projects with params:', params);
-      const response = await projectsAPI.getAll(params)
-      console.log('Projects response:', response.data);
+      console.log('Loading job posts with params:', params);
+      const response = await jobPostsAPI.getAll(params)
+      console.log('Job posts response:', response.data);
       
-      // Handle different response formats
-      if (response.data.success && response.data.data) {
-        setJobPosts(response.data.data.projects || [])
-        setTotalPages(response.data.data.totalPages || 1)
-        setTotalCount(response.data.data.total || 0)
+      // Handle the actual response format from the backend
+      if (response.data && response.data.jobPosts) {
+        console.log('Setting job posts:', response.data.jobPosts);
+        setJobPosts(response.data.jobPosts)
+        setTotalPages(response.data.totalPages || 1)
+        setTotalCount(response.data.totalCount || 0)
       } else if (Array.isArray(response.data)) {
+        console.log('Setting job posts from array:', response.data);
         setJobPosts(response.data)
         setTotalPages(1)
         setTotalCount(response.data.length)
       } else {
+        console.log('No job posts found in response');
         setJobPosts([])
         setTotalPages(1)
         setTotalCount(0)
       }
       setCurrentPage(page)
     } catch (error) {
-      console.error('Error fetching projects:', error)
-      setError('Failed to load projects')
+      console.error('Error fetching job posts:', error)
+      setError('Failed to load job posts')
       setJobPosts([])
     } finally {
       setIsLoading(false)
@@ -114,28 +116,34 @@ export default function BrowseJobs() {
   }
 
   // Format job post data to match the expected structure
-  const formatJobPostForDisplay = (jobPost) => ({
-    id: jobPost.jobId || jobPost.id,
-    jobId: jobPost.jobId || jobPost.id,
-    title: jobPost.title || 'Untitled Job',
-    description: jobPost.description || 'No description available',
-    budget: `$${jobPost.budget}` || 'Budget not specified',
-    budgetType: jobPost.budgetType || 'Fixed Price',
-    skills: jobPost.skillsRequired ? jobPost.skillsRequired.split(',').map(s => s.trim()) : [],
-    postedBy: jobPost.client?.name || 'Anonymous Client',
-    clientRating: 4.5, // Default rating - would need to calculate from reviews
-    clientReviews: 0, // Default - would need to count reviews
-    location: jobPost.location || 'Remote',
-    applications: jobPost.applicationsCount || 0,
-    timeLeft: jobPost.deadline ? `Due ${new Date(jobPost.deadline).toLocaleDateString()}` : 'Active',
-    postedTime: jobPost.createdAt ? new Date(jobPost.createdAt).toLocaleDateString() : 'Recently',
-    verified: true, // Default - would need verification system
-    status: jobPost.status,
-    category: jobPost.category,
-    experienceLevel: jobPost.experienceLevel
-  })
+  const formatJobPostForDisplay = (jobPost) => {
+    console.log('Formatting job post:', jobPost);
+    const formatted = {
+      id: jobPost.jobId || jobPost.id,
+      jobId: jobPost.jobId || jobPost.id,
+      title: jobPost.title || 'Untitled Job',
+      description: jobPost.description || 'No description available',
+      budget: `$${jobPost.budget}` || 'Budget not specified',
+      budgetType: jobPost.budgetType || 'Fixed Price',
+      skills: jobPost.skillsRequired ? jobPost.skillsRequired.split(',').map(s => s.trim()) : [],
+      postedBy: jobPost.client?.name || 'Anonymous Client',
+      clientRating: 4.5, // Default rating - would need to calculate from reviews
+      clientReviews: 0, // Default - would need to count reviews
+      location: jobPost.location || 'Remote',
+      applications: jobPost.applicationsCount || 0,
+      timeLeft: jobPost.deadline ? `Due ${new Date(jobPost.deadline).toLocaleDateString()}` : 'Active',
+      postedTime: jobPost.createdAt ? new Date(jobPost.createdAt).toLocaleDateString() : 'Recently',
+      verified: true, // Default - would need verification system
+      status: jobPost.status,
+      category: jobPost.category,
+      experienceLevel: jobPost.experienceLevel
+    };
+    console.log('Formatted job post:', formatted);
+    return formatted;
+  }
 
-  const displayJobs = jobPosts.map(formatJobPostForDisplay)
+  const displayJobs = jobPosts.map(formatJobPostForDisplay);
+  console.log('Display jobs array:', displayJobs);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000]">

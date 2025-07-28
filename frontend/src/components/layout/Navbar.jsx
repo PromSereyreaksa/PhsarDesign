@@ -37,7 +37,14 @@ export default function Navbar() {
         setUnreadCount(response.data.data.total)
       }
     } catch (error) {
+      // Handle 401 errors silently (user not authenticated)
+      if (error.response?.status === 401) {
+        console.debug('User not authenticated for notifications')
+        setUnreadCount(0)
+        return
+      }
       console.error('Failed to fetch unread count:', error)
+      setUnreadCount(0)
     }
   }
 
@@ -90,7 +97,7 @@ export default function Navbar() {
             </Link>
             {user?.role === 'client' && (
               <Link
-                to="/post-job/client"
+                to="/post-job-client"
                 className="text-white hover:text-[#A95BAB] px-3 py-2 transition-colors duration-500 ease-out"
               >
                 Hire Talent
@@ -98,7 +105,7 @@ export default function Navbar() {
             )}
             {user?.role === 'artist' && (
               <Link
-                to="/post-job/artist"
+                to="/post-job-freelancer"
                 className="text-white hover:text-[#A95BAB] px-3 py-2 transition-colors duration-500 ease-out"
               >
                 Offer Services
@@ -215,12 +222,12 @@ export default function Navbar() {
                 Browse Artists
               </Link>
               {user?.role === 'client' && (
-                <Link to="/post-job/client" className="block px-3 py-2 text-white hover:text-[#A95BAB]">
+                <Link to="/post-job-client" className="block px-3 py-2 text-white hover:text-[#A95BAB]">
                   Hire Talent
                 </Link>
               )}
               {user?.role === 'artist' && (
-                <Link to="/post-job/artist" className="block px-3 py-2 text-white hover:text-[#A95BAB]">
+                <Link to="/post-job-freelancer" className="block px-3 py-2 text-white hover:text-[#A95BAB]">
                   Offer Services
                 </Link>
               )}

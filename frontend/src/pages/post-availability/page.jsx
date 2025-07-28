@@ -15,6 +15,7 @@ import { Badge } from "../../components/ui/badge"
 import { X, Plus, DollarSign, User, Upload, ImageIcon, ArrowLeft, Loader2, Calendar, MapPin } from "lucide-react"
 import { availabilityPostsAPI, uploadAPI } from "../../services/api"
 import { addItem } from "../../store/slices/apiSlice"
+import { showToast } from "../../components/ui/toast"
 
 export default function PostAvailability() {
   const dispatch = useDispatch()
@@ -113,30 +114,107 @@ export default function PostAvailability() {
     setLoading(true)
     setSubmitError("")
 
+    console.log('Availability form submission started...')
+    console.log('Form data:', {
+      title,
+      description,
+      category,
+      availabilityType,
+      duration,
+      budget,
+      location,
+      skills,
+      portfolioSamples,
+      contactPreference,
+      status,
+      expiresAt
+    })
+
     try {
+      // Validate required fields
+      if (!title?.trim()) {
+        const error = "Title is required"
+        setSubmitError(error)
+        showToast(error, 'error')
+        setLoading(false)
+        return
+      }
+
+      if (!description?.trim()) {
+        const error = "Description is required"
+        setSubmitError(error)
+        showToast(error, 'error')
+        setLoading(false)
+        return
+      }
+
+      if (!category) {
+        const error = "Category is required"
+        setSubmitError(error)
+        showToast(error, 'error')
+        setLoading(false)
+        return
+      }
+
       const postData = {
-        title,
-        description,
+        title: title.trim(),
+        description: description.trim(),
         category,
         availabilityType,
         duration: duration || null,
         budget: budget ? parseFloat(budget) : null,
         location: location || null,
-        skills: skills.join(', '),
-        portfolioSamples,
+        skills: skills.length > 0 ? skills.join(', ') : null,
+        portfolioSamples: portfolioSamples || [],
         contactPreference,
         status,
         expiresAt: expiresAt || null
       }
 
+      console.log('Submitting availability post data:', postData)
+      console.log('Making API call to:', '/api/availability-posts');
+
       const response = await availabilityPostsAPI.create(postData)
       
-      dispatch(addItem({ type: 'availabilityPosts', data: response.data }))
+      console.log('Response received:', response)
+      console.log('Response status:', response?.status)
+      console.log('Response data:', response?.data)
       
-      navigate('/browse-availability')
+      if (response.data) {
+        dispatch(addItem({ type: 'availabilityPosts', data: response.data }))
+        
+        // Show success notification
+        showToast('Your availability post has been published successfully!', 'success')
+        
+        // Navigate to dashboard after a short delay
+        setTimeout(() => {
+          navigate('/dashboard')
+        }, 2000)
+      } else {
+        throw new Error('No data received from server')
+      }
     } catch (error) {
       console.error('Error creating availability post:', error)
-      setSubmitError(error.response?.data?.error || 'Failed to create availability post. Please try again.')
+      console.error('Error response:', error.response)
+      console.error('Error response data:', error.response?.data)
+      console.error('Error status:', error.response?.status)
+      console.error('Error message:', error.message)
+      
+      let errorMessage
+      
+      // Check if it's a network error
+      if (!error.response) {
+        errorMessage = "Network error: Cannot connect to server. Please check if the backend is running on port 3000."
+      } else if (error.response?.status === 404) {
+        errorMessage = "API endpoint not found. Please check if the backend routes are configured correctly."
+      } else if (error.response?.status === 500) {
+        errorMessage = "Server error: " + (error.response?.data?.error || "Internal server error")
+      } else {
+        errorMessage = error.response?.data?.error || error.message || 'Failed to create availability post. Please try again.'
+      }
+      
+      setSubmitError(errorMessage)
+      showToast(errorMessage, 'error')
     } finally {
       setLoading(false)
     }
@@ -199,8 +277,13 @@ export default function PostAvailability() {
                   placeholder="e.g. Experienced Logo Designer Available for Immediate Projects"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="mt-1 bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                  className="mt-1 bg-white/10 border-white/20 text-white placeholder:text-gray-400 focus:bg-white/15 focus:border-[#A95BAB] focus:ring-[#A95BAB]"
                   required
+                  style={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    borderColor: 'rgba(255, 255, 255, 0.2)',
+                    color: 'white'
+                  }}
                 />
                 <p className="text-sm text-gray-400 mt-1">Write a compelling title to attract clients</p>
               </div>
@@ -209,7 +292,10 @@ export default function PostAvailability() {
                 <Label htmlFor="category" className="text-white">
                   Category *
                 </Label>
-                <Select value={category} onValueChange={setCategory} required>
+                <Select value={category} onValueChange={(value) => {
+                  console.log('Category selected:', value);
+                  setCategory(value);
+                }} required>
                   <SelectTrigger className="mt-1 bg-[#202020] border-[#A95BAB]/30 text-white">
                     <SelectValue placeholder="Select your specialty" />
                   </SelectTrigger>
@@ -225,6 +311,11 @@ export default function PostAvailability() {
                     ))}
                   </SelectContent>
                 </Select>
+                {category && (
+                  <p className="text-sm text-green-400 mt-1">
+                    Selected: {category.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -236,8 +327,13 @@ export default function PostAvailability() {
                   placeholder="Describe your availability, expertise, and what types of projects you're looking for..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="mt-1 min-h-[120px] bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                  className="mt-1 min-h-[120px] bg-white/10 border-white/20 text-white placeholder:text-gray-400 focus:bg-white/15 focus:border-[#A95BAB] focus:ring-[#A95BAB]"
                   required
+                  style={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    borderColor: 'rgba(255, 255, 255, 0.2)',
+                    color: 'white'
+                  }}
                 />
                 <p className="text-sm text-gray-400 mt-1">Be specific about your expertise and project preferences</p>
               </div>
@@ -287,7 +383,12 @@ export default function PostAvailability() {
                   placeholder="e.g. 1-2 weeks, Short-term, Long-term"
                   value={duration}
                   onChange={(e) => setDuration(e.target.value)}
-                  className="mt-1 bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                  className="mt-1 bg-white/10 border-white/20 text-white placeholder:text-gray-400 focus:bg-white/15 focus:border-[#A95BAB] focus:ring-[#A95BAB]"
+                  style={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    borderColor: 'rgba(255, 255, 255, 0.2)',
+                    color: 'white'
+                  }}
                 />
                 <p className="text-sm text-gray-400 mt-1">Optional: Specify your preferred project duration</p>
               </div>
@@ -303,7 +404,12 @@ export default function PostAvailability() {
                     placeholder="e.g. Remote, New York, USA"
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
-                    className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                    className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-gray-400 focus:bg-white/15 focus:border-[#A95BAB] focus:ring-[#A95BAB]"
+                    style={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      borderColor: 'rgba(255, 255, 255, 0.2)',
+                      color: 'white'
+                    }}
                   />
                 </div>
                 <p className="text-sm text-gray-400 mt-1">Optional: Specify your location or if you work remotely</p>
@@ -321,7 +427,12 @@ export default function PostAvailability() {
                     placeholder="500"
                     value={budget}
                     onChange={(e) => setBudget(e.target.value)}
-                    className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                    className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-gray-400 focus:bg-white/15 focus:border-[#A95BAB] focus:ring-[#A95BAB]"
+                    style={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      borderColor: 'rgba(255, 255, 255, 0.2)',
+                      color: 'white'
+                    }}
                   />
                 </div>
                 <p className="text-sm text-gray-400 mt-1">Optional: Your typical project budget range</p>
@@ -342,7 +453,12 @@ export default function PostAvailability() {
                     placeholder="Type a skill and press Enter"
                     value={newSkill}
                     onChange={(e) => setNewSkill(e.target.value)}
-                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 focus:bg-white/15 focus:border-[#A95BAB] focus:ring-[#A95BAB]"
+                    style={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      borderColor: 'rgba(255, 255, 255, 0.2)',
+                      color: 'white'
+                    }}
                     onKeyPress={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault()
@@ -491,7 +607,13 @@ export default function PostAvailability() {
                   type="date"
                   value={expiresAt}
                   onChange={(e) => setExpiresAt(e.target.value)}
-                  className="mt-1 bg-white/10 border-white/20 text-white"
+                  className="mt-1 bg-white/10 border-white/20 text-white focus:bg-white/15 focus:border-[#A95BAB] focus:ring-[#A95BAB]"
+                  style={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    borderColor: 'rgba(255, 255, 255, 0.2)',
+                    color: 'white',
+                    colorScheme: 'dark'
+                  }}
                 />
                 <p className="text-sm text-gray-400 mt-1">Leave empty to keep the post active indefinitely</p>
               </div>

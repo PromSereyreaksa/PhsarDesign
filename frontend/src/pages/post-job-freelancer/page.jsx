@@ -13,7 +13,7 @@ import { Label } from "../../components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select"
 import { Badge } from "../../components/ui/badge"
 import { X, Plus, DollarSign, User, Upload, ImageIcon, ArrowLeft, Star, Loader2 } from "lucide-react"
-import { freelancersAPI, portfolioAPI, uploadAPI } from "../../services/api"
+import { freelancersAPI, portfolioAPI, uploadAPI, availabilityPostsAPI } from "../../services/api"
 import { addItem } from "../../store/slices/apiSlice"
 
 export default function PostJobFreelancer() {
@@ -110,10 +110,115 @@ export default function PostJobFreelancer() {
     setSubmitError("")
 
     try {
-      // First, create or update freelancer profile
+      console.log('=== FORM SUBMISSION STARTED ===')
+      console.log('Full user object:', user)
+      
+      // Check if user is logged in
+      if (!user) {
+        console.log('❌ No user found')
+        setSubmitError("Please log in to create a service")
+        return
+      }
+
+      console.log('✅ User is logged in:', user.email)
+
+      // Get user ID - the backend returns userId field
+      const userId = user.userId
+      console.log('User ID extracted:', userId)
+      
+      if (!userId) {
+        console.log('❌ No user ID found')
+        setSubmitError("User ID not found. Please log in again.")
+        return
+      }
+
+      console.log('✅ User ID valid:', userId)
+
+      // Validate required fields
+      console.log('Validating required fields...')
+      console.log('- serviceTitle:', serviceTitle)
+      console.log('- serviceDescription:', serviceDescription) 
+      console.log('- category:', category)
+      console.log('- hourlyRate:', hourlyRate)
+      
+      if (!serviceTitle || !serviceDescription || !category || !hourlyRate) {
+        console.log('❌ Required fields missing')
+        setSubmitError("Please fill in all required fields: Service Title, Description, Category, and Hourly Rate")
+        return
+      }
+
+      // Validate field lengths and formats
+      if (serviceTitle.length < 5) {
+        setSubmitError("Service title must be at least 5 characters long")
+        return
+      }
+
+      if (serviceDescription.length < 20) {
+        setSubmitError("Service description must be at least 20 characters long")
+        return
+      }
+
+      console.log('✅ All required fields present and valid')
+      
+      // Create availability post FIRST (this is what shows up in browse-freelancers)
+      console.log('=== CREATING AVAILABILITY POST ===')
+      
+      // Map frontend categories to backend categories
+      const categoryMap = {
+        "Digital Art": "illustration",
+        "Logo Design": "design", 
+        "Graphic Design": "design",
+        "3D Design": "animation",
+        "Character Design": "illustration"
+      }
+      
+      // Map frontend availability to backend availabilityType
+      const availabilityTypeMap = {
+        "full-time": "immediate",
+        "part-time": "within-week", 
+        "project-based": "flexible",
+        "weekends": "flexible"
+      }
+      
+      const backendCategory = categoryMap[category] || "other"
+      const backendAvailabilityType = availabilityTypeMap[availability] || "flexible"
+      
+      console.log('Mapped category:', category, '→', backendCategory)
+      console.log('Mapped availability:', availability, '→', backendAvailabilityType)
+      
+      const availabilityPostData = {
+        title: serviceTitle,
+        description: serviceDescription,
+        category: backendCategory,
+        availabilityType: backendAvailabilityType,
+        duration: 'Flexible',
+        budget: parseFloat(hourlyRate) || 0,
+        location: 'Remote',
+        skills: skills.length > 0 ? skills.join(', ') : 'Creative Services',
+        portfolioSamples: portfolioImages.map(img => img.url),
+        contactPreference: 'platform',
+        status: 'active'
+      }
+
+      console.log('Availability post data:', availabilityPostData)
+
+      let availabilityPost
+      try {
+        console.log('Sending availability post to backend...')
+        const availabilityResponse = await availabilityPostsAPI.create(availabilityPostData)
+        console.log('✅ Availability post created successfully:', availabilityResponse.data)
+        availabilityPost = availabilityResponse.data
+      } catch (availabilityError) {
+        console.error('❌ Error creating availability post:', availabilityError)
+        console.log('Error details:', availabilityError.response?.data)
+        throw availabilityError // Stop here if availability post fails
+      }
+
+      console.log('=== CREATING FREELANCER PROFILE ===')
+      // Create or update freelancer profile
       const freelancerData = {
-        userId: user.id,
-        name: user.name,
+        userId: parseInt(userId),
+        name: user.name || user.email || `User ${userId}`,
         title: serviceTitle,
         description: serviceDescription,
         hourlyRate: parseFloat(hourlyRate) || 0,
@@ -122,52 +227,77 @@ export default function PostJobFreelancer() {
         category: category
       }
 
+      console.log('Freelancer data:', freelancerData)
+
       let freelancerProfile
       try {
-        // Try to create new freelancer profile
+        console.log('Creating freelancer profile...')
         const response = await freelancersAPI.create(freelancerData)
+        console.log('✅ Freelancer profile created:', response.data)
         freelancerProfile = response.data
       } catch (error) {
-        if (error.response?.status === 400) {
-          // Freelancer might already exist, try to get existing profile
-          const existingResponse = await freelancersAPI.getByUserId(user.id)
-          freelancerProfile = existingResponse.data
+        console.log('Freelancer creation failed, checking if exists...')
+        if (error.response?.status === 400 || error.response?.status === 409) {
+          try {
+            const existingResponse = await freelancersAPI.getByUserId(userId)
+            freelancerProfile = existingResponse.data
+            console.log('✅ Found existing freelancer profile:', freelancerProfile)
+          } catch (getError) {
+            console.error('❌ Error getting existing freelancer:', getError)
+            // Don't fail the whole process just for this
+            console.log('⚠️ Continuing without freelancer profile update')
+          }
         } else {
-          throw error
+          console.error('❌ Unexpected freelancer creation error:', error)
+          // Don't fail the whole process just for this
+          console.log('⚠️ Continuing without freelancer profile')
         }
       }
 
-      // Create portfolio entries for uploaded images
-      if (portfolioImages.length > 0) {
-        const portfolioPromises = portfolioImages.map(async (image) => {
-          const portfolioData = {
-            freelancerId: freelancerProfile.freelancerId || freelancerProfile.id,
-            title: `${serviceTitle} - Portfolio Item`,
-            description: serviceDescription,
-            imageUrl: image.url,
-            tags: skills.join(',')
-          }
+      // Create portfolio entries (optional)
+      if (portfolioImages.length > 0 && freelancerProfile) {
+        console.log('=== CREATING PORTFOLIO ITEMS ===')
+        try {
+          const portfolioPromises = portfolioImages.map(async (image) => {
+            const portfolioData = {
+              freelancerId: freelancerProfile.freelancerId || freelancerProfile.id,
+              title: `${serviceTitle} - Portfolio Item`,
+              description: serviceDescription,
+              imageUrl: image.url,
+              tags: skills.join(',')
+            }
+            
+            try {
+              const response = await portfolioAPI.create(portfolioData)
+              return response.data
+            } catch (error) {
+              console.error('Error creating portfolio item:', error)
+              return null
+            }
+          })
           
-          try {
-            const response = await portfolioAPI.create(portfolioData)
-            return response.data
-          } catch (error) {
-            console.error('Error creating portfolio item:', error)
-            return null
-          }
-        })
-        
-        await Promise.all(portfolioPromises)
+          await Promise.all(portfolioPromises)
+          console.log('✅ Portfolio items created')
+        } catch (portfolioError) {
+          console.error('❌ Portfolio creation failed:', portfolioError)
+          // Don't fail the whole process for portfolio errors
+        }
       }
 
-      // Add to Redux store
-      dispatch(addItem({ type: 'freelancers', data: freelancerProfile }))
+      console.log('=== SUCCESS! ===')
+      console.log('✅ Service created successfully!')
       
-      // Navigate to profile or dashboard
-      navigate('/profile')
+      // Navigate to browse-freelancers to see the new service
+      navigate('/browse-freelancers')
     } catch (error) {
-      console.error('Error creating freelancer profile:', error)
-      setSubmitError(error.response?.data?.error || 'Failed to create freelancer profile. Please try again.')
+      console.error('=== FORM SUBMISSION FAILED ===')
+      console.error('Error:', error)
+      console.log('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      })
+      setSubmitError(error.response?.data?.error || error.message || 'Failed to create service. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -241,21 +371,24 @@ export default function PostJobFreelancer() {
                   Category *
                 </Label>
                 <Select value={category} onValueChange={setCategory} required>
-                  <SelectTrigger className="mt-1 bg-[#202020] border-[#A95BAB]/30 text-white">
-                    <SelectValue placeholder="Select your specialty" />
+                  <SelectTrigger className="mt-1 bg-white/10 border-white/20 text-white">
+                    <SelectValue placeholder="Select your specialty" className="text-white" />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#202020] border-[#A95BAB]/30">
+                  <SelectContent className="bg-gray-900 border-gray-700">
                     {categories.map((cat) => (
                       <SelectItem
                         key={cat}
                         value={cat}
-                        className="text-white hover:bg-[#A95BAB]/20 focus:bg-[#A95BAB]/20 focus:text-white"
+                        className="text-white hover:bg-gray-800 focus:bg-gray-800 focus:text-white"
                       >
                         {cat}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {category && (
+                  <p className="text-sm text-green-400 mt-1">Selected: {category}</p>
+                )}
               </div>
 
               <div>
@@ -434,36 +567,39 @@ export default function PostJobFreelancer() {
                   Availability
                 </Label>
                 <Select value={availability} onValueChange={setAvailability}>
-                  <SelectTrigger className="mt-1 bg-[#202020] border-[#A95BAB]/30 text-white">
-                    <SelectValue placeholder="Select your availability" />
+                  <SelectTrigger className="mt-1 bg-white/10 border-white/20 text-white">
+                    <SelectValue placeholder="Select your availability" className="text-white" />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#202020] border-[#A95BAB]/30">
+                  <SelectContent className="bg-gray-900 border-gray-700">
                     <SelectItem
                       value="full-time"
-                      className="text-white hover:bg-[#A95BAB]/20 focus:bg-[#A95BAB]/20 focus:text-white"
+                      className="text-white hover:bg-gray-800 focus:bg-gray-800 focus:text-white"
                     >
                       Full-time (40+ hours/week)
                     </SelectItem>
                     <SelectItem
                       value="part-time"
-                      className="text-white hover:bg-[#A95BAB]/20 focus:bg-[#A95BAB]/20 focus:text-white"
+                      className="text-white hover:bg-gray-800 focus:bg-gray-800 focus:text-white"
                     >
                       Part-time (20-40 hours/week)
                     </SelectItem>
                     <SelectItem
                       value="project-based"
-                      className="text-white hover:bg-[#A95BAB]/20 focus:bg-[#A95BAB]/20 focus:text-white"
+                      className="text-white hover:bg-gray-800 focus:bg-gray-800 focus:text-white"
                     >
                       Project-based
                     </SelectItem>
                     <SelectItem
                       value="weekends"
-                      className="text-white hover:bg-[#A95BAB]/20 focus:bg-[#A95BAB]/20 focus:text-white"
+                      className="text-white hover:bg-gray-800 focus:bg-gray-800 focus:text-white"
                     >
                       Weekends only
                     </SelectItem>
                   </SelectContent>
                 </Select>
+                {availability && (
+                  <p className="text-sm text-green-400 mt-1">Selected: {availability}</p>
+                )}
               </div>
             </CardContent>
           </Card>

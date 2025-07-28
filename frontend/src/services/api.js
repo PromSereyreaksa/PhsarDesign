@@ -2,7 +2,10 @@ import axios from 'axios';
 import store from '../store/store';
 import { logout, loginSuccess } from '../store/slices/authSlice';
 
-const API_BASE_URL = 'http://127.0.0.1:5000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:3000';
+
+console.log('API Base URL being used:', API_BASE_URL);
+console.log('Environment VITE_API_URL:', import.meta.env.VITE_API_URL);
 
 // Create axios instance
 const api = axios.create({
@@ -30,53 +33,56 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle auth errors - TEMPORARILY DISABLED
-// api.interceptors.response.use(
-//   (response) => response,
-//   async (error) => {
-//     console.log('API Error:', error.response?.status, error.response?.data);
+// Response interceptor to handle auth errors
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    console.log('API Error:', error.response?.status, error.response?.data);
     
-//     const originalRequest = error.config;
+    const originalRequest = error.config;
     
-//     if (error.response?.status === 401 && !originalRequest._retry) {
-//       console.log('401 error detected, attempting token refresh...');
-//       originalRequest._retry = true;
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      console.log('401 error detected, attempting token refresh...');
+      originalRequest._retry = true;
       
-//       // Try to refresh token first
-//       try {
-//         console.log('Attempting token refresh...');
-//         const refreshResponse = await axios.post(`${API_BASE_URL}/api/auth/refresh`, {}, {
-//           withCredentials: true // Include cookies for refresh token
-//         });
+      // Try to refresh token first
+      try {
+        console.log('Attempting token refresh...');
+        const refreshResponse = await axios.post(`${API_BASE_URL}/api/auth/refresh`, {}, {
+          withCredentials: true // Include cookies for refresh token
+        });
         
-//         if (refreshResponse.data.token) {
-//           console.log('Token refresh successful, retrying original request...');
-//           // Update the store with new token
-//           const state = store.getState();
-//           const user = state.auth.user;
+        if (refreshResponse.data.token) {
+          console.log('Token refresh successful, retrying original request...');
+          // Update the store with new token
+          const state = store.getState();
+          const user = state.auth.user;
           
-//           store.dispatch(loginSuccess({
-//             user: user,
-//             token: refreshResponse.data.token
-//           }));
+          store.dispatch(loginSuccess({
+            user: user,
+            token: refreshResponse.data.token
+          }));
           
-//           // Retry the original request with new token
-//           originalRequest.headers.Authorization = `Bearer ${refreshResponse.data.token}`;
-//           return api(originalRequest);
-//         }
-//       } catch (refreshError) {
-//         console.error('Token refresh failed:', refreshError);
-//         // Only logout if refresh token is invalid
-//         console.log('Logging out due to refresh token failure');
-//         store.dispatch(logout());
-//         window.location.href = '/login';
-//         return Promise.reject(refreshError);
-//       }
-//     }
+          // Retry the original request with new token
+          originalRequest.headers.Authorization = `Bearer ${refreshResponse.data.token}`;
+          return api(originalRequest);
+        }
+      } catch (refreshError) {
+        console.error('Token refresh failed:', refreshError);
+        // Only logout if refresh token is invalid and user was previously authenticated
+        const state = store.getState();
+        if (state.auth.isAuthenticated) {
+          console.log('Logging out due to refresh token failure');
+          store.dispatch(logout());
+          // Don't redirect automatically - let the user stay on the current page
+        }
+        return Promise.reject(refreshError);
+      }
+    }
     
-//     return Promise.reject(error);
-//   }
-// );
+    return Promise.reject(error);
+  }
+);
 
 // Auth API
 export const authAPI = {

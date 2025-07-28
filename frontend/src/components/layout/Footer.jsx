@@ -35,7 +35,7 @@ export default function Footer() {
             <h4 className="text-lg font-semibold mb-4 text-[#A95BAB]">For Clients</h4>
             <ul className="space-y-2">
               <li>
-                <Link to="/post-job" className="text-gray-300 hover:text-[#A95BAB] transition-colors">
+                <Link to="/post-job-client" className="text-gray-300 hover:text-[#A95BAB] transition-colors">
                   Post a Job
                 </Link>
               </li>

@@ -1,8 +1,8 @@
 "use client"
 import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { useDispatch } from "react-redux"
-import { projectsAPI } from "../../services/api"
+import { useDispatch, useSelector } from "react-redux"
+import { jobPostsAPI, clientsAPI } from "../../services/api"
 import { addItem } from "../../store/slices/apiSlice"
 import Navbar from "../../components/layout/Navbar"
 import Footer from "../../components/layout/Footer"
@@ -14,11 +14,13 @@ import { Label } from "../../components/ui/label"
 import { Checkbox } from "../../components/ui/checkbox"
 import { Badge } from "../../components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select"
+import { showToast } from "../../components/ui/toast"
 import { X, Plus, DollarSign, Users, Upload, ImageIcon } from 'lucide-react'
 
 export default function PostJobClient() {
   const navigate = useNavigate()
   const dispatch = useDispatch()
+  const { user } = useSelector((state) => state.auth)
   const [jobTitle, setJobTitle] = useState("")
   const [jobDescription, setJobDescription] = useState("")
   const [category, setCategory] = useState("")
@@ -38,20 +40,32 @@ export default function PostJobClient() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
+  
+  // Test backend connection on component mount
+  useEffect(() => {
+    const testBackendConnection = async () => {
+      try {
+        // Test with a simple API call
+        const response = await jobPostsAPI.getAll()
+        console.log('Backend connection successful')
+      } catch (error) {
+        console.error('Backend connection failed:', error)
+      }
+    }
+    
+    testBackendConnection()
+  }, [])
 
   const categories = [
-    "Digital Art",
-    "Logo Design", 
-    "Graphic Design",
-    "3D Design",
-    "Character Design",
-    "Web Development",
-    "UI/UX Design",
-    "Illustration",
-    "Animation",
-    "Photography",
-    "Brand Identity",
-    "Concept Art"
+    { value: "illustration", label: "Illustration" },
+    { value: "design", label: "Design" }, 
+    { value: "photography", label: "Photography" },
+    { value: "writing", label: "Writing" },
+    { value: "video", label: "Video" },
+    { value: "music", label: "Music" },
+    { value: "animation", label: "Animation" },
+    { value: "web-development", label: "Web Development" },
+    { value: "other", label: "Other" }
   ]
 
   const suggestedSkills = [
@@ -100,6 +114,18 @@ export default function PostJobClient() {
     setIsSubmitting(true)
     setError("")
 
+    console.log('Form submission started...')
+    console.log('Form data:', {
+      jobTitle,
+      jobDescription,
+      category,
+      budgetType,
+      budgetAmount,
+      projectDuration,
+      experienceLevel,
+      skills
+    })
+
     try {
       // Validate frontend data before sending
       if (!jobTitle?.trim() || jobTitle.trim().length < 3) {
@@ -126,48 +152,120 @@ export default function PostJobClient() {
         return
       }
 
-      const projectData = {
+      // Get effective user ID
+      const effectiveUserId = user?.id || user?.userId || 1
+
+      // First, ensure client profile exists
+      let clientProfile
+      try {
+        // Try to get existing client profile
+        const existingClient = await clientsAPI.getByUserId(effectiveUserId)
+        clientProfile = existingClient.data
+        console.log('Found existing client profile:', clientProfile)
+      } catch (error) {
+        if (error.response?.status === 404) {
+          // Client doesn't exist, create one
+          console.log('Client not found, creating new client profile...')
+          const clientData = {
+            userId: effectiveUserId,
+            name: user?.name || "Demo Client",
+            email: user?.email || "client@demo.com",
+            company: "Demo Company"
+          }
+          const newClient = await clientsAPI.create(clientData)
+          clientProfile = newClient.data
+          console.log('Created new client profile:', clientProfile)
+        } else {
+          throw error
+        }
+      }
+
+      // Convert project duration to deadline date
+      let deadline = null;
+      if (projectDuration) {
+        const now = new Date();
+        switch (projectDuration) {
+          case "1-week":
+            deadline = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+            break;
+          case "2-weeks":
+            deadline = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+            break;
+          case "1-month":
+            deadline = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+            break;
+          case "2-months":
+            deadline = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000);
+            break;
+          case "3-months":
+            deadline = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+            break;
+          default:
+            deadline = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // Default 1 month
+        }
+      }
+
+      const jobPostData = {
         title: jobTitle.trim(),
         description: jobDescription.trim(),
         budget: parseFloat(budgetAmount),
         budgetType: budgetType,
         category: category.trim(),
-        projectDuration: projectDuration || null,
+        deadline: deadline,
         experienceLevel: experienceLevel || null,
-        skillsRequired: skills.length > 0 ? skills.join(', ') : null,
-        status: 'open'
+        skillsRequired: skills.length > 0 ? skills.join(', ') : null
       }
 
-      console.log('Submitting project data:', projectData);
+      console.log('Submitting job post data:', jobPostData);
+      console.log('Client ID:', clientProfile.clientId || clientProfile.id);
+      console.log('Making API call to:', `/api/job-posts/client/${clientProfile.clientId || clientProfile.id}`);
 
-      const response = await projectsAPI.create(projectData)
+      const response = await jobPostsAPI.create(clientProfile.clientId || clientProfile.id, jobPostData)
+      console.log('API Response:', response);
 
-      // Backend returns {success, message, data} - access response.data.data
-      if (response.data.success && response.data.data) {
-        dispatch(addItem({ type: 'projects', data: response.data.data }))
-        setSuccess("Project created successfully! Redirecting to dashboard...")
+      // Backend returns the job post directly, not wrapped in success/data
+      if (response.data) {
+        dispatch(addItem({ type: 'jobPosts', data: response.data }))
+        setSuccess("Job posted successfully! Redirecting to dashboard...")
         setError("")
+        
+        // Show enhanced success notification
+        showToast(
+          `🎯 Your job "${jobTitle}" has been posted successfully! Talented freelancers can now submit proposals. You'll be redirected to your dashboard shortly.`, 
+          'success', 
+          8000
+        )
+        
         setTimeout(() => {
-          navigate("/dashboard", { state: { message: 'Project posted successfully!' } })
-        }, 2000)
+          navigate("/dashboard", { state: { message: 'Job posted successfully!' } })
+        }, 3000)
       } else {
-        throw new Error(response.data.message || 'Failed to create project')
+        throw new Error('Failed to create job post')
       }
     } catch (error) {
-      console.error('Project creation error:', error)
+      console.error('Job post creation error:', error)
       console.error('Error response:', error.response)
       console.error('Error response data:', error.response?.data)
+      console.error('Error status:', error.response?.status)
+      console.error('Error message:', error.message)
 
       setSuccess("")
-      // Show specific validation errors
-      if (error.response?.status === 400 && error.response.data.errors) {
+      
+      // Check if it's a network error
+      if (!error.response) {
+        setError("Network error: Cannot connect to server. Please check if the backend is running on port 3000.")
+      } else if (error.response?.status === 400 && error.response.data.errors) {
         const validationErrors = error.response.data.errors
           .map(err => `${err.field}: ${err.message}`)
           .join('. ')
         console.error('Validation errors:', validationErrors)
         setError(validationErrors)
+      } else if (error.response?.status === 404) {
+        setError("API endpoint not found. Please check if the backend routes are configured correctly.")
+      } else if (error.response?.status === 500) {
+        setError("Server error: " + (error.response?.data?.error || "Internal server error"))
       } else {
-        setError(error.response?.data?.message || "Failed to create project. Please try again.")
+        setError(error.response?.data?.error || error.response?.data?.message || `Request failed with status ${error.response?.status}: ${error.message}`)
       }
     } finally {
       setIsSubmitting(false)
@@ -208,7 +306,7 @@ export default function PostJobClient() {
 
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Project Details */}
-          <Card className="bg-white/5 border-white/10">
+          <Card className="bg-white/5 border-white/10 relative">
             <CardHeader>
               <CardTitle className="flex items-center text-white">
                 <Users className="h-5 w-5 mr-2" />
@@ -240,16 +338,19 @@ export default function PostJobClient() {
                   setCategory(value);
                 }} required>
                   <SelectTrigger className="mt-1 bg-white/10 border-white/20 text-white hover:bg-white/20 focus:border-[#A95BAB] focus:ring-[#A95BAB]">
-                    <SelectValue placeholder="Select a category" className="text-white" />
+                    <SelectValue 
+                      placeholder="Select a category" 
+                      value={categories.find(cat => cat.value === category)?.label || category}
+                    />
                   </SelectTrigger>
                   <SelectContent className="bg-[#1a1a1a] border-[#A95BAB]/30 max-h-60 overflow-y-auto">
                     {categories.map((cat) => (
                       <SelectItem
-                        key={cat}
-                        value={cat}
+                        key={cat.value}
+                        value={cat.value}
                         className="text-white hover:bg-[#A95BAB]/30 focus:bg-[#A95BAB]/30 focus:text-white cursor-pointer data-[highlighted]:bg-[#A95BAB]/30 data-[highlighted]:text-white"
                       >
-                        {cat}
+                        {cat.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -339,7 +440,7 @@ export default function PostJobClient() {
           </Card>
 
           {/* Skills Required */}
-          <Card className="bg-white/5 border-white/10">
+          <Card className="bg-white/5 border-white/10 relative">
             <CardHeader>
               <CardTitle className="text-white">Skills Required</CardTitle>
             </CardHeader>
@@ -412,7 +513,7 @@ export default function PostJobClient() {
           </Card>
 
           {/* Budget & Timeline */}
-          <Card className="bg-white/5 border-white/10">
+          <Card className="bg-white/5 border-white/10 relative">
             <CardHeader>
               <CardTitle className="flex items-center text-white">
                 <DollarSign className="h-5 w-5 mr-2" />

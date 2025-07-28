@@ -41,6 +41,13 @@ Projects.init(
         len: [10, 5000],
       },
     },
+    category: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+      validate: {
+        isIn: [["illustration", "design", "photography", "writing", "video", "music", "animation", "web-development", "other"]],
+      },
+    },
     budget: {
       type: DataTypes.FLOAT,
       allowNull: false,

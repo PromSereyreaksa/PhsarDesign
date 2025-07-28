@@ -2,6 +2,7 @@ import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
   projects: [],
+  jobPosts: [], // Add jobPosts array
   artists: [],
   freelancers: [], // Legacy field for backward compatibility
   clients: [],
@@ -38,6 +39,10 @@ const apiSlice = createSlice({
     },
     addItem: (state, action) => {
       const { type, data } = action.payload;
+      // Ensure the array exists before pushing
+      if (!state[type]) {
+        state[type] = [];
+      }
       state[type].push(data);
     },
     updateItem: (state, action) => {
@@ -72,6 +77,7 @@ const getIdField = (type) => {
     artists: 'artistId',
     freelancers: 'artistId', // Legacy mapping
     projects: 'projectId',
+    jobPosts: 'jobId', // Add jobPosts mapping
     portfolios: 'portfolioId',
     reviews: 'reviewId',
     applications: 'applicationId',

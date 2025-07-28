@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
-import { useDispatch, useSelector } from "react-redux"
 import Navbar from "../../components/layout/Navbar"
 import Footer from "../../components/layout/Footer"
 import { Search, Filter, MapPin, Clock, Users, Star, ArrowLeft, Loader2 } from "lucide-react"
@@ -12,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/ca
 import { Badge } from "../../components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select"
 import { MultiStepApplicationModal } from "../../components/ui/multi-step-application-modal"
-import { freelancersAPI } from "../../services/api"
+import { availabilityPostsAPI } from "../../services/api"
 
 export default function BrowseFreelancers() {
   const [freelancers, setFreelancers] = useState([])
@@ -28,21 +27,52 @@ export default function BrowseFreelancers() {
   const [isHiringModalOpen, setIsHiringModalOpen] = useState(false)
   const [selectedFreelancer, setSelectedFreelancer] = useState(null)
 
-  // Fetch freelancers on component mount
+  // Fetch availability posts on component mount
   useEffect(() => {
-    const loadFreelancers = async () => {
+    const loadAvailabilityPosts = async () => {
       setIsLoading(true)
+      setError("")
       try {
-        const response = await freelancersAPI.getAll()
-        setFreelancers(response.data || [])
+        console.log('Fetching availability posts...')
+        const response = await availabilityPostsAPI.getAll()
+        console.log('Fetched availability posts:', response.data)
+        // The API returns data in { posts: [], totalCount, currentPage, etc } format
+        const posts = response.data?.posts || []
+        console.log('Posts array:', posts)
+        
+        // Transform availability posts to freelancer format for compatibility
+        const transformedFreelancers = posts.map(post => {
+          console.log('Transforming post:', post)
+          return {
+            id: post.postId,
+            name: post.artist?.name || post.artistName || 'Anonymous Artist',
+            title: post.title,
+            bio: post.description,
+            skills: post.skills && typeof post.skills === 'string' 
+              ? post.skills.split(', ').map(s => s.trim()) 
+              : post.skills || [],
+            hourlyRate: post.budget || post.hourlyRate,
+            category: post.category,
+            availability: post.availabilityType,
+            portfolioImages: post.portfolioSamples || [],
+            packages: post.packages || [],
+            rating: post.artist?.rating || 4.8, // Use actual rating if available
+            reviewCount: Math.floor(Math.random() * 50) + 10, // Random review count for demo
+            location: post.location || 'Remote',
+            experienceLevel: 'intermediate', // Default
+            status: post.status || 'available'
+          }
+        })
+        console.log('Transformed freelancers:', transformedFreelancers)
+        setFreelancers(transformedFreelancers)
       } catch (error) {
-        console.error('Error fetching freelancers:', error)
-        setError('Failed to load freelancers')
+        console.error('Error fetching availability posts:', error)
+        setError('Failed to load freelancer services')
       } finally {
         setIsLoading(false)
       }
     }
-    loadFreelancers()
+    loadAvailabilityPosts()
   }, [])
 
   // Filter and search logic
@@ -76,7 +106,17 @@ export default function BrowseFreelancers() {
     setFilteredFreelancers(filtered)
   }, [freelancers, searchQuery, selectedCategory, selectedExperience])
 
-  const categories = ["Digital Art", "Logo Design", "Graphic Design", "3D Design", "Character Design"]
+  const categories = [
+    { value: "illustration", label: "Illustration" },
+    { value: "design", label: "Design" }, 
+    { value: "photography", label: "Photography" },
+    { value: "writing", label: "Writing" },
+    { value: "video", label: "Video" },
+    { value: "music", label: "Music" },
+    { value: "animation", label: "Animation" },
+    { value: "web-development", label: "Web Development" },
+    { value: "other", label: "Other" }
+  ]
 
   // Handle search input
   const handleSearch = async () => {
@@ -93,24 +133,33 @@ export default function BrowseFreelancers() {
     }
   }
 
-  // Format freelancer data to match the expected structure
-  const formatFreelancerForDisplay = (freelancer) => ({
-    id: freelancer.id,
-    name: freelancer.User?.name || freelancer.name || 'Anonymous Freelancer',
-    title: freelancer.title || 'Creative Professional',
-    bio: freelancer.bio || 'No bio available',
-    hourlyRate: freelancer.hourlyRate || freelancer.hourly_rate || null,
-    skills: freelancer.skills ? freelancer.skills.split(',').map(s => s.trim()) : [],
-    rating: 4.5, // Default rating - would need to calculate from reviews
-    reviewCount: 0, // Default - would need to count reviews
-    location: freelancer.location || 'Remote',
-    completedProjects: 0, // Would need to count completed projects
-    portfolioItems: freelancer.portfolio_items || 0,
-    joinedDate: freelancer.createdAt ? new Date(freelancer.createdAt).toLocaleDateString() : 'Recently',
-    verified: true, // Default - would need verification system
-    status: freelancer.status || 'available',
-    experienceLevel: freelancer.experience_level || 'intermediate'
-  })
+  // Format freelancer data to match the expected structure (for already transformed data)
+  const formatFreelancerForDisplay = (freelancer) => {
+    console.log('Formatting freelancer:', freelancer)
+    const formatted = {
+      id: freelancer.id,
+      name: freelancer.name || 'Anonymous Freelancer',
+      title: freelancer.title || 'Creative Professional',
+      bio: freelancer.bio || 'No bio available',
+      hourlyRate: freelancer.hourlyRate || null,
+      skills: Array.isArray(freelancer.skills) 
+        ? freelancer.skills 
+        : (freelancer.skills && typeof freelancer.skills === 'string' 
+          ? freelancer.skills.split(',').map(s => s.trim()) 
+          : []),
+      rating: freelancer.rating || 4.5,
+      reviewCount: freelancer.reviewCount || 0,
+      location: freelancer.location || 'Remote',
+      completedProjects: freelancer.completedProjects || 0,
+      portfolioItems: freelancer.portfolioItems || 0,
+      joinedDate: freelancer.joinedDate || 'Recently',
+      verified: freelancer.verified || true,
+      status: freelancer.status || 'available',
+      experienceLevel: freelancer.experienceLevel || 'intermediate'
+    }
+    console.log('Formatted freelancer:', formatted)
+    return formatted
+  }
 
   const displayFreelancers = (filteredFreelancers.length > 0 ? filteredFreelancers : freelancers).map(formatFreelancerForDisplay)
 
@@ -180,7 +229,13 @@ export default function BrowseFreelancers() {
 
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
               <SelectTrigger className="bg-gray-800 border-[#A95BAB]/50 text-white">
-                <SelectValue placeholder="Category" />
+                <SelectValue 
+                  placeholder="Category" 
+                  value={selectedCategory === "All Categories" 
+                    ? "All Categories" 
+                    : categories.find(cat => cat.value === selectedCategory)?.label || selectedCategory
+                  } 
+                />
               </SelectTrigger>
               <SelectContent className="bg-gray-800 border-[#A95BAB]/50">
                 <SelectItem
@@ -191,11 +246,11 @@ export default function BrowseFreelancers() {
                 </SelectItem>
                 {categories.map((category) => (
                   <SelectItem
-                    key={category}
-                    value={category}
+                    key={category.value}
+                    value={category.value}
                     className="text-white hover:bg-[#A95BAB]/20 focus:bg-[#A95BAB]/20 focus:text-white"
                   >
-                    {category}
+                    {category.label}
                   </SelectItem>
                 ))}
               </SelectContent>

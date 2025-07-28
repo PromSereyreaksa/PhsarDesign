@@ -131,7 +131,7 @@ export default function AboutPage() {
                 Browse Jobs
               </Link>
               <Link
-                to="/post-job"
+                to="/post-job-client"
                 className="text-white hover:text-[#A95BAB] transition-colors duration-500 ease-out cursor-pointer"
               >
                 Post Job
@@ -388,7 +388,7 @@ export default function AboutPage() {
                 Browse Talent
               </Button>
             </Link>
-            <Link to="/post-job">
+            <Link to="/post-job-client">
               <Button
                 size="lg"
                 className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-lg px-8 py-4 text-lg font-semibold group transform hover:scale-105 transition-all duration-500 ease-out"

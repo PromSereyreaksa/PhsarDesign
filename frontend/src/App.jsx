@@ -11,9 +11,7 @@ import AboutPage from "./pages/about/page.jsx"
 import BrowseJobs from "./pages/browse-job/page.jsx"
 import BrowseArtists from "./pages/browse-freelancers/page.jsx" // Import from legacy path but rename component
 import PostJobClient from "./pages/post-job-client/page.jsx"
-import PostJobArtist from "./pages/post-job-freelancer/page.jsx" // Legacy path but rename component
-import PostJobClientNew from "./pages/post-job/client.jsx"
-import PostJobArtistNew from "./pages/post-job/freelancer.jsx" // Legacy path but rename component
+import PostJobFreelancer from "./pages/post-job-freelancer/page.jsx"
 import Messages from "./pages/messages/page.jsx"
 import Profile from "./pages/profile/page.jsx"
 import Dashboard from "./pages/dashboard/page.jsx"
@@ -41,6 +39,7 @@ function App() {
           </ProtectedRoute>
         } />
         <Route path="/browse-jobs" element={<ProtectedRoute><BrowseJobs /></ProtectedRoute>} />
+        <Route path="/browse-job" element={<ProtectedRoute><BrowseJobs /></ProtectedRoute>} /> {/* Add singular route */}
         <Route path="/browse-freelancers" element={<ProtectedRoute><BrowseArtists /></ProtectedRoute>} />
         <Route path="/browse-artists" element={<ProtectedRoute><BrowseArtists /></ProtectedRoute>} /> {/* Add new consistent route */}
         <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
@@ -49,12 +48,11 @@ function App() {
         
         {/* Client only routes */}
         <Route path="/post-job-client" element={<ProtectedRoute requiredRole="client"><PostJobClient /></ProtectedRoute>} />
-        <Route path="/post-job/client" element={<ProtectedRoute requiredRole="client"><PostJobClientNew /></ProtectedRoute>} />
         
-        {/* Artist only routes */}
-        <Route path="/post-job-freelancer" element={<ProtectedRoute requiredRole="artist"><PostJobArtist /></ProtectedRoute>} />
-        <Route path="/post-job/freelancer" element={<ProtectedRoute requiredRole="artist"><PostJobArtistNew /></ProtectedRoute>} />
-        <Route path="/post-job/artist" element={<ProtectedRoute requiredRole="artist"><PostJobArtistNew /></ProtectedRoute>} /> {/* Add new consistent route */}
+        {/* Freelancer only routes */}
+        <Route path="/post-job-freelancer" element={<ProtectedRoute requiredRole="artist"><PostJobFreelancer /></ProtectedRoute>} />
+        <Route path="/post-job/freelancer" element={<ProtectedRoute requiredRole="artist"><PostJobFreelancer /></ProtectedRoute>} />
+        <Route path="/post-job/artist" element={<ProtectedRoute requiredRole="artist"><PostJobFreelancer /></ProtectedRoute>} />
       </Routes>
     </div>
   )
