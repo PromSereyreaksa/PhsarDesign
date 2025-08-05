@@ -118,9 +118,9 @@ export default function AboutPage() {
     image: "/Sophanith.jpg",
     description: "Frontend engineer with an eye for detail and commitment to excellent UX.",
     contacts: [
-      { platform: "email", url: "mailto:" },
-      { platform: "telegram", url: "#" },
-      { platform: "linkedin", url: "#" }
+      { platform: "email", url: "mailto:sophanithkosal9@gmail.com" },
+      { platform: "telegram", url: "https://t.me/nithkidd" },
+      { platform: "linkedin", url: "https://www.linkedin.com/in/kosal-sophanith-548b05333" }
     ]
   },
   {
