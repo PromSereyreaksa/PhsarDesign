@@ -2,13 +2,22 @@
 
 import { useState } from "react"
 import { Link } from "react-router-dom"
-import { ArrowRight, Users, Target, Award, Heart, CheckCircle, Star, Globe, Shield, Clock } from "lucide-react"
+import { ArrowRight, Users, Target, Award, Heart, CheckCircle, Star, Globe, Shield, Clock, Mail, Send, Linkedin, Menu, X } from "lucide-react"
 import { Button } from "../../components/ui/button"
 import { Card, CardContent } from "../../components/ui/card"
 import { Input } from "../../components/ui/input"
 
 export default function AboutPage() {
   const [email, setEmail] = useState("")
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+
+  const smoothScroll = (elementId) => {
+    const element = document.getElementById(elementId)
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" })
+    }
+    setIsMenuOpen(false)
+  }
 
   const stats = [
     { number: "50k+", label: "Creative Artists", icon: Users },
@@ -58,48 +67,119 @@ export default function AboutPage() {
   ]
 
   const team = [
-    {
-      name: "Sarah Chen",
-      role: "CEO & Founder",
-      image: "/DigitalArt.jpg",
-      description: "Former creative director with 15+ years in digital design and marketplace development.",
-    },
-    {
-      name: "Marcus Rodriguez",
-      role: "CTO",
-      image: "/LogoDesign.jpg",
-      description: "Tech visionary specializing in scalable platforms and user experience optimization.",
-    },
-    {
-      name: "Emily Watson",
-      role: "Head of Community",
-      image: "/CharacterDesign.jpg",
-      description: "Community builder passionate about connecting creatives and fostering artistic growth.",
-    },
-  ]
+    
+  {
+    name: "Kao Sodavann",
+    role: "Founder",
+    image: "/Sodavann.jpg",
+    description: "Visionary leader focused on bridging creativity and technology to empower digital artists.",
+    contacts: [
+      { platform: "email", url: "mailto:kaosodavann714@gmail.com" },
+      { platform: "telegram", url: "https://t.me/vannnnn001"},
+      { platform: "linkedin", url: "https://www.linkedin.com/in/kao-sodavann-b4b173321/" }
+    ]
+  },
+  {
+    name: "Prom Sereyreaksa",
+    role: "Co-Founder",
+    image: "/Sereyreaksa.jpg",
+    description: "Creative technologist passionate about intuitive user experience and platform innovation.",
+    contacts: [
+      { platform: "email", url: "mailto:prumsereyreaksa@gmail.com" },
+      { platform: "telegram", url: "https://t.me/souuJ" },
+      { platform: "linkedin", url: "https://www.linkedin.com/in/prom-sereyreaksa-2a2298364/" },
+    ]
+  },
+  {
+    name: "Chea Ilong",
+    role: "Backend Developer",
+    image: "/Ilong.jpg",
+    description: "Specializes in backend architecture, security, and efficient API development.",
+    contacts: [
+      { platform: "email", url: "mailto:" },
+      { platform: "telegram", url: "#" },
+      { platform: "linkedin", url: "#" }
+    ]
+  },
+  {
+    name: "Huy Visa",
+    role: "Backend Developer",
+    image: "/Visa.jpg",
+    description: "Focused on scalable backend systems and reliable data operations.",
+    contacts: [
+      { platform: "email", url: "mailto:Visadekh@gmail.com" },
+      { platform: "telegram", url: "https://t.me/visahuy" },
+      { platform: "linkedin", url: "https://www.linkedin.com/in/huy-visa-8443b2308" }
+    ]
+  },
+  {
+    name: "Kosal Sophanith",
+    role: "Frontend Developer",
+    image: "/Sophanith.jpg",
+    description: "Frontend engineer with an eye for detail and commitment to excellent UX.",
+    contacts: [
+      { platform: "email", url: "mailto:" },
+      { platform: "telegram", url: "#" },
+      { platform: "linkedin", url: "#" }
+    ]
+  },
+  {
+    name: "Chheang Sovanpanha",
+    role: "Backend Developer",
+    image: "/Sovanpanha.jpg",
+    description: "Builds robust server-side logic and contributes to seamless data integration.",
+    contacts: [
+      { platform: "email", url: "mailto:Panhasovan51@gmail.com" },
+      { platform: "telegram", url: "https://t.me/nhaaZzz" },
+      { platform: "linkedin", url: "https://www.linkedin.com/in/sovanpanha-chheang-17473b32a/" }
+    ]
+  },
+  {
+    name: "Sea Huyty",
+    role: "Frontend Developer",
+    image: "/Huyty.jpg",
+    description: "Crafts responsive and engaging user interfaces with a focus on performance.",
+    contacts: [
+      { platform: "email", url: "mailto:" },
+      { platform: "telegram", url: "#" },
+      { platform: "linkedin", url: "#" }
+    ]
+  },
+  {
+    name: "Phay Someth",
+    role: "Frontend Developer",
+    image: "/Someth.jpg",
+    description: "Designs clean, modern UI components and enhances user interactivity.",
+    contacts: [
+      { platform: "email", url: "mailto:" },
+      { platform: "telegram", url: "#" },
+      { platform: "linkedin", url: "#" }
+    ]
+  },
+  
+]
+
+    
+  
 
   const milestones = [
     {
-      year: "2020",
+      year: "2025",
       title: "Founded",
       description: "PhsarDesign launched with a vision to revolutionize creative freelancing",
     },
-    { year: "2021", title: "10k Users", description: "Reached our first major milestone of 10,000 registered users" },
+    { year: "June", title: "First Hackathon", description: "We participated in turing hackathon, receiving valueable feedbacks, validated our idea and securing top 4" },
     {
-      year: "2022",
-      title: "Global Expansion",
-      description: "Expanded to serve creatives in over 50 countries worldwide",
+      year: "July",
+      title: "ACTSmart Hackathon",
+      description: "Secured top 8, during the hackathon phase and advancing to the incubation.",
     },
     {
-      year: "2023",
-      title: "100k Projects",
-      description: "Celebrated 100,000 successful projects completed on our platform",
+      year: "Present",
+      title: "ACTSmart Incubation Program",
+      description: "Incubation phase, receiving mentorship and resources to refine our platform.",
     },
-    {
-      year: "2024",
-      title: "AI Integration",
-      description: "Launched AI-powered matching system for better project connections",
-    },
+    
   ]
 
   return (
@@ -117,45 +197,106 @@ export default function AboutPage() {
               </Link>
             </div>
 
-            <div className="hidden md:flex items-center space-x-8">
+            <div className="hidden lg:flex items-center space-x-8">
               <Link
                 to="/"
                 className="text-white hover:text-[#A95BAB] transition-colors duration-500 ease-out cursor-pointer"
               >
                 Home
               </Link>
-              <Link
-                to="/browse-jobs"
+              <button
+                onClick={() => smoothScroll("foundation")}
                 className="text-white hover:text-[#A95BAB] transition-colors duration-500 ease-out cursor-pointer"
               >
-                Browse Jobs
-              </Link>
-              <Link
-                to="/post-job-client"
+                Foundation
+              </button>
+              <button
+                onClick={() => smoothScroll("team")}
                 className="text-white hover:text-[#A95BAB] transition-colors duration-500 ease-out cursor-pointer"
               >
-                Post Job
-              </Link>
-              <span className="text-[#A95BAB] cursor-pointer">About</span>
+                Team
+              </button>
+              <button
+                onClick={() => smoothScroll("journey")}
+                className="text-white hover:text-[#A95BAB] transition-colors duration-500 ease-out cursor-pointer"
+              >
+                Journey
+              </button>
             </div>
 
-            <div className="flex items-center space-x-4">
-              <Link to="/login">
+            <div className="flex items-center space-x-2 lg:space-x-4">
+              <Link to="/login" className="hidden sm:block">
                 <Button
                   variant="ghost"
-                  className="text-white hover:text-[#A95BAB] hover:bg-white/10 rounded-lg px-6 transform hover:scale-105 transition-all duration-500 ease-out"
+                  className="text-white hover:text-[#A95BAB] hover:bg-white/10 rounded-lg px-4 lg:px-6 text-sm lg:text-base transform hover:scale-105 transition-all duration-500 ease-out"
                 >
                   Sign In
                 </Button>
               </Link>
-              <Link to="/register">
-                <Button className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-lg px-6 transform hover:scale-105 transition-all duration-500 ease-out">
+              <Link to="/register" className="hidden sm:block">
+                <Button className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-lg px-4 lg:px-6 text-sm lg:text-base transform hover:scale-105 transition-all duration-500 ease-out">
                   Get Started
                 </Button>
               </Link>
+              
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="lg:hidden text-white hover:text-[#A95BAB] transition-colors duration-300"
+              >
+                {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </button>
             </div>
           </div>
         </div>
+
+        {/* Mobile Menu */}
+        {isMenuOpen && (
+          <div className="lg:hidden absolute top-20 left-0 right-0 bg-[#202020]/95 backdrop-blur-sm border-b border-white/10 z-40">
+            <div className="px-4 py-6 space-y-4">
+              <Link
+                to="/"
+                className="block text-white hover:text-[#A95BAB] transition-colors duration-300 py-2"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Home
+              </Link>
+              <button
+                onClick={() => smoothScroll("foundation")}
+                className="block text-white hover:text-[#A95BAB] transition-colors duration-300 py-2 w-full text-left"
+              >
+                Foundation
+              </button>
+              <button
+                onClick={() => smoothScroll("team")}
+                className="block text-white hover:text-[#A95BAB] transition-colors duration-300 py-2 w-full text-left"
+              >
+                Team
+              </button>
+              <button
+                onClick={() => smoothScroll("journey")}
+                className="block text-white hover:text-[#A95BAB] transition-colors duration-300 py-2 w-full text-left"
+              >
+                Journey
+              </button>
+              <div className="pt-4 border-t border-white/10 flex flex-col space-y-3">
+                <Link to="/login" onClick={() => setIsMenuOpen(false)}>
+                  <Button
+                    variant="ghost"
+                    className="w-full text-white hover:text-[#A95BAB] hover:bg-white/10 rounded-lg"
+                  >
+                    Sign In
+                  </Button>
+                </Link>
+                <Link to="/register" onClick={() => setIsMenuOpen(false)}>
+                  <Button className="w-full bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-lg">
+                    Get Started
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Hero Section */}
@@ -210,7 +351,7 @@ export default function AboutPage() {
       </section>
 
       {/* Mission, Vision, Values */}
-      <section className="py-20">
+      <section id="foundation" className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-white mb-4">Our Foundation</h2>
@@ -274,7 +415,7 @@ export default function AboutPage() {
       </section>
 
       {/* Team Section */}
-      <section className="py-20">
+      <section id="team" className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-white mb-4">Meet Our Team</h2>
@@ -283,41 +424,149 @@ export default function AboutPage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {team.map((member, index) => (
-              <Card
-                key={index}
-                className="bg-white/5 border-white/10 hover:bg-white/10 rounded-2xl overflow-hidden group cursor-pointer relative transform hover:scale-105 transition-all duration-500 ease-out"
-              >
-                {/* Background Image on Hover */}
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-500 ease-out">
-                  <img
-                    src={member.image || "/placeholder.svg"}
-                    alt={member.name}
-                    className="w-full h-full object-cover"
-                  />
+          <div className="max-w-7xl mx-auto">
+            {/* Founders Level */}
+            <div className="flex flex-col lg:flex-row justify-center items-center gap-8 lg:gap-24 mb-16">
+              {team.filter(member => member.role === "Founder" || member.role === "Co-Founder").map((member, index) => (
+                <div key={index} className="text-center group relative">
+                  {/* Decorative background */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#A95BAB]/10 to-transparent rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500 ease-out"></div>
+                  
+                  <div className="relative z-10 bg-white/5 backdrop-blur-sm border border-white/10 rounded-3xl p-6 lg:p-8 group-hover:bg-white/10 group-hover:border-[#A95BAB]/30 transition-all duration-500 ease-out h-[450px] lg:h-[500px] flex flex-col">
+                    <div className="relative mb-6">
+                      <div className="w-32 h-32 lg:w-40 lg:h-40 mx-auto rounded-full overflow-hidden group-hover:scale-105 transition-transform duration-500 ease-out border-4 border-[#A95BAB]/50 shadow-2xl shadow-[#A95BAB]/20">
+                        <img
+                          src={member.image || "/placeholder.svg"}
+                          alt={member.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="flex-1 flex flex-col space-y-3">
+                      <h3 className="font-bold text-white text-xl lg:text-2xl">{member.name}</h3>
+                      <p className="text-[#A95BAB] font-bold text-base lg:text-lg uppercase tracking-wide">{member.role}</p>
+                      <p className="text-gray-300 text-sm leading-relaxed max-w-xs mx-auto flex-1">{member.description}</p>
+                      
+                      {/* Social Media Contacts */}
+                      <div className="flex justify-center gap-3 pt-4 mt-auto">
+                        {member.contacts?.map((contact, contactIndex) => {
+                          const getIcon = (platform) => {
+                            switch(platform.toLowerCase()) {
+                              case 'email': return Mail;
+                              case 'telegram': return Send;
+                              case 'linkedin': return Linkedin;
+                              default: return Globe;
+                            }
+                          };
+                          const IconComponent = getIcon(contact.platform);
+                          
+                          return (
+                            <a
+                              key={contactIndex}
+                              href={contact.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-10 h-10 bg-[#A95BAB]/20 hover:bg-[#A95BAB] rounded-full flex items-center justify-center transition-all duration-300 ease-out group/social"
+                            >
+                              <IconComponent className="w-5 h-5 text-[#A95BAB] group-hover/social:text-white transition-colors duration-300" />
+                            </a>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
                 </div>
+              ))}
+            </div>
 
-                <div className="aspect-square relative overflow-hidden">
-                  <img
-                    src={member.image || "/placeholder.svg"}
-                    alt={member.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
-                  />
+            {/* Enhanced Connection Lines */}
+            <div className="relative mb-8 lg:mb-12">
+              <div className="flex justify-center">
+                <div className="w-64 lg:w-96 h-px bg-gradient-to-r from-transparent via-[#A95BAB]/50 to-transparent relative">
+                  <div className="absolute left-1/2 transform -translate-x-1/2 w-px h-12 lg:h-16 bg-gradient-to-b from-[#A95BAB]/50 to-[#A95BAB]/20"></div>
+                  {/* Decorative dots */}
+                  <div className="absolute left-1/4 top-0 w-2 h-2 bg-[#A95BAB]/40 rounded-full transform -translate-y-1"></div>
+                  <div className="absolute right-1/4 top-0 w-2 h-2 bg-[#A95BAB]/40 rounded-full transform -translate-y-1"></div>
                 </div>
-                <CardContent className="p-6 text-center relative z-10">
-                  <h3 className="font-semibold text-white text-lg mb-1">{member.name}</h3>
-                  <p className="text-[#A95BAB] mb-3 font-medium">{member.role}</p>
-                  <p className="text-gray-300 text-sm leading-relaxed">{member.description}</p>
-                </CardContent>
-              </Card>
-            ))}
+              </div>
+            </div>
+
+            {/* Developers Level */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto">
+              {team.filter(member => member.role.includes("Developer")).map((member, index) => (
+                <div key={index} className="text-center group relative">
+                  {/* Connection lines to top - only show on larger screens */}
+                  {index < 3 && (
+                    <div className="hidden lg:block absolute -top-12 left-1/2 transform -translate-x-1/2 w-px h-12 bg-gradient-to-b from-[#A95BAB]/30 to-transparent"></div>
+                  )}
+                  
+                  <div className="relative z-10 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-4 lg:p-6 group-hover:bg-white/10 group-hover:border-[#A95BAB]/20 transition-all duration-500 ease-out h-[350px] lg:h-[400px] flex flex-col">
+                    <div className="relative mb-4">
+                      <div className="w-28 h-28 lg:w-32 lg:h-32 mx-auto rounded-full overflow-hidden group-hover:scale-105 transition-transform duration-500 ease-out border-3 border-white/30 shadow-xl">
+                        <img
+                          src={member.image || "/placeholder.svg"}
+                          alt={member.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      {/* Role badge */}
+                      <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
+                        <div className="bg-[#A95BAB]/90 px-3 py-1 rounded-full">
+                          <span className="text-white font-medium text-xs">
+                            {member.role.includes("Frontend") ? "FE" : "BE"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex-1 flex flex-col space-y-2">
+                      <h3 className="font-semibold text-white text-base lg:text-lg">{member.name}</h3>
+                      <p className="text-[#A95BAB] font-medium text-xs lg:text-sm">{member.role}</p>
+                      <p className="text-gray-300 text-xs leading-relaxed flex-1">{member.description}</p>
+                      
+                      {/* Social Media Contacts */}
+                      <div className="flex justify-center gap-2 pt-3 mt-auto">
+                        {member.contacts?.map((contact, contactIndex) => {
+                          const getIcon = (platform) => {
+                            switch(platform.toLowerCase()) {
+                              case 'email': return Mail;
+                              case 'telegram': return Send;
+                              case 'linkedin': return Linkedin;
+                              default: return Globe;
+                            }
+                          };
+                          const IconComponent = getIcon(contact.platform);
+                          
+                          return (
+                            <a
+                              key={contactIndex}
+                              href={contact.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-8 h-8 bg-[#A95BAB]/20 hover:bg-[#A95BAB] rounded-full flex items-center justify-center transition-all duration-300 ease-out group/social"
+                            >
+                              <IconComponent className="w-4 h-4 text-[#A95BAB] group-hover/social:text-white transition-colors duration-300" />
+                            </a>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Bottom decorative line */}
+            <div className="relative mt-12">
+              <div className="w-full max-w-4xl mx-auto h-px bg-gradient-to-r from-transparent via-[#A95BAB]/20 to-transparent"></div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Timeline Section */}
-      <section className="py-20">
+      <section id="journey" className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-white mb-4">Our Journey</h2>

@@ -527,7 +527,7 @@ export default function LandingPage() {
                 Contact
               </a>
             </div>
-            <p className="text-gray-500 text-sm mt-6">© 2024 PhsarDesign. All rights reserved.</p>
+            <p className="text-gray-500 text-sm mt-6">© 2025 Phsar Design. All rights reserved.</p>
           </div>
         </div>
       </footer>

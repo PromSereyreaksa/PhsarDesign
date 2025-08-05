@@ -7,7 +7,7 @@ import AboutPage from "./pages/about/page.jsx"
 
 function App() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000]">
+    <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000]" style={{fontFamily: 'Poppins, sans-serif'}}>
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<LandingPage />} />
