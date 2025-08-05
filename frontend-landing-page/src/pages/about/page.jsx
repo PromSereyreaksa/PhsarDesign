@@ -96,9 +96,9 @@ export default function AboutPage() {
     image: "/Ilong.jpg",
     description: "Specializes in backend architecture, security, and efficient API development.",
     contacts: [
-      { platform: "email", url: "mailto:" },
-      { platform: "telegram", url: "#" },
-      { platform: "linkedin", url: "#" }
+      { platform: "email", url: "mailto:cheadara133@gmail.com" },
+      { platform: "telegram", url: "http://t.me/Chea_Ilong" },
+      { platform: "linkedin", url: "https://www.linkedin.com/in/chea-ilong-88bb83333" }
     ]
   },
   {
@@ -140,9 +140,9 @@ export default function AboutPage() {
     image: "/Huyty.jpg",
     description: "Crafts responsive and engaging user interfaces with a focus on performance.",
     contacts: [
-      { platform: "email", url: "mailto:" },
-      { platform: "telegram", url: "#" },
-      { platform: "linkedin", url: "#" }
+      { platform: "email", url: "mailto:seehuyty@gmail.com" },
+      { platform: "telegram", url: "https://t.me/SeaHuyty" },
+      { platform: "linkedin", url: "https://www.linkedin.com/in/sea-huyty-bab014283" }
     ]
   },
   {
@@ -151,9 +151,9 @@ export default function AboutPage() {
     image: "/Someth.jpg",
     description: "Designs clean, modern UI components and enhances user interactivity.",
     contacts: [
-      { platform: "email", url: "mailto:" },
-      { platform: "telegram", url: "#" },
-      { platform: "linkedin", url: "#" }
+      { platform: "email", url: "mailto:phay.someth70@gmail.com" },
+      { platform: "telegram", url: "https://t.me/SomethPhay" },
+      { platform: "linkedin", url: "https://www.linkedin.com/in/phay-someth" }
     ]
   },
   
