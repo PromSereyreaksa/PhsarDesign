@@ -54,6 +54,11 @@ Users.init({
       isIn: [['client', 'artist']] // Role must be either 'client' or 'artist'
     }
   },
+  emailVerification: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
   stripeCustomerId: {
     type: DataTypes.STRING,
     allowNull: true,

@@ -1,5 +1,5 @@
 import express from "express";
-import { register, login, refresh, logout } from "../controllers/auth.controller.js";
+import { register, login, refresh, logout, requestOTP, verifyOTP, changePassword } from "../controllers/auth.controller.js";
 import { generateAccessToken } from "../utils/jwt.js";
 import { validateRegistration, validateLogin } from "../middlewares/security.middleware.js";
 
@@ -10,6 +10,9 @@ router.post("/register", validateRegistration, register);
 router.post("/login", validateLogin, login);
 router.post("/refresh", refresh);
 router.post("/logout", logout);
+router.post("/request-otp", requestOTP);
+router.post("/verify-otp", verifyOTP);
+router.post("/change-password", changePassword);
 
 // Google OAuth routes - only enable if environment variables are set
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {

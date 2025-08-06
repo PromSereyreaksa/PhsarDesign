@@ -229,6 +229,7 @@ const resyncAndSeed = async () => {
         title: `Creative Project ${i + 1}`,
         description: generateRandomText(30, 120),
         budget: generateRandomPrice(300, 8000),
+        category: categories[Math.floor(Math.random() * categories.length)],
         status: ['open', 'in_progress', 'completed', 'cancelled'][Math.floor(Math.random() * 4)],
         paymentStatus: ['pending', 'processing', 'completed', 'failed'][Math.floor(Math.random() * 4)],
         paymentIntentId: Math.random() > 0.7 ? `pi_${uuidv4().substring(0, 20)}` : null,
