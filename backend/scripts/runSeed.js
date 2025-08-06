@@ -3,6 +3,7 @@
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { sequelize } from '../config/database.js';
 
 // Load environment variables
 const __filename = fileURLToPath(import.meta.url);
@@ -20,6 +21,10 @@ console.log('');
 await new Promise(resolve => setTimeout(resolve, 2000));
 
 try {
+  // Drop existing tables and recreate them
+  await sequelize.sync({ force: true });
+  console.log('Database models synchronized.');
+
   await resyncAndSeed();
   console.log('');
   console.log('✨ Database successfully resynced and seeded!');

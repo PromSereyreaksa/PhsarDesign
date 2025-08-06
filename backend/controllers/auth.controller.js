@@ -1,4 +1,7 @@
 import bcrypt from "bcryptjs";
+import randomString from "randomstring";
+import nodemailer from "nodemailer";
+
 import { Users } from "../models/index.js";
 import {
   generateAccessToken,
@@ -12,6 +15,8 @@ const cookieOptions = {
   sameSite: process.env.NODE_ENV === 'production' ? "Strict" : "Lax", // More relaxed for development
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 };
+
+const otpCache = {};
 
 export const register = async (req, res) => {
   const { email, password, role } = req.body;
@@ -113,6 +118,109 @@ export const refresh = (req, res) => {
   } catch (err) {
     console.error("Refresh token error:", err);
     res.status(403).json({ message: "Refresh token invalid or expired" });
+  }
+};
+
+export const requestOTP = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const otp = randomString.generate({ length: 4, charset: 'numeric' });
+    otpCache[email] = otp;
+
+    // Send OTP via email
+    const mailOptions = {
+      from: 'seehuyty@gmail.com',
+      to: email,
+      subject: 'Your Verification Code',
+      text: 'Your OTP for verification is: ' + otp
+    };
+
+    let transporter = nodemailer.createTransport({
+      service: 'Gmail',
+      auth: {
+        user: 'seahuyty4444@gmail.com',
+        pass: 'zkyd cgrg nplj ichm'
+      },
+      tls: {
+        rejectUnauthorized: false // Disable certificate validation
+      }
+    });
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.log('Error occurred:', error);
+      } else {
+        console.log('OTP email sent successfully', info.response);
+      }
+    });
+
+    // Store OTP in cache for 5 minutes
+    res.cookie('otpCache', otpCache, { maxAge: 30000, httpOnly: true });
+    res.status(200).json({ success: true, message: 'OTP sent successfully' });
+  } catch (error) {
+    console.log('Error in requestOTP:', error);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+};
+
+export const verifyOTP = async (req, res) => {
+  const { email, otp } = req.body;
+  const storedOtp = otpCache[email];
+  try {
+    // Check if email exists in the cache
+    if (!otpCache.hasOwnProperty(email)) {
+      return res.status(400).json({ success: false, message: 'Email not found' });
+    }
+
+    if (storedOtp == otp) {
+      // OTP is valid, remove from cache
+      delete otpCache[email];
+
+      // Update emailVerification in database to true
+      const updateEmailVerification = await Users.update({
+        emailVerification: true,
+      }, {
+        where: { email: email }
+      });
+
+      return res.status(200).json({ success: true, message: 'OTP verified successfully' });
+    } else {
+      return res.status(400).json({ success: false, message: 'Invalid OTP' });
+    }
+  } catch (error) {
+    console.log('Error in verifyOTP:', error);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+};
+
+export const changePassword = async (req, res) => {
+  const { email, newPassword } = req.body;
+  try {
+    // Check if the new password is valid
+    if (newPassword.length < 6) {
+      return res.status(400).json({ success: false, message: 'Password should be at least 6 characters long' });
+    }
+
+    // Check if email exists in the database
+    const user = await Users.findOne({ where: { email: email } });
+    if (!user) {
+      return res.status(400).json({ success: false, message: 'Email not found'});
+    }
+
+    // Hash Password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    const updatePassword = await Users.update({
+      password: hashedPassword,
+    }, {
+      where: { email: email }
+    });
+
+    res.status(200).json({ success: true, message: 'Password updated successfully' });
+  } catch (error) {
+    console.log('Error in changePassword:', error);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 };
 
