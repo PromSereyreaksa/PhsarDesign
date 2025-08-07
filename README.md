@@ -640,10 +640,6 @@ artlink/
 - **SEO Optimization**: Server-side rendering ready with meta tag management
 - **Accessibility**: WCAG 2.1 compliant with keyboard navigation and screen reader support
 
-## 📄 **License & Legal**
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for complete details.
-
 ### **Third-party Licenses**
 - React: MIT License
 - Express.js: MIT License

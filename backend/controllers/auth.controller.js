@@ -1,6 +1,9 @@
 import bcrypt from "bcryptjs";
 import randomString from "randomstring";
 import nodemailer from "nodemailer";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 import { Users } from "../models/index.js";
 import {
@@ -130,7 +133,7 @@ export const requestOTP = async (req, res) => {
 
     // Send OTP via email
     const mailOptions = {
-      from: 'seehuyty@gmail.com',
+      from: process.env.EMAIL_USER,
       to: email,
       subject: 'Your Verification Code',
       text: 'Your OTP for verification is: ' + otp
@@ -139,8 +142,8 @@ export const requestOTP = async (req, res) => {
     let transporter = nodemailer.createTransport({
       service: 'Gmail',
       auth: {
-        user: 'seahuyty4444@gmail.com',
-        pass: 'zkyd cgrg nplj ichm'
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
       },
       tls: {
         rejectUnauthorized: false // Disable certificate validation
