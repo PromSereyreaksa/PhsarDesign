@@ -69,11 +69,11 @@ class PhsarDesignApp extends StatelessWidget {
       theme: ThemeData(
         brightness: Brightness.dark,
         primaryColor: const Color(0xFF9C27B0),
-        scaffoldBackgroundColor: const Color(0xFF121212),
+        scaffoldBackgroundColor: const Color(0xFF202020), // Use gradient start color as base
         colorScheme: const ColorScheme.dark(
           primary: Color(0xFF9C27B0),
           secondary: Color(0xFF9C27B0),
-          surface: Color(0xFF1E1E1E),
+          surface: Color(0xFF202020), // Use gradient start color
         ),
         textTheme: GoogleFonts.poppinsTextTheme(
           ThemeData.dark().textTheme,
@@ -84,25 +84,86 @@ class PhsarDesignApp extends StatelessWidget {
   }
 }
 
-class LandingPage extends StatelessWidget {
+class LandingPage extends StatefulWidget {
   const LandingPage({super.key});
+
+  @override
+  State<LandingPage> createState() => _LandingPageState();
+}
+
+class _LandingPageState extends State<LandingPage> {
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _freelancingKey = GlobalKey();
+
+  void _scrollToFreelancing() {
+    final context = _freelancingKey.currentContext;
+    if (context != null) {
+      // Get the RenderBox to calculate position
+      final RenderBox renderBox = context.findRenderObject() as RenderBox;
+      final position = renderBox.localToGlobal(Offset.zero);
+
+      // Calculate navbar height dynamically (fixed height of 80)
+      const double navbarHeight = 80.0;
+
+      // Add additional spacing for better visual separation
+      const double additionalSpacing = 20.0;
+
+      // Calculate the target scroll position
+      final double targetPosition = position.dy - navbarHeight - additionalSpacing;
+
+      // Animate to the calculated position
+      _scrollController.animateTo(
+        targetPosition.clamp(0.0, _scrollController.position.maxScrollExtent),
+        duration: const Duration(milliseconds: 800),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         children: [
-          // Scrollable content with top padding for fixed navbar
+          // Scrollable content with gradient background covering full content height
           SingleChildScrollView(
-            child: Column(
-              children: [
+            controller: _scrollController,
+            child: Container(
+              // Apply gradient background to the full content container
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  stops: [0.3, 1.0], // 30% and 100% positions based on full content height
+                  colors: [
+                    Color(0xFF202020), // Dark gray at 30%
+                    Color(0xFF000000), // Black at 100%
+                  ],
+                ),
+              ),
+              child: Column(
+                children: [
                 const SizedBox(height: 80), // Space for fixed navbar
                 const HeroSection(
                   backgroundImageUrl: 'image/hero section background.png',
                 ),
-                const ExploreSection(),
-                const FreelancingOpportunitiesSection(
-                  customImages: [
+
+                // Explore Section - now acts as navigation anchor
+                ExploreSection(
+                  isExpanded: false, // Always false since we show all sections
+                  onToggle: _scrollToFreelancing, // Scroll to freelancing instead of toggle
+                ),
+
+                // All sections now visible by default
+                FreelancingOpportunitiesSection(
+                  titleKey: _freelancingKey, // Add key for scroll targeting to title
+                  customImages: const [
                     'image/freelance1.png',
                     'image/freelance2.png',
                     'image/freelance3.png',
@@ -129,7 +190,8 @@ class LandingPage extends StatelessWidget {
                   ],
                 ),
                 const FooterSection(),
-              ],
+                ],
+              ),
             ),
           ),
           // Fixed navbar at top
@@ -169,7 +231,7 @@ class _TopNavbarState extends State<TopNavbar> {
         vertical: 16,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
+        color: const Color(0xFF202020).withValues(alpha: 0.98), // High opacity gradient start color for improved contrast and visibility
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.2),
@@ -431,57 +493,39 @@ class _HeroSectionState extends State<HeroSection> {
             horizontal: isMobile ? 20 : 40,
             vertical: 20,
           ),
-          color: const Color(0xFF121212),
-          child: _buildWelcomeText(isMobile, isTablet),
+          color: Colors.transparent, // Transparent background to show page gradient
+          child: Row(
+            children: [
+              Container(
+                // Auto-sizing container that matches text width
+                child: _buildWelcomeText(isMobile, isTablet),
+              ),
+            ],
+          ),
         ),
 
-        // Main hero section with purple background
+        // Main hero section with background image only
         Container(
           width: double.infinity,
           constraints: const BoxConstraints(
             minHeight: 400,
           ),
-          decoration: BoxDecoration(
-            // Use custom background image if provided, otherwise use gradient
-            image: widget.backgroundImageUrl != null
-              ? DecorationImage(
-                  image: widget.backgroundImageUrl!.startsWith('http')
-                    ? NetworkImage(widget.backgroundImageUrl!)
-                    : AssetImage(widget.backgroundImageUrl!) as ImageProvider,
-                  fit: BoxFit.cover,
-                )
-              : null,
-            gradient: widget.backgroundImageUrl == null
-              ? const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFF2E1065),
-                    Color(0xFF1F1937),
-                  ],
-                )
-              : null,
+          decoration: const BoxDecoration(
+            // Use only the hero section background image with natural scaling
+            image: DecorationImage(
+              image: AssetImage('image/hero section background.png'),
+              fit: BoxFit.cover, // Maintains aspect ratio and covers entire container
+            ),
           ),
           child: Container(
-            decoration: BoxDecoration(
-              // Overlay for better text readability
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  const Color(0xFF9C27B0).withValues(alpha: widget.backgroundImageUrl != null ? 0.6 : 0.7),
-                  const Color(0xFF121212).withValues(alpha: widget.backgroundImageUrl != null ? 0.7 : 0.8),
-                ],
-              ),
+            width: double.infinity, // Full viewport width
+            padding: EdgeInsets.symmetric(
+              horizontal: isMobile ? 20 : 40, // Minimal padding for content readability
+              vertical: 32,
             ),
-            child: Container(
-              width: double.infinity, // Full viewport width
-              padding: EdgeInsets.symmetric(
-                horizontal: isMobile ? 20 : 40, // Minimal padding for content readability
-                vertical: 32,
-              ),
-              child: isMobile ? _buildMobileLayout(context) : _buildDesktopLayout(context, isTablet),
-            ),
+            // Removed all color backgrounds, gradients, and overlays
+            // Using only the background image as the visual background
+            child: isMobile ? _buildMobileLayout(context) : _buildDesktopLayout(context, isTablet),
           ),
         ),
       ],
@@ -490,35 +534,37 @@ class _HeroSectionState extends State<HeroSection> {
 
   Widget _buildMobileLayout(BuildContext context) {
     return SingleChildScrollView(
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Left side - Main content
-          Expanded(
-            flex: 2,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 24), // Standardized spacing
-                Text(
-                  'Find Artists, See Work, Be Discovered',
-                  style: GoogleFonts.poppins(
-                    fontSize: 40, // Changed to 2.5rem (40px)
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 24), // Standardized spacing
-                _buildSearchBox(),
-                const SizedBox(height: 24), // Standardized spacing
-                _buildSuggestionButtons(),
-                const SizedBox(height: 24), // Standardized spacing
-              ],
+          const SizedBox(height: 24), // Standardized spacing
+
+          // Title Widget
+          Text(
+            'Find Artists, See Work, Be Discovered',
+            style: GoogleFonts.poppins(
+              fontSize: 40, // Changed to 2.5rem (40px)
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
             ),
           ),
 
-          // Right side - Marketplace tagline (mobile: below main content)
+          const SizedBox(height: 24), // Spacing between title and search container
+
+          // Search and Interaction Container
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildSearchBox(),
+              const SizedBox(height: 16), // Spacing between search box and suggestions
+              _buildSuggestionButtons(),
+            ],
+          ),
+
+          const SizedBox(height: 24), // Spacing between search container and tagline
+
+          // Marketplace Tagline Container
+          _buildGradientTitle(),
         ],
       ),
     );
@@ -539,6 +585,8 @@ class _HeroSectionState extends State<HeroSection> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const SizedBox(height: 24), // Standardized spacing
+
+                  // Title Widget
                   Text(
                     'Find Artists, See Work, Be Discovered',
                     style: GoogleFonts.poppins(
@@ -547,10 +595,19 @@ class _HeroSectionState extends State<HeroSection> {
                       color: Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 24), // Standardized spacing
-                  _buildSearchBox(),
-                  const SizedBox(height: 24), // Standardized spacing
-                  _buildSuggestionButtons(),
+
+                  const SizedBox(height: 24), // Spacing between title and search container
+
+                  // Search and Interaction Container
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSearchBox(),
+                      const SizedBox(height: 16), // Spacing between search box and suggestions
+                      _buildSuggestionButtons(),
+                    ],
+                  ),
+
                   const SizedBox(height: 24), // Standardized spacing
                 ],
               ),
@@ -558,7 +615,7 @@ class _HeroSectionState extends State<HeroSection> {
           ],
         ),
 
-        // Marketplace tagline positioned at bottom-right
+        // Marketplace Tagline Container positioned at bottom-right
         Positioned(
           right: 0,
           bottom: 20,
@@ -570,10 +627,12 @@ class _HeroSectionState extends State<HeroSection> {
 
   Widget _buildSearchBox() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12), // Reduced vertical padding from 16 to 12
+      width: 875, // Exact width as specified
+      height: 48, // Exact height as specified
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0), // Remove vertical padding since height is fixed
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Colors.white, Color(0xFFE0E0E0)], // Left-to-right gradient from white to gray
+          colors: [Colors.white, Color(0xFF404040)], // Enhanced gradient from white to dark gray
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
         ),
@@ -588,22 +647,23 @@ class _HeroSectionState extends State<HeroSection> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.search, color: Color(0xFF666666), size: 24),
+          const Icon(Icons.search, color: Color(0xFF555555), size: 22), // Slightly darker for better contrast
           const SizedBox(width: 12),
           Expanded(
             child: TextField(
               controller: _searchController,
               style: GoogleFonts.poppins(
-                fontSize: 16,
-                color: const Color(0xFF333333),
+                fontSize: 16, // Standard font size for better readability
+                color: const Color(0xFF222222), // Darker text for better contrast against gradient
               ),
               decoration: InputDecoration(
                 hintText: 'What type of service are you looking for?',
                 hintStyle: GoogleFonts.poppins(
                   fontSize: 16,
-                  color: const Color(0xFF999999),
+                  color: const Color(0xFF777777), // Adjusted hint color for better visibility
                 ),
                 border: InputBorder.none,
+                contentPadding: EdgeInsets.zero, // Remove content padding since container height is fixed
               ),
             ),
           ),
@@ -614,47 +674,27 @@ class _HeroSectionState extends State<HeroSection> {
 
   Widget _buildSuggestionButtons() {
     final suggestions = ['logo', 'graphic design', '3D Render', 'illustration', 'branding'];
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = screenWidth >= 1024; // Desktop breakpoint
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final screenWidth = MediaQuery.of(context).size.width;
-        final isMobile = screenWidth < 600; // More precise mobile breakpoint
-        final isTablet = screenWidth >= 600 && screenWidth < 1024;
-
-        if (isMobile) {
-          // Mobile: Use responsive wrap layout for better flexibility
-          return Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: suggestions.map((suggestion) =>
-              SizedBox(
-                width: (constraints.maxWidth - 8) / 2, // Two columns with spacing
-                child: _buildSuggestionChip(suggestion),
-              )
-            ).toList(),
-          );
-        } else if (isTablet) {
-          // Tablet: Use responsive wrap layout with better spacing
-          return Wrap(
-            spacing: 12,
-            runSpacing: 8,
-            children: suggestions.map((suggestion) =>
-              SizedBox(
-                width: (constraints.maxWidth - 24) / 3, // Three columns with spacing
-                child: _buildSuggestionChip(suggestion),
-              )
-            ).toList(),
-          );
-        } else {
-          // Desktop: Use horizontal layout with flex wrap
-          return Wrap(
-            spacing: 12,
-            runSpacing: 8,
-            children: suggestions.map((suggestion) => _buildSuggestionChip(suggestion)).toList(),
-          );
-        }
-      },
-    );
+    if (isDesktop) {
+      // Desktop: Display in horizontal row/grid format
+      return Row(
+        children: [
+          ...suggestions.map((suggestion) => Padding(
+            padding: const EdgeInsets.only(right: 12), // Space between buttons
+            child: _buildSuggestionChip(suggestion),
+          )),
+        ],
+      );
+    } else {
+      // Smaller screens: Allow wrapping to multiple rows
+      return Wrap(
+        spacing: 12, // Horizontal spacing between buttons
+        runSpacing: 8, // Vertical spacing between rows
+        children: suggestions.map((suggestion) => _buildSuggestionChip(suggestion)).toList(),
+      );
+    }
   }
 
   Widget _buildSuggestionChip(String suggestion) {
@@ -664,9 +704,10 @@ class _HeroSectionState extends State<HeroSection> {
       },
       borderRadius: BorderRadius.circular(12),
       child: Container(
+        height: 28, // Exact height as specified
         padding: const EdgeInsets.symmetric(
-          horizontal: 12, // Tighter padding
-          vertical: 8,   // Tighter padding
+          horizontal: 12, // Minimal horizontal padding for text content
+          vertical: 0,   // Remove vertical padding since height is fixed
         ),
         decoration: BoxDecoration(
           color: const Color(0xFF2A2A2A),
@@ -680,16 +721,18 @@ class _HeroSectionState extends State<HeroSection> {
             ),
           ],
         ),
-        child: Text(
-          suggestion,
-          style: GoogleFonts.poppins(
-            color: Colors.white,
-            fontSize: 16, // Fixed 16px font size
-            fontWeight: FontWeight.w400,
+        child: Center( // Center the text within the fixed height container
+          child: Text(
+            suggestion,
+            style: GoogleFonts.poppins(
+              color: Colors.white,
+              fontSize: 16, // 16px font size as specified
+              fontWeight: FontWeight.w400,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-          textAlign: TextAlign.center,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
         ),
       ),
     );
@@ -710,7 +753,7 @@ class _HeroSectionState extends State<HeroSection> {
         style: GoogleFonts.poppins(
           fontSize: 40, // Changed to 2.5rem (40px)
           fontWeight: FontWeight.bold,
-          color: Colors.white,
+          color: Colors.white, // This will be overridden by the shader mask
         ),
       ),
     );
@@ -751,26 +794,21 @@ class _HeroSectionState extends State<HeroSection> {
 
 // Explore Section Component
 class ExploreSection extends StatefulWidget {
-  const ExploreSection({super.key});
+  final bool isExpanded;
+  final VoidCallback onToggle;
+
+  const ExploreSection({
+    super.key,
+    required this.isExpanded,
+    required this.onToggle,
+  });
 
   @override
   State<ExploreSection> createState() => _ExploreSectionState();
 }
 
 class _ExploreSectionState extends State<ExploreSection> {
-  String? selectedCategory;
-  final List<String> categories = [
-    'All Categories',
-    'Graphic Design',
-    'Web Development',
-    '3D Modeling',
-    'Photography',
-    'Video Editing',
-    'Illustration',
-    'UI/UX Design',
-    'Branding',
-    'Animation'
-  ];
+  bool _isHovered = false;
 
   @override
   Widget build(BuildContext context) {
@@ -779,84 +817,56 @@ class _ExploreSectionState extends State<ExploreSection> {
 
     return Container(
       padding: EdgeInsets.all(isMobile ? 16 : 32),
-      color: const Color(0xFF121212),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Explore',
-                style: GoogleFonts.poppins(
-                  fontSize: isMobile ? 24 : 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              // Dropdown menu for category selection
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E1E1E),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFF9C27B0), width: 1),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: selectedCategory,
-                    hint: Text(
-                      'Select Category',
+      color: Colors.transparent, // Transparent background to show page gradient
+      child: Center( // Center the explore component horizontally
+        child: MouseRegion(
+          onEnter: (_) => setState(() => _isHovered = true),
+          onExit: (_) => setState(() => _isHovered = false),
+          child: InkWell(
+            onTap: widget.onToggle,
+            borderRadius: BorderRadius.circular(25), // Same as search box
+            child: AnimatedScale(
+              scale: _isHovered ? 1.0 : 0.8, // Scale up on hover, smaller by default
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
+              child: Container(
+                padding: const EdgeInsets.all(5), // Minimal padding as requested
+                decoration: const BoxDecoration(),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min, // Only take up space needed for content
+                  children: [
+                    Text(
+                      'Explore',
                       style: GoogleFonts.poppins(
-                        color: Colors.white70,
-                        fontSize: 14,
+                        fontSize: 30, // Base size, will be scaled by AnimatedScale
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
                     ),
-                    icon: const Icon(
-                      Icons.keyboard_arrow_down,
-                      color: Color(0xFF9C27B0),
-                    ),
-                    dropdownColor: const Color(0xFF1E1E1E),
-                    items: categories.map((String category) {
-                      return DropdownMenuItem<String>(
-                        value: category,
-                        child: Text(
-                          category,
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontSize: 14,
-                          ),
+                    const SizedBox(width: 8), // Small space between text and arrow
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF9C27B0), // Purple circle background
+                        shape: BoxShape.circle,
+                      ),
+                      child: AnimatedRotation(
+                        turns: widget.isExpanded ? 0.5 : 0.0, // 180 degrees when expanded
+                        duration: const Duration(milliseconds: 300),
+                        child: const Icon(
+                          Icons.keyboard_arrow_down,
+                          color: Colors.white,
+                          size: 20,
                         ),
-                      );
-                    }).toList(),
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        selectedCategory = newValue;
-                      });
-                    },
-                  ),
-                ),
-              ),
-            ],
-          ),
-          if (selectedCategory != null) ...[
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E1E1E),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                'Showing results for: $selectedCategory',
-                style: GoogleFonts.poppins(
-                  color: const Color(0xFF9C27B0),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-          ],
-        ],
+          ),
+        ),
       ),
     );
   }
@@ -865,8 +875,9 @@ class _ExploreSectionState extends State<ExploreSection> {
 // Freelancing Opportunities Section Component
 class FreelancingOpportunitiesSection extends StatelessWidget {
   final List<String>? customImages;
+  final GlobalKey? titleKey;
 
-  const FreelancingOpportunitiesSection({super.key, this.customImages});
+  const FreelancingOpportunitiesSection({super.key, this.customImages, this.titleKey});
 
   @override
   Widget build(BuildContext context) {
@@ -883,6 +894,7 @@ class FreelancingOpportunitiesSection extends StatelessWidget {
               Expanded(
                 child: Text(
                   'Freelancing Opportunities',
+                  key: titleKey, // Add key for scroll targeting
                   style: GoogleFonts.poppins(
                     fontSize: isMobile ? 24 : 32,
                     fontWeight: FontWeight.bold,
@@ -910,13 +922,14 @@ class FreelancingOpportunitiesSection extends StatelessWidget {
   }
 
   Widget _buildMasonryGrid(bool isMobile) {
+    // Removed fixed heights for Pinterest-style masonry layout
     final artworks = [
-      {'color': const Color(0xFF9C27B0), 'height': 200.0},
-      {'color': const Color(0xFF3F51B5), 'height': 150.0},
-      {'color': const Color(0xFF00BCD4), 'height': 250.0},
-      {'color': const Color(0xFF4CAF50), 'height': 175.0},
-      {'color': const Color(0xFFFF9800), 'height': 150.0},
-      {'color': const Color(0xFFE91E63), 'height': 200.0},
+      {'color': const Color(0xFF9C27B0), 'category': 'Logo Design'},
+      {'color': const Color(0xFF3F51B5), 'category': 'Graphic Design'},
+      {'color': const Color(0xFF00BCD4), 'category': '3D Modeling'},
+      {'color': const Color(0xFF4CAF50), 'category': 'Illustration'},
+      {'color': const Color(0xFFFF9800), 'category': 'Photography'},
+      {'color': const Color(0xFFE91E63), 'category': 'Branding'},
     ];
 
     return MasonryGridView.count(
@@ -930,44 +943,113 @@ class FreelancingOpportunitiesSection extends StatelessWidget {
         final hasCustomImage = customImages != null &&
                               index < customImages!.length &&
                               customImages![index].isNotEmpty;
+        final categoryName = artworks[index]['category'] as String;
 
-        return Container(
-          height: artworks[index]['height'] as double,
-          decoration: BoxDecoration(
+        return MouseRegion(
+          child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            color: hasCustomImage ? null : artworks[index]['color'] as Color,
-            image: hasCustomImage
-              ? DecorationImage(
-                  image: customImages![index].startsWith('http')
-                    ? NetworkImage(customImages![index])
-                    : AssetImage(customImages![index]) as ImageProvider,
-                  fit: BoxFit.cover,
-                )
-              : null,
-          ),
-          child: hasCustomImage
-            ? Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withValues(alpha: 0.3),
-                    ],
+            child: Stack(
+              children: [
+                // Main image or colored container
+                hasCustomImage
+                  ? Image(
+                      image: customImages![index].startsWith('http')
+                        ? NetworkImage(customImages![index])
+                        : AssetImage(customImages![index]) as ImageProvider,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      // Let the image determine its own height for Pinterest effect
+                    )
+                  : Container(
+                      height: 200, // Fallback height for non-custom images
+                      width: double.infinity,
+                      color: artworks[index]['color'] as Color,
+                      child: const Center(
+                        child: Icon(
+                          Icons.image,
+                          color: Colors.white,
+                          size: 40,
+                        ),
+                      ),
+                    ),
+
+                // Base overlay for custom images
+                if (hasCustomImage)
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withValues(alpha: 0.3),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                // Hover overlay with blur effect and text
+                Positioned.fill(
+                  child: _HoverOverlay(
+                    categoryName: categoryName,
+                    borderRadius: 12,
                   ),
                 ),
-              )
-            : const Center(
-                child: Icon(
-                  Icons.image,
-                  color: Colors.white,
-                  size: 40,
-                ),
-              ),
+              ],
+            ),
+          ),
         );
       },
+    );
+  }
+}
+
+// Hover Overlay Widget for Image Effects
+class _HoverOverlay extends StatefulWidget {
+  final String categoryName;
+  final double borderRadius;
+
+  const _HoverOverlay({
+    required this.categoryName,
+    required this.borderRadius,
+  });
+
+  @override
+  State<_HoverOverlay> createState() => _HoverOverlayState();
+}
+
+class _HoverOverlayState extends State<_HoverOverlay> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(widget.borderRadius),
+          color: _isHovered
+            ? Colors.black.withValues(alpha: 0.7)
+            : Colors.transparent,
+        ),
+        child: _isHovered
+          ? Center(
+              child: Text(
+                widget.categoryName,
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            )
+          : null,
+      ),
     );
   }
 }
@@ -1021,50 +1103,82 @@ class PopularServicesSection extends StatelessWidget {
   }
 
   Widget _buildServiceGrid(bool isMobile, bool isTablet) {
+    // Removed fixed heights for Pinterest-style masonry layout
     final artworks = [
-      {'color': const Color(0xFF9C27B0), 'height': 200.0},
-      {'color': const Color(0xFF3F51B5), 'height': 180.0},
-      {'color': const Color(0xFF00BCD4), 'height': 220.0},
-      {'color': const Color(0xFF4CAF50), 'height': 190.0},
+      {'color': const Color(0xFF9C27B0), 'category': 'Web Design'},
+      {'color': const Color(0xFF3F51B5), 'category': 'Mobile Apps'},
+      {'color': const Color(0xFF00BCD4), 'category': 'UI/UX Design'},
+      {'color': const Color(0xFF4CAF50), 'category': 'Digital Marketing'},
     ];
 
-    return GridView.builder(
+    return MasonryGridView.count(
+      crossAxisCount: isMobile ? 2 : (isTablet ? 3 : 4),
+      mainAxisSpacing: 16,
+      crossAxisSpacing: 16,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: isMobile ? 2 : (isTablet ? 3 : 4),
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 0.8,
-      ),
       itemCount: artworks.length,
       itemBuilder: (context, index) {
         final hasCustomImage = customImages != null &&
                               index < customImages!.length &&
                               customImages![index].isNotEmpty;
+        final categoryName = artworks[index]['category'] as String;
 
-        return Container(
-          decoration: BoxDecoration(
+        return MouseRegion(
+          child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            color: hasCustomImage ? null : artworks[index]['color'] as Color,
-            image: hasCustomImage
-              ? DecorationImage(
-                  image: customImages![index].startsWith('http')
-                    ? NetworkImage(customImages![index])
-                    : AssetImage(customImages![index]) as ImageProvider,
-                  fit: BoxFit.cover,
-                )
-              : null,
-          ),
-          child: hasCustomImage
-            ? null
-            : const Center(
-                child: Icon(
-                  Icons.image,
-                  color: Colors.white,
-                  size: 40,
+            child: Stack(
+              children: [
+                // Main image or colored container
+                hasCustomImage
+                  ? Image(
+                      image: customImages![index].startsWith('http')
+                        ? NetworkImage(customImages![index])
+                        : AssetImage(customImages![index]) as ImageProvider,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      // Let the image determine its own height for Pinterest effect
+                    )
+                  : Container(
+                      height: 200, // Fallback height for non-custom images
+                      width: double.infinity,
+                      color: artworks[index]['color'] as Color,
+                      child: const Center(
+                        child: Icon(
+                          Icons.image,
+                          color: Colors.white,
+                          size: 40,
+                        ),
+                      ),
+                    ),
+
+                // Base overlay for custom images
+                if (hasCustomImage)
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withValues(alpha: 0.3),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                // Hover overlay with blur effect and text
+                Positioned.fill(
+                  child: _HoverOverlay(
+                    categoryName: categoryName,
+                    borderRadius: 12,
+                  ),
                 ),
-              ),
+              ],
+            ),
+          ),
         );
       },
     );
@@ -1122,31 +1236,31 @@ class ArtistYouMayLikeSection extends StatelessWidget {
   Widget _buildArtistGrid(bool isMobile, bool isTablet) {
     final artists = [
       {
-        'name': 'Sarah Chen',
+        'name': 'Prom Sereyreaksa',
         'role': 'UI/UX Designer',
         'bio': 'Passionate about creating beautiful digital experiences',
         'color': const Color(0xFF9C27B0)
       },
       {
-        'name': 'Alex Rivera',
+        'name': 'Chea Ilong',
         'role': '3D Artist',
         'bio': 'Bringing imagination to life through 3D modeling',
         'color': const Color(0xFF3F51B5)
       },
       {
-        'name': 'Maya Patel',
+        'name': 'Huy Visa',
         'role': 'Illustrator',
         'bio': 'Creating vibrant illustrations that tell stories',
         'color': const Color(0xFF00BCD4)
       },
       {
-        'name': 'David Kim',
+        'name': 'Sea Huyty',
         'role': 'Brand Designer',
         'bio': 'Crafting memorable brand identities',
         'color': const Color(0xFF4CAF50)
       },
       {
-        'name': 'Emma Wilson',
+        'name': 'Phay Someth',
         'role': 'Motion Designer',
         'bio': 'Bringing designs to life through animation',
         'color': const Color(0xFFFF9800)
@@ -1209,6 +1323,21 @@ class ArtistYouMayLikeSection extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
 
+        const SizedBox(height: 6),
+
+        // Artist role with purple color
+        Text(
+          artist['role'] as String,
+          style: GoogleFonts.poppins(
+            fontSize: isMobile ? 14 : 16,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF6B46C1), // Purple color as requested
+          ),
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+
         const SizedBox(height: 8),
 
         // Short bio text
@@ -1239,7 +1368,7 @@ class FooterSection extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      color: const Color(0xFF1A1A1A),
+      color: Colors.transparent, // Transparent background to show page gradient
       padding: EdgeInsets.all(isMobile ? 20 : 40),
       child: Column(
         children: [
