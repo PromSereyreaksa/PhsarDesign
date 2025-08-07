@@ -120,7 +120,7 @@ export default function AboutPage() {
     contacts: [
       { platform: "email", url: "mailto:sophanithkosal9@gmail.com" },
       { platform: "telegram", url: "https://t.me/nithkidd" },
-      { platform: "linkedin", url: "https://www.linkedin.com/in/kosal-sophanith-548b05333" }
+      { platform: "linkedin", url: "" }
     ]
   },
   {
