@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { useState, useEffect } from "react"
+import { Link, useNavigate, useLocation } from "react-router-dom"
 import { useDispatch, useSelector } from "react-redux"
 import { Eye, EyeOff, ArrowLeft } from "lucide-react"
 import { Button } from "../ui/button"
@@ -16,10 +16,19 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
+  const [successMessage, setSuccessMessage] = useState("")
   
   const dispatch = useDispatch()
   const navigate = useNavigate()
+  const location = useLocation()
   const { loading } = useSelector((state) => state.auth)
+
+  // Check for success message from password change
+  useEffect(() => {
+    if (location.state?.message) {
+      setSuccessMessage(location.state.message)
+    }
+  }, [location.state])
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -59,6 +68,11 @@ export default function LoginPage() {
 
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-6">
+              {successMessage && (
+                <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-xl">
+                  <p className="text-green-400 text-sm">{successMessage}</p>
+                </div>
+              )}
               {error && (
                 <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
                   <p className="text-red-400 text-sm">{error}</p>

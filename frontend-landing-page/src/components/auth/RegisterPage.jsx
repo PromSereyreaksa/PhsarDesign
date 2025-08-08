@@ -10,11 +10,12 @@ import { Label } from "../ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
 import { authAPI } from "../../services/api"
-import { loginStart, loginSuccess, loginFailure } from "../../store/slices/authSlice"
+import { loginStart, loginFailure } from "../../store/slices/authSlice"
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -52,6 +53,18 @@ export default function RegisterPage() {
     console.log('Form data before validation:', formData);
 
     // Validate form
+    if (!formData.firstName.trim()) {
+      setError("First name is required");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!formData.lastName.trim()) {
+      setError("Last name is required");
+      setIsSubmitting(false);
+      return;
+    }
+
     if (!formData.email || !formData.email.includes('@')) {
       setError("Please enter a valid email address");
       setIsSubmitting(false);
@@ -89,7 +102,8 @@ export default function RegisterPage() {
       const role = formData.role === 'freelancer' ? 'artist' : formData.role;
       
       const requestData = {
-        name: formData.name || 'User',
+        firstName: formData.firstName,
+        lastName: formData.lastName,
         email: formData.email,
         password: formData.password,
         role: role
@@ -97,11 +111,22 @@ export default function RegisterPage() {
       
       console.log('Sending registration request with data:', requestData);
       
-      const response = await authAPI.register(requestData);
+      await authAPI.register(requestData);
       
-      const { user, token } = response.data;
-      dispatch(loginSuccess({ user, token }));
-      navigate("/profile-setup");
+      // After successful registration, request OTP for email verification
+      await authAPI.requestOtp({ 
+        email: formData.email, 
+        type: "registration" 
+      });
+      
+      // Navigate to OTP verification page
+      navigate("/verify-otp", { 
+        state: { 
+          email: formData.email, 
+          type: "registration",
+          fromRegister: true
+        } 
+      });
     } catch (error) {
       console.error('Registration error:', error);
       const errorMessage = error.response?.data?.message || error.response?.data?.error || "Registration failed. Please try again.";
@@ -136,18 +161,36 @@ export default function RegisterPage() {
                 </div>
               )}
 
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-white font-medium">
-                  Full Name <span className="text-gray-400 text-sm">(Optional)</span>
-                </Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="Enter your full name"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange("name", e.target.value)}
-                  className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 rounded-xl h-11 focus:ring-2 focus:ring-[#A95BAB]/50 focus:border-[#A95BAB]/50 transition-all duration-200"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName" className="text-white font-medium">
+                    First Name <span className="text-red-400">*</span>
+                  </Label>
+                  <Input
+                    id="firstName"
+                    type="text"
+                    placeholder="First name"
+                    value={formData.firstName}
+                    onChange={(e) => handleInputChange("firstName", e.target.value)}
+                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 rounded-xl h-11 focus:ring-2 focus:ring-[#A95BAB]/50 focus:border-[#A95BAB]/50 transition-all duration-200"
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="lastName" className="text-white font-medium">
+                    Last Name <span className="text-red-400">*</span>
+                  </Label>
+                  <Input
+                    id="lastName"
+                    type="text"
+                    placeholder="Last name"
+                    value={formData.lastName}
+                    onChange={(e) => handleInputChange("lastName", e.target.value)}
+                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 rounded-xl h-11 focus:ring-2 focus:ring-[#A95BAB]/50 focus:border-[#A95BAB]/50 transition-all duration-200"
+                    required
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
