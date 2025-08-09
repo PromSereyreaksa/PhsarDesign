@@ -29,14 +29,19 @@ export default function ForgotPassword() {
     setLoading(true)
 
     try {
-      await authAPI.requestOtp({ 
-        email, 
-        type: "password-reset" 
+      console.log("📤 Sending forgot password request")
+      
+      // Call specific forgot password endpoint
+      await authAPI.requestForgotPasswordOtp({ 
+        email
       })
       
+      console.log("✅ Reset code requested successfully")
       setSuccess(true)
+      
       // Navigate to OTP verification after successful request
       setTimeout(() => {
+        console.log("🔄 Navigating to OTP verification page")
         navigate("/verify-otp", { 
           state: { 
             email, 
@@ -45,6 +50,9 @@ export default function ForgotPassword() {
         })
       }, 2000)
     } catch (error) {
+      console.error("❌ Failed to request reset code:", error)
+      console.error("📝 Error response:", error.response?.data)
+      
       const errorMessage = error.response?.data?.message || "Failed to send reset code. Please try again."
       setError(errorMessage)
     } finally {
@@ -65,7 +73,7 @@ export default function ForgotPassword() {
                 Check Your Email
               </CardTitle>
               <p className="text-gray-300 text-sm mt-2">
-                We've sent a verification code to
+                We've sent a password reset code to
               </p>
               <p className="text-[#A95BAB] font-medium">{email}</p>
             </CardHeader>
@@ -73,13 +81,13 @@ export default function ForgotPassword() {
             <CardContent>
               <div className="text-center">
                 <p className="text-gray-400 text-sm mb-4">
-                  Redirecting to verification page...
+                  Redirecting to reset page...
                 </p>
                 <Button 
                   onClick={() => navigate("/verify-otp", { state: { email, type: "password-reset" } })}
                   className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-xl"
                 >
-                  Continue to Verification
+                  Continue to Reset
                 </Button>
               </div>
             </CardContent>
@@ -104,7 +112,7 @@ export default function ForgotPassword() {
               Forgot Password?
             </CardTitle>
             <p className="text-gray-300 text-sm mt-2">
-              No worries! Enter your email address and we'll send you a verification code to reset your password.
+              No worries! Enter your email address and we'll send you a password reset code.
             </p>
           </CardHeader>
 
@@ -136,7 +144,7 @@ export default function ForgotPassword() {
                 className="w-full bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-xl py-3 font-semibold"
                 disabled={loading}
               >
-                {loading ? "Sending Code..." : "Send Verification Code"}
+                {loading ? "Sending Code..." : "Send Reset Code"}
               </Button>
             </form>
 

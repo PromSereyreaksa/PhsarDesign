@@ -31,7 +31,6 @@ export default function RegisterPage() {
   const { loading } = useSelector((state) => state.auth)
 
   const handleInputChange = (field, value) => {
-    console.log('handleInputChange:', field, value); // Debug log
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
@@ -41,16 +40,17 @@ export default function RegisterPage() {
   const handleRegister = async (e) => {
     e.preventDefault();
     
+    console.log("📝 Registration form submitted");
+    console.log("📊 Form data:", formData);
+    
     // Prevent multiple submissions
     if (loading || isSubmitting) {
-      console.log('Form submission prevented - already submitting');
+      console.log("⚠️ Submission blocked - already in progress");
       return;
     }
     
     setError("");
     setIsSubmitting(true);
-
-    console.log('Form data before validation:', formData);
 
     // Validate form
     if (!formData.firstName.trim()) {
@@ -95,12 +95,14 @@ export default function RegisterPage() {
       return;
     }
 
+    console.log("✅ All validation passed, starting registration process");
     dispatch(loginStart());
 
     try {
       // Convert 'freelancer' role to 'artist' if needed (backward compatibility)
       const role = formData.role === 'freelancer' ? 'artist' : formData.role;
       
+      // Prepare registration data with all required fields
       const requestData = {
         firstName: formData.firstName,
         lastName: formData.lastName,
@@ -109,17 +111,17 @@ export default function RegisterPage() {
         role: role
       };
       
-      console.log('Sending registration request with data:', requestData);
+      console.log("📤 Sending registration request with data:", requestData);
       
-      await authAPI.register(requestData);
+      // Step 1: Register user (send to /register)
+      const registerResponse = await authAPI.register(requestData);
+      console.log("✅ Registration response:", registerResponse);
       
-      // After successful registration, request OTP for email verification
-      await authAPI.requestOtp({ 
-        email: formData.email, 
-        type: "registration" 
-      });
+      console.log("📧 Registration successful, OTP should be automatically sent");
+      console.log("🔄 Navigating to OTP verification page");
       
       // Navigate to OTP verification page
+      // Note: OTP is automatically sent by the /register endpoint
       navigate("/verify-otp", { 
         state: { 
           email: formData.email, 
@@ -128,7 +130,9 @@ export default function RegisterPage() {
         } 
       });
     } catch (error) {
-      console.error('Registration error:', error);
+      console.error("❌ Registration failed:", error);
+      console.error("📝 Error response:", error.response?.data);
+      
       const errorMessage = error.response?.data?.message || error.response?.data?.error || "Registration failed. Please try again.";
       setError(errorMessage);
       dispatch(loginFailure(errorMessage));
@@ -213,7 +217,6 @@ export default function RegisterPage() {
                   I want to <span className="text-red-400">*</span>
                 </Label>
                 <Select value={formData.role} onValueChange={(value) => {
-                  console.log('Role selected:', value); // Debug log
                   handleInputChange("role", value);
                 }}>
                   <SelectTrigger className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 rounded-xl h-11 focus:ring-2 focus:ring-[#A95BAB]/50 focus:border-[#A95BAB]/50 transition-all duration-200">

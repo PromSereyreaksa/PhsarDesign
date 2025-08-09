@@ -16,6 +16,8 @@ export default function OTPVerification() {
   const [error, setError] = useState("")
   const [timeLeft, setTimeLeft] = useState(300) // 5 minutes
   const [resendDisabled, setResendDisabled] = useState(true)
+  const [verificationSuccess, setVerificationSuccess] = useState(false)
+  const [localLoading, setLocalLoading] = useState(false) // Local loading state as backup
   const inputRefs = useRef([])
   
   const dispatch = useDispatch()
@@ -26,7 +28,13 @@ export default function OTPVerification() {
   const { email, type = "registration", fromRegister = false } = location.state || {}
 
   useEffect(() => {
+    console.log("🔧 OTP Verification component mounted")
+    console.log("🏷️ Type:", type)
+    console.log("🔄 From Register:", fromRegister)
+    console.log("⏳ Loading state:", loading)
+    
     if (!email) {
+      console.log("❌ No email found, redirecting to login")
       navigate("/login")
       return
     }
@@ -44,6 +52,22 @@ export default function OTPVerification() {
 
     return () => clearInterval(timer)
   }, [email, navigate])
+
+  // Debug effect to monitor loading state changes
+  useEffect(() => {
+    console.log("⏳ Global loading state changed:", loading)
+    console.log("🔄 Local loading state:", localLoading)
+  }, [loading, localLoading])
+
+  // Force reset loading states when component mounts or when there's an error
+  useEffect(() => {
+    if (error) {
+      console.log("❌ Error detected, resetting loading states")
+      setLocalLoading(false)
+      // Don't dispatch here to avoid conflicts
+    }
+  }, [error])
+
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60)
@@ -72,11 +96,20 @@ export default function OTPVerification() {
 
   const handleResendOtp = async () => {
     try {
-      await authAPI.requestOtp({ email, type })
+      console.log("📤 Resending OTP - Type:", type)
+      
+      if (type === "password-reset") {
+        await authAPI.requestForgotPasswordOtp({ email })
+      } else {
+        await authAPI.requestOtp({ email, type })
+      }
+      
       setTimeLeft(300)
       setResendDisabled(true)
       setError("")
+      console.log("✅ OTP resent successfully")
     } catch (error) {
+      console.error("❌ Failed to resend OTP:", error)
       setError(error.response?.data?.message || "Failed to resend OTP")
     }
   }
@@ -90,33 +123,78 @@ export default function OTPVerification() {
       return
     }
 
+    console.log("🔄 Starting OTP verification - Type:", type)
+    console.log("🔢 OTP Code:", otpCode)
+
     setError("")
-    dispatch(loginStart())
+    setLocalLoading(true) // Set local loading state
+    dispatch(loginStart()) // Set global loading state
 
     try {
-      const response = await authAPI.verifyOtp({ 
-        email, 
-        otp: otpCode, 
-        type 
-      })
+      // For the API format: email and otp are required
+      const verifyData = {
+        email: email,
+        otp: otpCode
+      };
+      
+      console.log("📤 Sending OTP verification request")
+      console.log("📝 Request data:", { email: "***", otp: otpCode })
+      
+      let response;
+      if (type === "password-reset") {
+        // Use specific forgot password OTP verification endpoint: email and otp
+        response = await authAPI.verifyForgotPasswordOtp(verifyData)
+      } else {
+        // Use regular OTP verification for registration: email and otp
+        response = await authAPI.verifyOtp(verifyData)
+      }
+
+      console.log("✅ OTP verification response:", response)
 
       if (type === "registration") {
         const { user, token } = response.data
+        console.log("👤 User data received:", user)
+        console.log("🔑 Token received:", token ? "✓" : "✗")
+        
         dispatch(loginSuccess({ user, token }))
-        navigate("/profile-setup")
+        setVerificationSuccess(true)
+        
+        console.log("🎉 Registration verification successful! Showing success message.")
+        
+        // Auto redirect after 3 seconds
+        setTimeout(() => {
+          console.log("🏠 Auto-redirecting to home page...")
+          navigate("/")
+        }, 3000)
+        
       } else if (type === "password-reset") {
-        // For password reset, navigate to change password with verification token
+        console.log("🔒 Password reset OTP verification successful")
+        console.log("📝 Reset response data:", response.data)
+        
+        // After successful OTP verification for password reset, 
+        // redirect to change password page with verification data
+        console.log("🔄 Redirecting to change password page")
         navigate("/change-password", { 
           state: { 
-            email, 
-            verificationToken: response.data.verificationToken 
+            email,
+            verified: true,
+            // Pass any verification token or data from backend
+            ...(response.data.verificationToken && { verificationToken: response.data.verificationToken }),
+            ...(response.data.resetToken && { resetToken: response.data.resetToken })
           } 
         })
       }
     } catch (error) {
+      console.error("❌ OTP verification failed:", error)
+      console.error("📝 Error response:", error.response?.data)
+      
       const errorMessage = error.response?.data?.message || "Invalid OTP. Please try again."
       setError(errorMessage)
       dispatch(loginFailure(errorMessage))
+    } finally {
+      // ALWAYS reset local loading state regardless of success or error
+      console.log("🔄 Resetting local loading state")
+      setLocalLoading(false)
     }
   }
 
@@ -159,12 +237,36 @@ export default function OTPVerification() {
           </CardHeader>
 
           <CardContent>
-            <form onSubmit={handleVerifyOtp} className="space-y-6">
-              {error && (
-                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
-                  <p className="text-red-400 text-sm">{error}</p>
+            {verificationSuccess ? (
+              <div className="text-center space-y-4">
+                <div className="p-6 bg-green-500/10 border border-green-500/20 rounded-xl">
+                  {type === "registration" ? (
+                    <>
+                      <div className="text-green-400 text-lg font-semibold mb-2">🎉 Registration Complete!</div>
+                      <p className="text-green-300 text-sm mb-3">Your account has been successfully verified and created. You can now access the app when it's available.</p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-green-400 text-lg font-semibold mb-2">🔒 Password Reset Complete!</div>
+                      <p className="text-green-300 text-sm mb-3">Your password has been successfully reset. You can now access your account.</p>
+                    </>
+                  )}
+                  <p className="text-green-300/80 text-xs">Redirecting in 3 seconds...</p>
                 </div>
-              )}
+                <Button
+                  onClick={() => navigate(type === "registration" ? "/" : "/login")}
+                  className="w-full bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-xl py-3 font-semibold"
+                >
+                  {type === "registration" ? "Go to Home Now" : "Go to Login Now"}
+                </Button>
+              </div>
+            ) : (
+              <form onSubmit={handleVerifyOtp} className="space-y-6">
+                {error && (
+                  <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
+                    <p className="text-red-400 text-sm">{error}</p>
+                  </div>
+                )}
 
               <div className="space-y-2">
                 <Label className="text-white">Enter 6-digit verification code</Label>
@@ -184,32 +286,34 @@ export default function OTPVerification() {
                 </div>
               </div>
 
-              <Button
-                type="submit"
-                className="w-full bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-xl py-3 font-semibold"
-                disabled={loading}
-              >
-                {loading ? "Verifying..." : "Verify Code"}
-              </Button>
-            </form>
-
-            <div className="mt-6 text-center space-y-2">
-              {timeLeft > 0 ? (
-                <p className="text-gray-400 text-sm">
-                  Resend code in {formatTime(timeLeft)}
-                </p>
-              ) : (
                 <Button
-                  variant="ghost"
-                  onClick={handleResendOtp}
-                  disabled={resendDisabled}
-                  className="text-[#A95BAB] hover:text-[#A95BAB]/80 hover:bg-[#A95BAB]/10"
+                  type="submit"
+                  className="w-full bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-xl py-3 font-semibold"
                 >
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Resend Code
+                  {(loading || localLoading) ? "Verifying..." : "Verify Code"}
                 </Button>
-              )}
-            </div>
+              </form>
+            )}
+
+            {!verificationSuccess && (
+              <div className="mt-6 text-center space-y-2">
+                {timeLeft > 0 ? (
+                  <p className="text-gray-400 text-sm">
+                    Resend code in {formatTime(timeLeft)}
+                  </p>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    onClick={handleResendOtp}
+                    disabled={resendDisabled}
+                    className="text-[#A95BAB] hover:text-[#A95BAB]/80 hover:bg-[#A95BAB]/10"
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Resend Code
+                  </Button>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

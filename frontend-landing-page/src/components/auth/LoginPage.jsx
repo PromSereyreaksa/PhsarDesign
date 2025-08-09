@@ -9,7 +9,7 @@ import { Input } from "../ui/input"
 import { Label } from "../ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
 import { authAPI } from "../../services/api"
-import { loginStart, loginSuccess, loginFailure } from "../../store/slices/authSlice"
+import { loginStart, loginSuccess as loginSuccessAction, loginFailure } from "../../store/slices/authSlice"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -17,6 +17,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [successMessage, setSuccessMessage] = useState("")
+  const [loginSuccess, setLoginSuccess] = useState(false)
   
   const dispatch = useDispatch()
   const navigate = useNavigate()
@@ -34,15 +35,27 @@ export default function LoginPage() {
     e.preventDefault()
     setError("")
     
+    console.log("🔑 Login attempt for email:", email)
+    console.log("📤 Sending login data:", { email, password: password ? "✓ provided" : "✗ missing" })
+    
     dispatch(loginStart())
 
     try {
       const response = await authAPI.login({ email, password })
-      const { user, token } = response.data
+      console.log("✅ Login response:", response)
       
-      dispatch(loginSuccess({ user, token }))
-      navigate("/dashboard")
+      const { user, token } = response.data
+      console.log("👤 User data:", user)
+      console.log("🔑 Token received:", token ? "✓" : "✗")
+      
+      dispatch(loginSuccessAction({ user, token }))
+      setLoginSuccess(true)
+      console.log("🎉 Login successful!")
+      setSuccessMessage(`Welcome back, ${user.firstName}! Login successful.`)
     } catch (error) {
+      console.error("❌ Login failed:", error)
+      console.error("📝 Error response:", error.response?.data)
+      
       const errorMessage = error.response?.data?.error || "Login failed. Please try again."
       setError(errorMessage)
       dispatch(loginFailure(errorMessage))
@@ -67,17 +80,31 @@ export default function LoginPage() {
           </CardHeader>
 
           <CardContent>
-            <form onSubmit={handleLogin} className="space-y-6">
-              {successMessage && (
-                <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-xl">
-                  <p className="text-green-400 text-sm">{successMessage}</p>
+            {loginSuccess ? (
+              <div className="text-center space-y-4">
+                <div className="p-6 bg-green-500/10 border border-green-500/20 rounded-xl">
+                  <div className="text-green-400 text-lg font-semibold mb-2">✅ Login Successful!</div>
+                  <p className="text-green-300 text-sm">{successMessage}</p>
                 </div>
-              )}
-              {error && (
-                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
-                  <p className="text-red-400 text-sm">{error}</p>
-                </div>
-              )}
+                <Button
+                  onClick={() => navigate("/")}
+                  className="w-full bg-gray-600 hover:bg-gray-500 rounded-xl py-3 font-semibold"
+                >
+                  Back to Home
+                </Button>
+              </div>
+            ) : (
+              <form onSubmit={handleLogin} className="space-y-6">
+                {successMessage && !loginSuccess && (
+                  <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-xl">
+                    <p className="text-green-400 text-sm">{successMessage}</p>
+                  </div>
+                )}
+                {error && (
+                  <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
+                    <p className="text-red-400 text-sm">{error}</p>
+                  </div>
+                )}
 
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-white">
@@ -128,23 +155,26 @@ export default function LoginPage() {
                 </Link>
               </div>
 
-              <Button
-                type="submit"
-                className="w-full bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-xl py-3 font-semibold"
-                disabled={loading}
-              >
-                {loading ? "Signing in..." : "Sign In"}
-              </Button>
-            </form>
+                <Button
+                  type="submit"
+                  className="w-full bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-xl py-3 font-semibold"
+                  disabled={loading}
+                >
+                  {loading ? "Signing in..." : "Sign In"}
+                </Button>
+              </form>
+            )}
 
-            <div className="mt-6 text-center">
-              <p className="text-gray-300">
-                Don't have an account?{" "}
-                <Link to="/register" className="text-[#A95BAB] hover:underline font-semibold">
-                  Sign up
-                </Link>
-              </p>
-            </div>
+            {!loginSuccess && (
+              <div className="mt-6 text-center">
+                <p className="text-gray-300">
+                  Don't have an account?{" "}
+                  <Link to="/register" className="text-[#A95BAB] hover:underline font-semibold">
+                    Sign up
+                  </Link>
+                </p>
+              </div>
+            )}
 
           </CardContent>
         </Card>

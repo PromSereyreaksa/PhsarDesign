@@ -23,10 +23,10 @@ export default function ChangePassword() {
   const navigate = useNavigate()
   const location = useLocation()
   
-  const { email, verificationToken } = location.state || {}
+  const { email, verificationToken, resetToken, verified } = location.state || {}
 
-  // Redirect if no verification token
-  if (!email || !verificationToken) {
+  // Redirect if no verification data
+  if (!email || (!verificationToken && !resetToken && !verified)) {
     navigate("/forgot-password")
     return null
   }
@@ -53,23 +53,34 @@ export default function ChangePassword() {
     setLoading(true)
 
     try {
-      await authAPI.changePassword({
-        email,
-        verificationToken,
+      console.log("📤 Sending change password request")
+      
+      const changePasswordData = {
+        email: email,
         newPassword: formData.newPassword
-      })
+      };
+      
+      console.log("📝 Change password data:", { email: email ? "✓ provided" : "✗ missing", password: formData.newPassword ? "✓ provided" : "✗ missing" })
+      console.log("📧 Email being sent:", email)
+      
+      await authAPI.changePassword(changePasswordData)
 
+      console.log("✅ Password changed successfully")
       setSuccess(true)
       
       // Redirect to login after success
       setTimeout(() => {
+        console.log("🔄 Redirecting to login page")
         navigate("/login", { 
           state: { 
-            message: "Password changed successfully. Please log in with your new password." 
+            message: "Password changed successfully! Please log in with your new password." 
           } 
         })
       }, 2000)
     } catch (error) {
+      console.error("❌ Failed to change password:", error)
+      console.error("📝 Error response:", error.response?.data)
+      
       const errorMessage = error.response?.data?.message || "Failed to change password. Please try again."
       setError(errorMessage)
     } finally {
@@ -198,7 +209,7 @@ export default function ChangePassword() {
                 className="w-full bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-xl py-3 font-semibold"
                 disabled={loading}
               >
-                {loading ? "Changing Password..." : "Change Password"}
+                {loading ? "Saving..." : "Save New Password"}
               </Button>
             </form>
           </CardContent>
