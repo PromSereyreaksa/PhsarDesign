@@ -56,8 +56,7 @@ export function GlobalSearch({ isOpen, onClose }) {
         : []
 
       setResults({ artists, clients })
-    } catch (error) {
-      console.error('Search error:', error)
+    } catch {
       setError('Failed to search. Please try again.')
     } finally {
       setIsLoading(false)

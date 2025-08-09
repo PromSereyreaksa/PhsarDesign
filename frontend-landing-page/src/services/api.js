@@ -4,8 +4,6 @@ import { logout, loginSuccess } from '../store/slices/authSlice';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.phsardesign.com';
 
-console.log('API Base URL being used:', API_BASE_URL);
-console.log('Environment VITE_API_URL:', import.meta.env.VITE_API_URL);
 
 // Create axios instance
 const api = axios.create({
@@ -37,23 +35,19 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    console.log('API Error:', error.response?.status, error.response?.data);
     
     const originalRequest = error.config;
     
     if (error.response?.status === 401 && !originalRequest._retry) {
-      console.log('401 error detected, attempting token refresh...');
       originalRequest._retry = true;
       
       // Try to refresh token first
       try {
-        console.log('Attempting token refresh...');
         const refreshResponse = await axios.post(`${API_BASE_URL}/api/auth/refresh`, {}, {
           withCredentials: true // Include cookies for refresh token
         });
         
         if (refreshResponse.data.token) {
-          console.log('Token refresh successful, retrying original request...');
           // Update the store with new token
           const state = store.getState();
           const user = state.auth.user;
@@ -68,11 +62,9 @@ api.interceptors.response.use(
           return api(originalRequest);
         }
       } catch (refreshError) {
-        console.error('Token refresh failed:', refreshError);
         // Only logout if refresh token is invalid and user was previously authenticated
         const state = store.getState();
         if (state.auth.isAuthenticated) {
-          console.log('Logging out due to refresh token failure');
           store.dispatch(logout());
           // Don't redirect automatically - let the user stay on the current page
         }

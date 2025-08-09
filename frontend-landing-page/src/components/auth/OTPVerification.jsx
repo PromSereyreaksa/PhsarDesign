@@ -28,13 +28,7 @@ export default function OTPVerification() {
   const { email, type = "registration", fromRegister = false } = location.state || {}
 
   useEffect(() => {
-    console.log("🔧 OTP Verification component mounted")
-    console.log("🏷️ Type:", type)
-    console.log("🔄 From Register:", fromRegister)
-    console.log("⏳ Loading state:", loading)
-    
     if (!email) {
-      console.log("❌ No email found, redirecting to login")
       navigate("/login")
       return
     }
@@ -53,16 +47,10 @@ export default function OTPVerification() {
     return () => clearInterval(timer)
   }, [email, navigate])
 
-  // Debug effect to monitor loading state changes
-  useEffect(() => {
-    console.log("⏳ Global loading state changed:", loading)
-    console.log("🔄 Local loading state:", localLoading)
-  }, [loading, localLoading])
 
   // Force reset loading states when component mounts or when there's an error
   useEffect(() => {
     if (error) {
-      console.log("❌ Error detected, resetting loading states")
       setLocalLoading(false)
       // Don't dispatch here to avoid conflicts
     }
@@ -96,8 +84,6 @@ export default function OTPVerification() {
 
   const handleResendOtp = async () => {
     try {
-      console.log("📤 Resending OTP - Type:", type)
-      
       if (type === "password-reset") {
         await authAPI.requestForgotPasswordOtp({ email })
       } else {
@@ -107,9 +93,7 @@ export default function OTPVerification() {
       setTimeLeft(300)
       setResendDisabled(true)
       setError("")
-      console.log("✅ OTP resent successfully")
     } catch (error) {
-      console.error("❌ Failed to resend OTP:", error)
       setError(error.response?.data?.message || "Failed to resend OTP")
     }
   }
@@ -123,9 +107,6 @@ export default function OTPVerification() {
       return
     }
 
-    console.log("🔄 Starting OTP verification - Type:", type)
-    console.log("🔢 OTP Code:", otpCode)
-
     setError("")
     setLocalLoading(true) // Set local loading state
     dispatch(loginStart()) // Set global loading state
@@ -137,9 +118,6 @@ export default function OTPVerification() {
         otp: otpCode
       };
       
-      console.log("📤 Sending OTP verification request")
-      console.log("📝 Request data:", { email: "***", otp: otpCode })
-      
       let response;
       if (type === "password-reset") {
         // Use specific forgot password OTP verification endpoint: email and otp
@@ -149,31 +127,20 @@ export default function OTPVerification() {
         response = await authAPI.verifyOtp(verifyData)
       }
 
-      console.log("✅ OTP verification response:", response)
-
       if (type === "registration") {
         const { user, token } = response.data
-        console.log("👤 User data received:", user)
-        console.log("🔑 Token received:", token ? "✓" : "✗")
         
         dispatch(loginSuccess({ user, token }))
         setVerificationSuccess(true)
         
-        console.log("🎉 Registration verification successful! Showing success message.")
-        
         // Auto redirect after 3 seconds
         setTimeout(() => {
-          console.log("🏠 Auto-redirecting to home page...")
           navigate("/")
         }, 3000)
         
       } else if (type === "password-reset") {
-        console.log("🔒 Password reset OTP verification successful")
-        console.log("📝 Reset response data:", response.data)
-        
         // After successful OTP verification for password reset, 
         // redirect to change password page with verification data
-        console.log("🔄 Redirecting to change password page")
         navigate("/change-password", { 
           state: { 
             email,
@@ -185,15 +152,11 @@ export default function OTPVerification() {
         })
       }
     } catch (error) {
-      console.error("❌ OTP verification failed:", error)
-      console.error("📝 Error response:", error.response?.data)
-      
       const errorMessage = error.response?.data?.message || "Invalid OTP. Please try again."
       setError(errorMessage)
       dispatch(loginFailure(errorMessage))
     } finally {
       // ALWAYS reset local loading state regardless of success or error
-      console.log("🔄 Resetting local loading state")
       setLocalLoading(false)
     }
   }

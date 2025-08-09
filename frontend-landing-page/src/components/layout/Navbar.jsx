@@ -39,11 +39,9 @@ export default function Navbar() {
     } catch (error) {
       // Handle 401 errors silently (user not authenticated)
       if (error.response?.status === 401) {
-        console.debug('User not authenticated for notifications')
         setUnreadCount(0)
         return
       }
-      console.error('Failed to fetch unread count:', error)
       setUnreadCount(0)
     }
   }

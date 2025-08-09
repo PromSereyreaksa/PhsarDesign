@@ -29,19 +29,15 @@ export default function ForgotPassword() {
     setLoading(true)
 
     try {
-      console.log("📤 Sending forgot password request")
-      
       // Call specific forgot password endpoint
       await authAPI.requestForgotPasswordOtp({ 
         email
       })
       
-      console.log("✅ Reset code requested successfully")
       setSuccess(true)
       
       // Navigate to OTP verification after successful request
       setTimeout(() => {
-        console.log("🔄 Navigating to OTP verification page")
         navigate("/verify-otp", { 
           state: { 
             email, 
@@ -50,9 +46,6 @@ export default function ForgotPassword() {
         })
       }, 2000)
     } catch (error) {
-      console.error("❌ Failed to request reset code:", error)
-      console.error("📝 Error response:", error.response?.data)
-      
       const errorMessage = error.response?.data?.message || "Failed to send reset code. Please try again."
       setError(errorMessage)
     } finally {

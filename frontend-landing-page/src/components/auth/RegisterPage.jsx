@@ -40,12 +40,9 @@ export default function RegisterPage() {
   const handleRegister = async (e) => {
     e.preventDefault();
     
-    console.log("📝 Registration form submitted");
-    console.log("📊 Form data:", formData);
     
     // Prevent multiple submissions
     if (loading || isSubmitting) {
-      console.log("⚠️ Submission blocked - already in progress");
       return;
     }
     
@@ -95,7 +92,6 @@ export default function RegisterPage() {
       return;
     }
 
-    console.log("✅ All validation passed, starting registration process");
     dispatch(loginStart());
 
     try {
@@ -111,14 +107,9 @@ export default function RegisterPage() {
         role: role
       };
       
-      console.log("📤 Sending registration request with data:", requestData);
       
       // Step 1: Register user (send to /register)
-      const registerResponse = await authAPI.register(requestData);
-      console.log("✅ Registration response:", registerResponse);
-      
-      console.log("📧 Registration successful, OTP should be automatically sent");
-      console.log("🔄 Navigating to OTP verification page");
+      await authAPI.register(requestData);
       
       // Navigate to OTP verification page
       // Note: OTP is automatically sent by the /register endpoint
@@ -130,8 +121,6 @@ export default function RegisterPage() {
         } 
       });
     } catch (error) {
-      console.error("❌ Registration failed:", error);
-      console.error("📝 Error response:", error.response?.data);
       
       const errorMessage = error.response?.data?.message || error.response?.data?.error || "Registration failed. Please try again.";
       setError(errorMessage);

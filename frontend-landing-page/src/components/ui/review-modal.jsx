@@ -50,7 +50,6 @@ export function ReviewModal({
       setRating(0)
       setReviewText("")
     } catch (error) {
-      console.error('Review submission error:', error)
       setError(error.response?.data?.message || 'Failed to submit review')
     } finally {
       setIsSubmitting(false)

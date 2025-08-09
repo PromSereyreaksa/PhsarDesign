@@ -53,24 +53,17 @@ export default function ChangePassword() {
     setLoading(true)
 
     try {
-      console.log("📤 Sending change password request")
-      
       const changePasswordData = {
         email: email,
         newPassword: formData.newPassword
       };
       
-      console.log("📝 Change password data:", { email: email ? "✓ provided" : "✗ missing", password: formData.newPassword ? "✓ provided" : "✗ missing" })
-      console.log("📧 Email being sent:", email)
-      
       await authAPI.changePassword(changePasswordData)
 
-      console.log("✅ Password changed successfully")
       setSuccess(true)
       
       // Redirect to login after success
       setTimeout(() => {
-        console.log("🔄 Redirecting to login page")
         navigate("/login", { 
           state: { 
             message: "Password changed successfully! Please log in with your new password." 
@@ -78,9 +71,6 @@ export default function ChangePassword() {
         })
       }, 2000)
     } catch (error) {
-      console.error("❌ Failed to change password:", error)
-      console.error("📝 Error response:", error.response?.data)
-      
       const errorMessage = error.response?.data?.message || "Failed to change password. Please try again."
       setError(errorMessage)
     } finally {

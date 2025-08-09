@@ -93,7 +93,6 @@ export function MultiStepApplicationModal({
           experience: formData.experience,
           additionalNotes: formData.additionalNotes
         }
-        console.log('Sending job application data:', applicationData);
         await applicationsAPI.create(applicationData)
       } else {
         // Client hiring artist
@@ -117,7 +116,6 @@ export function MultiStepApplicationModal({
           experience: formData.experience,
           additionalNotes: formData.additionalNotes
         }
-        console.log('Sending service application data:', applicationData);
         await applicationsAPI.applyToService(applicationData)
       }
       
@@ -140,7 +138,6 @@ export function MultiStepApplicationModal({
         })
       }, 3000)
     } catch (error) {
-      console.error('Application submission error:', error)
       setError(error.response?.data?.message || error.message || 'Failed to submit application')
     } finally {
       setIsSubmitting(false)

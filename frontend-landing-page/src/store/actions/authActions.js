@@ -1,6 +1,6 @@
 import { authAPI, clientsAPI, freelancersAPI } from '../../services/api';
 import { loginStart, loginSuccess, loginFailure, logout } from '../slices/authSlice';
-import { addItem, fetchStart, fetchSuccess, fetchFailure, updateItem, deleteItem } from '../slices/apiSlice';
+import { addItem, fetchStart, fetchSuccess, updateItem, deleteItem } from '../slices/apiSlice';
 import store from '../store';
 
 // Auth actions
@@ -66,9 +66,8 @@ export const refreshToken = () => async (dispatch) => {
 export const logoutUser = () => async (dispatch) => {
   try {
     await authAPI.logout();
-  } catch (error) {
+  } catch {
     // Continue with logout even if API call fails
-    console.warn('Logout API call failed:', error);
   } finally {
     dispatch(logout());
   }

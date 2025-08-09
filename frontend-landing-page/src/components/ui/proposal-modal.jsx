@@ -59,7 +59,6 @@ export function ProposalModal({ isOpen, onClose, project, onSuccess }) {
         })
       }
     } catch (error) {
-      console.error('Error submitting proposal:', error)
       setError(error.response?.data?.message || 'Failed to submit proposal. Please try again.')
     } finally {
       setIsSubmitting(false)
@@ -179,7 +178,6 @@ export function ProposalModal({ isOpen, onClose, project, onSuccess }) {
                   accept="image/*,.pdf,.doc,.docx"
                   onChange={(e) => {
                     // Handle file upload logic here
-                    console.log('Files selected:', e.target.files)
                   }}
                 />
               </label>

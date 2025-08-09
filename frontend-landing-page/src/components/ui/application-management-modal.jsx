@@ -33,7 +33,6 @@ export function ApplicationManagementModal({ isOpen, onClose, project, applicati
         }
       }
     } catch (error) {
-      console.error('Error updating application status:', error)
       setError(error.response?.data?.message || 'Failed to update application status.')
     } finally {
       setIsProcessing(false)
