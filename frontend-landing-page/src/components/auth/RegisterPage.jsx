@@ -209,7 +209,7 @@ export default function RegisterPage() {
                   handleInputChange("role", value);
                 }}>
                   <SelectTrigger className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 rounded-xl h-11 focus:ring-2 focus:ring-[#A95BAB]/50 focus:border-[#A95BAB]/50 transition-all duration-200">
-                    <SelectValue placeholder="Choose your role" />
+                    <SelectValue placeholder="Choose your role" value={formData.role} />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-800 border-gray-600">
                     <SelectItem value="client" className="text-white hover:bg-gray-700">
