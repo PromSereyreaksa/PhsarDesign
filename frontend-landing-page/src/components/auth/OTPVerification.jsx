@@ -14,7 +14,7 @@ import { loginStart, loginSuccess, loginFailure } from "../../store/slices/authS
 export default function OTPVerification() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""])
   const [error, setError] = useState("")
-  const [timeLeft, setTimeLeft] = useState(300) // 5 minutes
+  const [timeLeft, setTimeLeft] = useState(60)
   const [resendDisabled, setResendDisabled] = useState(true)
   const [verificationSuccess, setVerificationSuccess] = useState(false)
   const [localLoading, setLocalLoading] = useState(false) // Local loading state as backup
