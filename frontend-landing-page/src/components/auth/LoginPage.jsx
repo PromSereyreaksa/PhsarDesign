@@ -10,6 +10,7 @@ import { Label } from "../ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
 import { authAPI } from "../../services/api"
 import { loginStart, loginSuccess as loginSuccessAction, loginFailure } from "../../store/slices/authSlice"
+import { redirectToFlutter } from "../../utils/flutterRedirect"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -41,12 +42,12 @@ export default function LoginPage() {
       const { user, token } = response.data
       
       dispatch(loginSuccessAction({ user, token }))
-      setSuccessMessage(`Welcome back, ${user.firstName}! Login successful.`)
+      setSuccessMessage(`Welcome back, ${user.firstName}! Redirecting to your dashboard...`)
       
-      // Navigate to home page immediately after successful login
+      // Redirect to Flutter app after successful login
       setTimeout(() => {
-        navigate("/")
-      }, 1500)
+        redirectToFlutter(user)
+      }, 2000)
     } catch (error) {
       const errorMessage = error.response?.data?.error || "Login failed. Please try again."
       setError(errorMessage)
@@ -77,7 +78,7 @@ export default function LoginPage() {
                 <div className="p-6 bg-green-500/10 border border-green-500/20 rounded-xl">
                   <div className="text-green-400 text-lg font-semibold mb-2">✅ Login Successful!</div>
                   <p className="text-green-300 text-sm">{successMessage}</p>
-                  <p className="text-gray-400 text-xs mt-2">Redirecting you to home page...</p>
+                  <p className="text-gray-400 text-xs mt-2">Opening your Flutter app dashboard...</p>
                 </div>
               </div>
             ) : (
