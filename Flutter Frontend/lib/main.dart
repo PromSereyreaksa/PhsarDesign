@@ -14,57 +14,9 @@ import 'components/footer_section.dart';
 import 'widgets/auth_status_widget.dart';
 import 'widgets/login_redirect_handler.dart';
 
-/*
- * CUSTOM IMAGE FUNCTIONALITY USAGE:
- *
- * This file now supports custom images for all major sections while maintaining
- * backward compatibility. When no custom images are provided, sections use
- * default fallbacks (gradients, colors, icons).
- *
- * EXAMPLE USAGE WITH CUSTOM IMAGES:
- *
- * // Hero Section with custom background
- * const HeroSection(
- *   backgroundImageUrl: 'https://your-image-url.com/hero-bg.jpg',
- * ),
- *
- * // Freelancing Opportunities with custom team photos
- * const FreelancingOpportunitiesSection(
- *   customImages: [
- *     'https://your-image-url.com/team1.jpg',
- *     'https://your-image-url.com/team2.jpg',
- *     'https://your-image-url.com/team3.jpg',
- *     // Add more images as needed
- *   ],
- * ),
- *
- * // Popular Services with custom service images
- * const PopularServicesSection(
- *   customImages: [
- *     'https://your-image-url.com/service1.jpg',
- *     'https://your-image-url.com/service2.jpg',
- *     'https://your-image-url.com/service3.jpg',
- *     'https://your-image-url.com/service4.jpg',
- *   ],
- * ),
- *
- * // Artists Section with custom profile pictures
- * const ArtistYouMayLikeSection(
- *   customImages: [
- *     'https://your-image-url.com/artist1.jpg',
- *     'https://your-image-url.com/artist2.jpg',
- *     'https://your-image-url.com/artist3.jpg',
- *     // Add more artist photos as needed
- *   ],
- * ),
- *
- * NOTES:
- * - All custom image parameters are optional
- * - Images should be optimized for web (< 1MB each)
- * - Use appropriate aspect ratios for best results
- * - For production, use CDN or cloud storage with CORS enabled
- * - Local assets can also be used with AssetImage instead of NetworkImage
- */
+// Import new pages
+import 'pages/creative_jobs_page.dart';
+import 'pages/creative_services_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -84,6 +36,12 @@ class PhsarDesignApp extends StatelessWidget {
       home: const LoginRedirectHandler(
         child: LandingPage(),
       ),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const LandingPage(),
+        '/jobs': (context) => const CreativeJobsPage(),
+        '/services': (context) => const CreativeServicesPage(),
+      },
     );
   }
 }
