@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 // Import modular components
 import 'config/app_theme.dart';
@@ -10,12 +11,16 @@ import 'components/freelancing_opportunities_section.dart';
 import 'components/popular_services_section.dart';
 import 'components/artists_section.dart';
 import 'components/footer_section.dart';
+import 'widgets/auth_status_widget.dart';
+import 'widgets/login_redirect_handler.dart';
 
 // Import new pages
 import 'pages/creative_jobs_page.dart';
 import 'pages/creative_services_page.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   runApp(const PhsarDesignApp());
 }
 
@@ -28,6 +33,9 @@ class PhsarDesignApp extends StatelessWidget {
       title: 'PhsarDesign',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme(),
+      home: const LoginRedirectHandler(
+        child: LandingPage(),
+      ),
       initialRoute: '/',
       routes: {
         '/': (context) => const LandingPage(),
@@ -95,47 +103,44 @@ class _LandingPageState extends State<LandingPage> {
               ),
               child: Column(
                 children: [
-                  SizedBox(height: AppConstants.navbarHeight), // Space for fixed navbar
-                  const HeroSection(
-                    backgroundImageUrl: 'image/hero section background.png',
-                  ),
+                SizedBox(height: AppConstants.navbarHeight), // Space for fixed navbar
+                const HeroSection(
+                  backgroundImageUrl: 'image/hero section background.png',
+                ),
 
-                  // Explore Section - now acts as navigation anchor
-                  ExploreSection(
-                    isExpanded: false, // Always false since we show all sections
-                    onToggle: _scrollToFreelancing, // Scroll to freelancing instead of toggle
-                  ),
+                // Explore Section - now acts as navigation anchor
+                ExploreSection(
+                  isExpanded: false, // Always false since we show all sections
+                  onToggle: _scrollToFreelancing, // Scroll to freelancing instead of toggle
+                ),
 
-                  // All sections now visible by default
-                  FreelancingOpportunitiesSection(
-                    titleKey: _freelancingKey, // Add key for scroll targeting to title
-                    customImages: const [
-                      'image/freelance1.png',
-                      'image/freelance2.png',
-                      'image/freelance3.png',
-                      'image/freelance4.png',
-                      'image/freelance5.png',
-                      'image/freelance6.png',
-                    ],
-                  ),
-                  const PopularServicesSection(
-                    customImages: [
-                      'image/Service1.jpg',
-                      'image/Service2.jpg',
-                      'image/Service3.jpg',
-                      'image/Service4.jpg',
-                    ],
-                  ),
-                  const ArtistYouMayLikeSection(
-                    customImages: [
-                      'image/Artist1.jpg',
-                      'image/Artist2.jpg',
-                      'image/Artist3.jpg',
-                      'image/Artist4.jpg',
-                      'image/Artist5.jpg',
-                    ],
-                  ),
-                  const FooterSection(),
+                // All sections now visible by default
+                FreelancingOpportunitiesSection(
+                  titleKey: _freelancingKey, // Add key for scroll targeting to title
+                  customImages: const [
+                    'image/freelance1.png',
+                    'image/freelance2.png',
+                    'image/freelance3.png',
+                    'image/freelance4.png',
+                    'image/freelance5.png',
+                    'image/freelance6.png',
+                  ],
+                ),
+                const PopularServicesSection(),
+                const ArtistYouMayLikeSection(
+                  customImages: [
+                    'image/Artist1.jpg',
+                    'image/Artist2.jpg',
+                    'image/Artist3.jpg',
+                    'image/Artist4.jpg',
+                    'image/Artist5.jpg',
+                  ],
+                ),
+                
+                // Authentication Status Widget for development/debugging
+                // const AuthStatusWidget(),
+                
+                const FooterSection(),
                 ],
               ),
             ),

@@ -5,8 +5,7 @@ import '../config/app_styles.dart';
 /// Standardized button component matching landing page design patterns.
 class AppButton extends StatefulWidget {
   final String text;
-  final VoidCallback? onPressed;
-  final AppButtonVariant variant;
+  final VoidCallback? onPressed; final AppButtonVariant variant;
   final AppButtonSize size;
   final Widget? icon;
   final bool iconAfter;

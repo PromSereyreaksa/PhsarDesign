@@ -41,13 +41,24 @@ export default function LoginPage() {
       const response = await authAPI.login({ email, password })
       const { user, token } = response.data
       
+      // Store JWT token securely in localStorage for cross-app sharing
+      localStorage.setItem('jwt_token', token)
+      localStorage.setItem('user_data', JSON.stringify(user))
+      localStorage.setItem('token_timestamp', Date.now().toString())
+      
       dispatch(loginSuccessAction({ user, token }))
-      setSuccessMessage(`Welcome back, ${user.firstName}! Redirecting to your dashboard...`)
+      setSuccessMessage(`Welcome back, ${user.firstName}! Login successful.`)
       
       // Redirect to Flutter app after successful login
       setTimeout(() => {
-        redirectToFlutter(user)
-      }, 2000)
+        try {
+          redirectToFlutter(user)
+        } catch (error) {
+          console.error('Failed to redirect to Flutter app:', error)
+          // Fallback to React home page if Flutter redirect fails
+          navigate("/")
+        }
+      }, 1500)
     } catch (error) {
       const errorMessage = error.response?.data?.error || "Login failed. Please try again."
       setError(errorMessage)
@@ -71,14 +82,13 @@ export default function LoginPage() {
             </CardTitle>
             <p className="text-gray-300">Sign in to your PhsarDesign account</p>
           </CardHeader>
-
           <CardContent>
             {successMessage ? (
               <div className="text-center space-y-4">
                 <div className="p-6 bg-green-500/10 border border-green-500/20 rounded-xl">
                   <div className="text-green-400 text-lg font-semibold mb-2">✅ Login Successful!</div>
                   <p className="text-green-300 text-sm">{successMessage}</p>
-                  <p className="text-gray-400 text-xs mt-2">Opening your Flutter app dashboard...</p>
+                  <p className="text-gray-400 text-xs mt-2">Redirecting you to PhsarDesign app...</p>
                 </div>
               </div>
             ) : (
