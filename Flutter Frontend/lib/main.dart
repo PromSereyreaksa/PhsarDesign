@@ -11,57 +11,9 @@ import 'components/popular_services_section.dart';
 import 'components/artists_section.dart';
 import 'components/footer_section.dart';
 
-/*
- * CUSTOM IMAGE FUNCTIONALITY USAGE:
- *
- * This file now supports custom images for all major sections while maintaining
- * backward compatibility. When no custom images are provided, sections use
- * default fallbacks (gradients, colors, icons).
- *
- * EXAMPLE USAGE WITH CUSTOM IMAGES:
- *
- * // Hero Section with custom background
- * const HeroSection(
- *   backgroundImageUrl: 'https://your-image-url.com/hero-bg.jpg',
- * ),
- *
- * // Freelancing Opportunities with custom team photos
- * const FreelancingOpportunitiesSection(
- *   customImages: [
- *     'https://your-image-url.com/team1.jpg',
- *     'https://your-image-url.com/team2.jpg',
- *     'https://your-image-url.com/team3.jpg',
- *     // Add more images as needed
- *   ],
- * ),
- *
- * // Popular Services with custom service images
- * const PopularServicesSection(
- *   customImages: [
- *     'https://your-image-url.com/service1.jpg',
- *     'https://your-image-url.com/service2.jpg',
- *     'https://your-image-url.com/service3.jpg',
- *     'https://your-image-url.com/service4.jpg',
- *   ],
- * ),
- *
- * // Artists Section with custom profile pictures
- * const ArtistYouMayLikeSection(
- *   customImages: [
- *     'https://your-image-url.com/artist1.jpg',
- *     'https://your-image-url.com/artist2.jpg',
- *     'https://your-image-url.com/artist3.jpg',
- *     // Add more artist photos as needed
- *   ],
- * ),
- *
- * NOTES:
- * - All custom image parameters are optional
- * - Images should be optimized for web (< 1MB each)
- * - Use appropriate aspect ratios for best results
- * - For production, use CDN or cloud storage with CORS enabled
- * - Local assets can also be used with AssetImage instead of NetworkImage
- */
+// Import new pages
+import 'pages/creative_jobs_page.dart';
+import 'pages/creative_services_page.dart';
 
 void main() {
   runApp(const PhsarDesignApp());
@@ -76,7 +28,12 @@ class PhsarDesignApp extends StatelessWidget {
       title: 'PhsarDesign',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme(),
-      home: const LandingPage(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const LandingPage(),
+        '/jobs': (context) => const CreativeJobsPage(),
+        '/services': (context) => const CreativeServicesPage(),
+      },
     );
   }
 }
@@ -138,47 +95,47 @@ class _LandingPageState extends State<LandingPage> {
               ),
               child: Column(
                 children: [
-                SizedBox(height: AppConstants.navbarHeight), // Space for fixed navbar
-                const HeroSection(
-                  backgroundImageUrl: 'image/hero section background.png',
-                ),
+                  SizedBox(height: AppConstants.navbarHeight), // Space for fixed navbar
+                  const HeroSection(
+                    backgroundImageUrl: 'image/hero section background.png',
+                  ),
 
-                // Explore Section - now acts as navigation anchor
-                ExploreSection(
-                  isExpanded: false, // Always false since we show all sections
-                  onToggle: _scrollToFreelancing, // Scroll to freelancing instead of toggle
-                ),
+                  // Explore Section - now acts as navigation anchor
+                  ExploreSection(
+                    isExpanded: false, // Always false since we show all sections
+                    onToggle: _scrollToFreelancing, // Scroll to freelancing instead of toggle
+                  ),
 
-                // All sections now visible by default
-                FreelancingOpportunitiesSection(
-                  titleKey: _freelancingKey, // Add key for scroll targeting to title
-                  customImages: const [
-                    'image/freelance1.png',
-                    'image/freelance2.png',
-                    'image/freelance3.png',
-                    'image/freelance4.png',
-                    'image/freelance5.png',
-                    'image/freelance6.png',
-                  ],
-                ),
-                const PopularServicesSection(
-                  customImages: [
-                    'image/Service1.jpg',
-                    'image/Service2.jpg',
-                    'image/Service3.jpg',
-                    'image/Service4.jpg',
-                  ],
-                ),
-                const ArtistYouMayLikeSection(
-                  customImages: [
-                    'image/Artist1.jpg',
-                    'image/Artist2.jpg',
-                    'image/Artist3.jpg',
-                    'image/Artist4.jpg',
-                    'image/Artist5.jpg',
-                  ],
-                ),
-                const FooterSection(),
+                  // All sections now visible by default
+                  FreelancingOpportunitiesSection(
+                    titleKey: _freelancingKey, // Add key for scroll targeting to title
+                    customImages: const [
+                      'image/freelance1.png',
+                      'image/freelance2.png',
+                      'image/freelance3.png',
+                      'image/freelance4.png',
+                      'image/freelance5.png',
+                      'image/freelance6.png',
+                    ],
+                  ),
+                  const PopularServicesSection(
+                    customImages: [
+                      'image/Service1.jpg',
+                      'image/Service2.jpg',
+                      'image/Service3.jpg',
+                      'image/Service4.jpg',
+                    ],
+                  ),
+                  const ArtistYouMayLikeSection(
+                    customImages: [
+                      'image/Artist1.jpg',
+                      'image/Artist2.jpg',
+                      'image/Artist3.jpg',
+                      'image/Artist4.jpg',
+                      'image/Artist5.jpg',
+                    ],
+                  ),
+                  const FooterSection(),
                 ],
               ),
             ),
