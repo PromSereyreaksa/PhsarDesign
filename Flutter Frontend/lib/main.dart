@@ -11,6 +11,8 @@ import 'components/freelancing_opportunities_section.dart';
 import 'components/popular_services_section.dart';
 import 'components/artists_section.dart';
 import 'components/footer_section.dart';
+import 'widgets/auth_status_widget.dart';
+import 'widgets/login_redirect_handler.dart';
 
 /*
  * CUSTOM IMAGE FUNCTIONALITY USAGE:
@@ -64,7 +66,9 @@ import 'components/footer_section.dart';
  * - Local assets can also be used with AssetImage instead of NetworkImage
  */
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   runApp(const PhsarDesignApp());
 }
 
@@ -77,7 +81,9 @@ class PhsarDesignApp extends StatelessWidget {
       title: 'PhsarDesign',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme(),
-      home: const LandingPage(),
+      home: const LoginRedirectHandler(
+        child: LandingPage(),
+      ),
     );
   }
 }
@@ -172,6 +178,10 @@ class _LandingPageState extends State<LandingPage> {
                     'image/Artist5.jpg',
                   ],
                 ),
+                
+                // Authentication Status Widget for development/debugging
+                // const AuthStatusWidget(),
+                
                 const FooterSection(),
                 ],
               ),
