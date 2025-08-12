@@ -162,14 +162,7 @@ class _LandingPageState extends State<LandingPage> {
                     'image/freelance6.png',
                   ],
                 ),
-                const PopularServicesSection(
-                  customImages: [
-                    'image/Service1.jpg',
-                    'image/Service2.jpg',
-                    'image/Service3.jpg',
-                    'image/Service4.jpg',
-                  ],
-                ),
+                const PopularServicesSection(),
                 const ArtistYouMayLikeSection(
                   customImages: [
                     'image/Artist1.jpg',
