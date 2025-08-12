@@ -10,7 +10,6 @@ import { Label } from "../ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
 import { authAPI } from "../../services/api"
 import { loginStart, loginSuccess, loginFailure } from "../../store/slices/authSlice"
-import { redirectToFlutter } from "../../utils/flutterRedirect"
 
 export default function OTPVerification() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""])
@@ -134,11 +133,10 @@ export default function OTPVerification() {
         dispatch(loginSuccess({ user, token }))
         setVerificationSuccess(true)
         
-        // Redirect to Flutter app after successful registration
+        // Auto redirect after 3 seconds
         setTimeout(() => {
-          redirectToFlutter(user)
+          navigate("/")
         }, 3000)
-        
         
       } else if (type === "password-reset") {
         // After successful OTP verification for password reset, 
@@ -208,7 +206,7 @@ export default function OTPVerification() {
                   {type === "registration" ? (
                     <>
                       <div className="text-green-400 text-lg font-semibold mb-2">🎉 Registration Complete!</div>
-                      <p className="text-green-300 text-sm mb-3">Your account has been successfully verified and created. Opening your Flutter app dashboard...</p>
+                      <p className="text-green-300 text-sm mb-3">Your account has been successfully verified and created. You can now access the app when it's available.</p>
                     </>
                   ) : (
                     <>
@@ -216,7 +214,7 @@ export default function OTPVerification() {
                       <p className="text-green-300 text-sm mb-3">Your password has been successfully reset. You can now access your account.</p>
                     </>
                   )}
-                  <p className="text-green-300/80 text-xs">Opening Flutter app in 3 seconds...</p>
+                  <p className="text-green-300/80 text-xs">Redirecting in 3 seconds...</p>
                 </div>
                 <Button
                   onClick={() => navigate(type === "registration" ? "/" : "/login")}

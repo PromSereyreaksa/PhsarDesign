@@ -64,9 +64,12 @@ const authSlice = createSlice({
       state.isAuthenticated = true;
       state.error = null;
       
-      // Save to localStorage
+      // Save to localStorage with shared keys for cross-app access
       localStorage.setItem('token', action.payload.token);
       localStorage.setItem('user', JSON.stringify(action.payload.user));
+      localStorage.setItem('jwt_token', action.payload.token);
+      localStorage.setItem('user_data', JSON.stringify(action.payload.user));
+      localStorage.setItem('token_timestamp', Date.now().toString());
     },
     loginFailure: (state, action) => {
       state.loading = false;
@@ -82,9 +85,12 @@ const authSlice = createSlice({
       state.loading = false;
       state.error = null;
       
-      // Clear localStorage
+      // Clear localStorage including shared keys
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      localStorage.removeItem('jwt_token');
+      localStorage.removeItem('user_data');
+      localStorage.removeItem('token_timestamp');
     },
     clearError: (state) => {
       state.error = null;
