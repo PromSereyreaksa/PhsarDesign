@@ -561,20 +561,7 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Right Section - Newsletter */}
-            <div className="space-y-4">
-              <h4 className="text-xl font-bold text-white">Our Newsletter</h4>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <input
-                  type="email"
-                  placeholder="Enter your email address"
-                  className="flex-1 bg-[#2A2A2A] border border-white/20 rounded-lg px-4 py-3 text-white placeholder:text-gray-400 focus:outline-none focus:border-[#A95BAB] transition-colors duration-500 ease-out"
-                />
-                <button className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-500 ease-out transform hover:scale-105">
-                  Subscribe
-                </button>
-              </div>
-            </div>
+            
           </div>
 
           {/* Bottom Section */}
