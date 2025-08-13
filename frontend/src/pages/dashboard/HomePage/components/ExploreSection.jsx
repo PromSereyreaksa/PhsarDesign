@@ -6,14 +6,14 @@ export default function ExploreSection({ isExpanded, onToggle }) {
   const [isHovered, setIsHovered] = useState(false)
 
   return (
-    <section className="py-8">
+    <section className="py-8 mb-25 mt-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-center">
         <button
           onClick={onToggle}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
-          className="flex items-center space-x-2 p-1 rounded-3xl transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#A95BAB] focus:ring-opacity-50"
+          className="flex items-center space-x-2 p-1 rounded-3xl transition-all duration-200 ease-in-out focus:outline-none"
           style={{
             transform: isHovered ? 'scale(1.0)' : 'scale(0.8)',
           }}

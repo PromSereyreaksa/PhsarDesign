@@ -1,9 +1,11 @@
 "use client"
 
-import { useState } from "react"
-import { Link, useLocation } from "react-router-dom"
-import { Menu, X } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
+import { Link, useLocation, useNavigate } from "react-router-dom"
+import { useSelector, useDispatch } from "react-redux"
+import { Menu, X, User, Settings, LayoutDashboard, LogOut, ChevronRight } from "lucide-react"
 import { Button } from "../../ui/button"
+import { logout } from "../../../store/slices/authSlice"
 
 export default function SharedPublicNavbar({ 
   showScrollLinks = true, 
@@ -11,7 +13,84 @@ export default function SharedPublicNavbar({
   className = ""
 }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false)
   const location = useLocation()
+  const navigate = useNavigate()
+  const dispatch = useDispatch()
+  const dropdownRef = useRef(null)
+
+  // Get authentication state
+  const { isAuthenticated, user } = useSelector((state) => state.auth)
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsProfileDropdownOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
+
+  // Get user initials for avatar
+  const getUserInitials = () => {
+    if (!user) return 'U'
+    const firstName = user.firstName || ''
+    const lastName = user.lastName || ''
+    return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase() || 'U'
+  }
+
+  // Handle About navigation based on current page
+  const handleAboutClick = () => {
+    if (location.pathname === "/") {
+      // If on landing page, scroll to about section
+      smoothScroll("about")
+    } else {
+      // If on other pages, navigate to about page and scroll to top
+      navigate('/about')
+      // Scroll to top after navigation
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }, 100)
+    }
+    setIsMenuOpen(false)
+  }
+
+  // Handle navigation with scroll to top for other links
+  const handleNavigation = (href) => {
+    navigate(href)
+    // Scroll to top after navigation
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }, 100)
+    setIsMenuOpen(false)
+  }
+
+  // Profile menu items
+  const profileMenuItems = [
+    { label: 'Profile', icon: User, href: '/profile' },
+    { label: 'Settings', icon: Settings, href: '/settings' },
+    { label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
+  ]
+
+  // Handle profile menu item click
+  const handleProfileMenuClick = (href) => {
+    setIsProfileDropdownOpen(false)
+    handleNavigation(href)
+  }
+
+  // Handle logout
+  const handleLogout = () => {
+    // Dispatch logout action
+    dispatch(logout())
+    setIsProfileDropdownOpen(false)
+    // Navigate to login page
+    navigate('/login')
+  }
 
   const smoothScroll = (elementId) => {
     const element = document.getElementById(elementId)
@@ -69,39 +148,135 @@ export default function SharedPublicNavbar({
                   {link.label}
                 </button>
               ) : (
-                <Link
+                <button
                   key={index}
-                  to={link.href}
+                  onClick={() => handleNavigation(link.href)}
                   className="text-white hover:text-[#A95BAB] transition-colors duration-500 ease-out cursor-pointer"
                 >
                   {link.label}
-                </Link>
+                </button>
               )
             ))}
             
-            {/* Always show About link */}
-            <Link
-              to="/about"
+            {/* Always show About link with smart navigation */}
+            <button
+              onClick={handleAboutClick}
               className="text-white hover:text-[#A95BAB] transition-colors duration-500 ease-out cursor-pointer"
             >
               About
-            </Link>
+            </button>
           </div>
 
           <div className="flex items-center space-x-4">
-            <Link to="/login">
-              <Button
-                variant="ghost"
-                className="text-white hover:text-[#A95BAB] hover:bg-white/10 rounded-lg px-6 transform hover:scale-105 transition-all duration-500 ease-out"
-              >
-                Sign In
-              </Button>
-            </Link>
-            <Link to="/register">
-              <Button className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-lg px-6 transform hover:scale-105 transition-all duration-500 ease-out">
-                Get Started
-              </Button>
-            </Link>
+            {isAuthenticated ? (
+              // User Profile Dropdown
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                  className="flex items-center space-x-2 p-2 rounded-lg hover:bg-white/10 transition-colors duration-300"
+                >
+                  {/* User Avatar */}
+                  <div className="w-8 h-8 bg-[#A95BAB] rounded-full flex items-center justify-center">
+                    {user?.avatar ? (
+                      <img
+                        src={user.avatar}
+                        alt={user.firstName}
+                        className="w-8 h-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-white text-sm font-bold">
+                        {getUserInitials()}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-white hidden sm:block">
+                    {user?.firstName || 'User'}
+                  </span>
+                </button>
+
+                {/* Dropdown Menu */}
+                {isProfileDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-64 bg-[#202020] border border-gray-700 rounded-lg shadow-lg z-50">
+                    {/* User Info Section */}
+                    <div className="p-4 border-b border-gray-700">
+                      <div className="flex items-center space-x-3">
+                        {/* Profile Picture */}
+                        <div className="w-10 h-10 bg-[#A95BAB] rounded-full flex items-center justify-center">
+                          {user?.avatar ? (
+                            <img
+                              src={user.avatar}
+                              alt={user.firstName}
+                              className="w-10 h-10 rounded-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-white text-sm font-bold">
+                              {getUserInitials()}
+                            </span>
+                          )}
+                        </div>
+                        {/* User Name */}
+                        <div>
+                          <p className="text-white font-bold">
+                            {user?.firstName && user?.lastName 
+                              ? `${user.firstName} ${user.lastName}` 
+                              : user?.email || 'User'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Menu Items */}
+                    <div className="py-2">
+                      {profileMenuItems.map((item, index) => {
+                        const IconComponent = item.icon
+                        return (
+                          <button
+                            key={index}
+                            onClick={() => handleProfileMenuClick(item.href)}
+                            className="w-full flex items-center justify-between px-4 py-3 text-gray-300 hover:bg-white/5 hover:text-white transition-colors duration-200"
+                          >
+                            <div className="flex items-center space-x-3">
+                              <IconComponent size={16} className="text-gray-400" />
+                              <span>{item.label}</span>
+                            </div>
+                            <ChevronRight size={14} className="text-gray-400" />
+                          </button>
+                        )
+                      })}
+                      
+                      {/* Logout Button */}
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center justify-between px-4 py-3 text-gray-300 hover:bg-red-500/10 hover:text-red-400 transition-colors duration-200"
+                      >
+                        <div className="flex items-center space-x-3">
+                          <LogOut size={16} className="text-gray-400" />
+                          <span>Log out</span>
+                        </div>
+                        <ChevronRight size={14} className="text-gray-400" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              // Login/Register Buttons for non-authenticated users
+              <>
+                <Link to="/login">
+                  <Button
+                    variant="ghost"
+                    className="text-white hover:text-[#A95BAB] hover:bg-white/10 rounded-lg px-6 transform hover:scale-105 transition-all duration-500 ease-out"
+                  >
+                    Sign In
+                  </Button>
+                </Link>
+                <Link to="/register">
+                  <Button className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-lg px-6 transform hover:scale-105 transition-all duration-500 ease-out">
+                    Get Started
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -129,24 +304,22 @@ export default function SharedPublicNavbar({
                     {link.label}
                   </button>
                 ) : (
-                  <Link
+                  <button
                     key={index}
-                    to={link.href}
+                    onClick={() => handleNavigation(link.href)}
                     className="block px-3 py-2 text-white hover:text-[#A95BAB] transition-colors duration-300"
-                    onClick={() => setIsMenuOpen(false)}
                   >
                     {link.label}
-                  </Link>
+                  </button>
                 )
               ))}
               
-              <Link
-                to="/about"
+              <button
+                onClick={handleAboutClick}
                 className="block px-3 py-2 text-white hover:text-[#A95BAB] transition-colors duration-300"
-                onClick={() => setIsMenuOpen(false)}
               >
                 About
-              </Link>
+              </button>
               
               <div className="pt-4 space-y-2">
                 <Link to="/login" onClick={() => setIsMenuOpen(false)}>
