@@ -1,11 +1,22 @@
 "use client"
 
 import { useState } from "react"
+import { useSelector } from "react-redux"
 import SearchBox from "../../../../components/common/SearchBox"
 import SuggestionChip from "../../../../components/common/SuggestionChip"
 
 export default function HeroSectionAuth({ backgroundImageUrl }) {
   const [searchController, setSearchController] = useState("")
+  
+  // Get user from Redux store
+  const { user } = useSelector((state) => state.auth)
+  
+  // Get user's first name or fallback
+  const getUserName = () => {
+    if (user?.firstName) return user.firstName
+    if (user?.email) return user.email.split('@')[0]
+    return 'User'
+  }
 
   const buildSuggestionButtons = () => {
     const suggestions = ['logo', 'graphic design', '3D Render', 'illustration', 'branding']
@@ -122,9 +133,10 @@ export default function HeroSectionAuth({ backgroundImageUrl }) {
 
   const WelcomeText = () => {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-        <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-white to-[#A95BAB] bg-clip-text text-transparent">
-          Welcome, User!
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 mt-30 mb-6">
+        <h2 className="text-3xl md:text-4xl font-bold">
+          <span className="text-white">Welcome, </span>
+          <span className="text-[#A95BAB]">{getUserName()}!</span>
         </h2>
       </div>
     )
@@ -134,10 +146,18 @@ export default function HeroSectionAuth({ backgroundImageUrl }) {
     return (
       <div className="text-right">
         <div className="space-y-1">
-          <div className="text-3xl md:text-4xl font-bold text-gray-400 leading-tight">
+          <div className="text-3xl md:text-3xl font-bold text-gray-400 leading-tight">
             A Marketplace Where Creative
           </div>
-          <div className="text-3xl md:text-4xl font-bold text-green-500 leading-tight">
+          <div 
+            className="text-3xl md:text-4xl font-bold leading-tight"
+            style={{
+              background: 'linear-gradient(to bottom, rgba(34, 197, 94, 1) 0%, rgba(156, 163, 175, 0.6) 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}
+          >
             Dreams Take Shape.
           </div>
         </div>
@@ -161,13 +181,21 @@ export default function HeroSectionAuth({ backgroundImageUrl }) {
     <div className="w-full">
       <WelcomeText />
       
-      <div 
-        className="w-full min-h-[400px] bg-cover bg-center relative"
-        style={{
-          backgroundImage: `url(${backgroundImageUrl || '/image/hero section background.png'})`
-        }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div
+  className="w-full min-h-[400px] relative overflow-hidden"
+  style={{
+    backgroundImage: `
+      linear-gradient(to right, #1c1c1c 0%, #1c1c1c 70%, rgba(192, 0, 199, 0.51) 100%),
+      url('/image/hero-image.png')
+    `,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center right',
+    backgroundRepeat: 'no-repeat',
+  }}
+>
+
+        
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {getLayout()}
         </div>
       </div>
