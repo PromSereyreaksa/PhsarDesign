@@ -1,6 +1,6 @@
 import axios from "axios"
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000/api"
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api"
 
 // Create axios instance with default config
 const api = axios.create({
@@ -31,8 +31,8 @@ api.interceptors.response.use(
   },
 )
 
-// API endpoints
-export const getPosts = (filters = {}) => {
+// Availability Posts API endpoints
+export const getAllAvailabilityPosts = (filters = {}) => {
   const params = new URLSearchParams()
   Object.entries(filters).forEach(([key, value]) => {
     if (value && value !== "") {
@@ -46,23 +46,45 @@ export const getPosts = (filters = {}) => {
   return api.get(`/availability-posts?${params.toString()}`)
 }
 
-export const getPostById = (postId) => {
-  return api.get(`/availability-posts/${postId}`)
+export const searchAvailabilityPosts = (filters = {}) => {
+  const params = new URLSearchParams()
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value && value !== "") {
+      if (Array.isArray(value)) {
+        value.forEach((v) => params.append(key, v))
+      } else {
+        params.append(key, value)
+      }
+    }
+  })
+  return api.get(`/availability-posts/search?${params.toString()}`)
 }
 
-export const createPost = (postData) => {
+export const getAvailabilityPostsByArtist = (artistId) => {
+  return api.get(`/availability-posts/artist/${artistId}`)
+}
+
+export const getAvailabilityPostById = (postId) => {
+  return api.get(`/availability-posts/id/${postId}`)
+}
+
+export const getAvailabilityPostBySlug = (slug) => {
+  return api.get(`/availability-posts/${slug}`)
+}
+
+export const createAvailabilityPost = (postData) => {
   return api.post("/availability-posts", postData)
 }
 
-export const updatePost = (postId, postData) => {
-  return api.put(`/availability-posts/${postId}`, postData)
+export const updateAvailabilityPost = (postId, postData) => {
+  return api.put(`/availability-posts/id/${postId}`, postData)
 }
 
-export const deletePost = (postId) => {
-  return api.delete(`/availability-posts/${postId}`)
+export const deleteAvailabilityPost = (postId) => {
+  return api.delete(`/availability-posts/id/${postId}`)
 }
 
-export const getUserPosts = () => {
+export const getMyAvailabilityPosts = () => {
   return api.get("/availability-posts/my-posts")
 }
 
@@ -79,6 +101,6 @@ export const uploadImages = (files) => {
   })
 }
 
-export const contactArtist = (postId, message) => {
-  return api.post(`/availability-posts/${postId}/contact`, { message })
+export const contactArtistFromPost = (postId, message) => {
+  return api.post(`/availability-posts/id/${postId}/contact`, { message })
 }
