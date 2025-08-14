@@ -9,14 +9,25 @@ import OTPVerificationPage from "../pages/auth/OTPVerificationPage"
 import ChangePasswordPage from "../pages/auth/ChangePasswordPage"
 import AboutPage from "../pages/public/AboutPage"
 import ProtectedRoute from "../guards/ProtectedRoute.jsx"
+import MarketplacePage from "../pages/Marketplace/MarketplacePage"
+import PostDetailPage from "../pages/Marketplace/PostDetailPage"
+import CreatePostPage from "../pages/Marketplace/CreatePost"
+import EditPostPage from "../pages/Marketplace/EditPostPage"
+import MyPostsPage from "../pages/Dashboard/MyPostsPage"
 
 function App() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000]" style={{fontFamily: 'Poppins, sans-serif'}}>
+    <div
+      className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000]"
+      style={{ fontFamily: "Poppins, sans-serif" }}
+    >
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/about" element={<AboutPage />} />
+
+        <Route path="/marketplace" element={<MarketplacePage />} />
+        <Route path="/marketplace/:postId" element={<PostDetailPage />} />
 
         {/* Protected authenticated routes */}
         <Route
@@ -24,6 +35,31 @@ function App() {
           element={
             <ProtectedRoute>
               <HomePage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/marketplace/create"
+          element={
+            <ProtectedRoute>
+              <CreatePostPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/marketplace/edit/:postId"
+          element={
+            <ProtectedRoute>
+              <EditPostPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/my-posts"
+          element={
+            <ProtectedRoute>
+              <MyPostsPage />
             </ProtectedRoute>
           }
         />

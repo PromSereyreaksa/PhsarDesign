@@ -86,13 +86,13 @@ export default function AuthNavbar() {
 
   // Dropdown menu data
   const findTalentsItems = [
-    { title: "Post a Recruitment", icon: Plus },
-    { title: "Browse Available Artists", icon: Users },
+    { title: "Post a Recruitment", icon: Plus, href: "/marketplace/create" },
+    { title: "Browse Available Artists", icon: Users, href: "/marketplace" },
   ]
 
   const findWorksItems = [
-    { title: "Post Works", icon: Briefcase },
-    { title: "Browse Available Works", icon: Search },
+    { title: "Post Works", icon: Briefcase, href: "/marketplace/create" },
+    { title: "Browse Available Works", icon: Search, href: "/marketplace" },
   ]
 
   // Handle profile menu item click
@@ -124,6 +124,13 @@ const DropdownItem = ({ text, items = [], isMobile = false }) => {
   
   const handleMouseLeave = () => {
     if (hasDropdown) {
+      setIsHovered(false);
+    }
+  };
+
+  const handleDropdownItemClick = (href) => {
+    if (href) {
+      navigate(href);
       setIsHovered(false);
     }
   };
@@ -161,6 +168,7 @@ const DropdownItem = ({ text, items = [], isMobile = false }) => {
             {items.map((item, index) => (
               <div
                 key={index}
+                onClick={() => handleDropdownItemClick(item.href)}
                 className="flex items-center justify-between p-3 rounded-lg hover:bg-white/10 transition-colors duration-200 cursor-pointer"
               >
                 <div className="flex items-center space-x-3">
