@@ -2,12 +2,14 @@
 
 import { useEffect } from "react"
 import { useSelector, useDispatch } from "react-redux"
+import { useNavigate } from "react-router-dom"
 import SectionHeader from "../../components/common/SectionHeader"
 import HoverOverlay from "../../components/common/HoverOverlay"
 import { fetchPosts, fetchCategories, clearError } from "../../store/slices/postsSlice"
 
 export default function PopularServicesSection({ customImages }) {
   const dispatch = useDispatch()
+  const navigate = useNavigate()
   
   // Get data from Redux store
   const { 
@@ -145,11 +147,18 @@ export default function PopularServicesSection({ customImages }) {
         {posts.slice(0, 8).map((post, index) => {
           const categoryName = getCategoryName(post.categoryId)
           
-          // Get image URL from API photos
+          // Get image URL from API attachments
           let apiImageUrl = null;
-          if (post.photos && Array.isArray(post.photos) && post.photos.length > 0) {
-            // Use the first photo from the API
-            apiImageUrl = post.photos[0].url;
+          if (post.attachments && Array.isArray(post.attachments) && post.attachments.length > 0) {
+            // Handle different attachment structures
+            const attachment = post.attachments[0];
+            if (typeof attachment === 'string') {
+              // If attachment is directly a URL string
+              apiImageUrl = attachment;
+            } else if (attachment && typeof attachment === 'object') {
+              // If attachment is an object, try common URL properties
+              apiImageUrl = attachment.url || attachment.src || attachment.path || attachment.link;
+            }
           }
           
           // Fallback images only if API image is not available
@@ -177,7 +186,14 @@ export default function PopularServicesSection({ customImages }) {
           });
           
           return (
-            <div key={post.postId || index} className="relative rounded-xl overflow-hidden group cursor-pointer transform hover:scale-105 transition-all duration-300">
+            <div 
+              key={post.postId || index} 
+              className="relative rounded-xl overflow-hidden group cursor-pointer transform hover:scale-105 transition-all duration-300"
+              onClick={() => {
+                // Navigate to marketplace with category filter
+                navigate(`/marketplace?category=${encodeURIComponent(categoryName)}&section=services`)
+              }}
+            >
               <img
                 src={displayImage}
                 alt={categoryName}
@@ -207,7 +223,15 @@ export default function PopularServicesSection({ customImages }) {
   return (
     <section className="py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <SectionHeader title="Popular Services" />
+        <div className="flex items-center justify-between mb-16">
+          <SectionHeader title="Popular Services" />
+          <button
+            onClick={() => navigate('/marketplace?section=services')}
+            className="text-[#A95BAB] hover:text-[#A95BAB]/80 font-medium text-sm transition-colors"
+          >
+            See All →
+          </button>
+        </div>
         <div className="mt-16">
           {buildServiceGrid()}
         </div>

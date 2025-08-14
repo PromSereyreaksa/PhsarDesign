@@ -2,7 +2,7 @@
 import { useNavigate } from "react-router-dom"
 import { Clock, Star, ArrowRight } from "lucide-react"
 
-const PostCard = ({ post }) => {
+const SimplePostCard = ({ post }) => {
   const navigate = useNavigate()
 
   const handleViewDetails = () => {
@@ -39,17 +39,8 @@ const PostCard = ({ post }) => {
 
   return (
     <div className="group relative h-full">
-      {/* Softer shining light reflection effect */}
-      <div className="absolute -inset-0.5 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-60 transition-all duration-700 rounded-2xl blur-sm"></div>
-      <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-white/3 opacity-0 group-hover:opacity-70 transition-all duration-500 rounded-2xl"></div>
-      
-      {/* Softer moving light sweep effect */}
-      <div className="absolute inset-0 rounded-2xl overflow-hidden">
-        <div className="absolute -inset-10 bg-gradient-to-r from-transparent via-white/15 to-transparent -skew-x-12 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000 ease-out opacity-0 group-hover:opacity-60"></div>
-      </div>
-      
       <div
-        className="relative backdrop-blur-md bg-white/5 border border-white/10 rounded-2xl overflow-hidden cursor-pointer transition-all duration-500 hover:bg-white/10 hover:border-white/20 hover:backdrop-blur-xl hover:shadow-2xl hover:shadow-white/5 hover:-translate-y-2 hover:scale-[1.02] h-full flex flex-col"
+        className="relative backdrop-blur-md bg-white/5 border border-white/10 rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:bg-white/8 hover:border-white/20 hover:-translate-y-1 hover:scale-[1.01] h-full flex flex-col"
         onClick={handleViewDetails}
       >
       {/* Image Section */}
@@ -170,4 +161,4 @@ const PostCard = ({ post }) => {
   )
 }
 
-export default PostCard
+export default SimplePostCard

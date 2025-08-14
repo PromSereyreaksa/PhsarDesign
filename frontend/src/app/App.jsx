@@ -27,7 +27,7 @@ function App() {
         <Route path="/about" element={<AboutPage />} />
 
         <Route path="/marketplace" element={<MarketplacePage />} />
-        <Route path="/marketplace/:postId" element={<PostDetailPage />} />
+        <Route path="/marketplace/:slug" element={<PostDetailPage />} />
 
         {/* Protected authenticated routes */}
         <Route
