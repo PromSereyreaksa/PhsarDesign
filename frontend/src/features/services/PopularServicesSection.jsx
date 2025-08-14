@@ -1,71 +1,123 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
+import { useSelector, useDispatch } from "react-redux"
+import { useNavigate } from "react-router-dom"
 import SectionHeader from "../../components/common/SectionHeader"
 import HoverOverlay from "../../components/common/HoverOverlay"
-import { availabilityPostsAPI } from "../../services/api"
+import { fetchPosts, fetchCategories, clearError } from "../../store/slices/postsSlice"
 
 export default function PopularServicesSection({ customImages }) {
-  const [posts, setPosts] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
+  
+  // Get data from Redux store
+  const { 
+    posts, 
+    categories, 
+    loading, 
+    error,
+    categoriesLoading 
+  } = useSelector((state) => state.posts)
 
-  // Category mapping for display names
-  const categoryMap = {
-    1: 'Graphic Design',
-    2: 'Web Design', 
-    3: 'Mobile Apps',
-    4: 'UI/UX Design',
-    5: 'Logo Design',
-    6: '3D Modeling',
-    7: 'Digital Art',
-    8: 'Photography',
-    9: 'Illustration',
-    10: 'Animation',
-    11: 'Branding',
-    12: 'Print Design'
+  // Create dynamic category mapping from categories array
+  const getCategoryName = (categoryId) => {
+    // Try to use dynamic categories first
+    if (categories && Array.isArray(categories) && categories.length > 0) {
+      const category = categories.find(cat => cat.id === categoryId || cat.categoryId === categoryId);
+      if (category) {
+        return category.name || category.categoryName;
+      }
+    }
+    
+    // Fallback category mapping only as last resort
+    const fallbackCategories = {
+      1: 'Graphic Design',
+      2: 'Web Design', 
+      3: 'Mobile Apps',
+      4: 'UI/UX Design',
+      5: 'Logo Design',
+      6: '3D Modeling',
+      7: 'Digital Art',
+      8: 'Photography',
+      9: 'Illustration',
+      10: 'Animation',
+      11: 'Branding',
+      12: 'Print Design'
+    };
+    
+    if (fallbackCategories[categoryId]) {
+      return fallbackCategories[categoryId];
+    }
+    
+    return 'Other';
   }
 
   useEffect(() => {
-    fetchPosts()
-  }, [])
+    // Fetch both posts and categories when component mounts
+    dispatch(fetchPosts())
+    dispatch(fetchCategories())
 
-  const fetchPosts = async () => {
-    try {
-      setLoading(true)
-      const response = await availabilityPostsAPI.getAll({ 
-        limit: 8, // Limit to 8 posts as requested
-        isActive: true 
-      })
-      console.log('API Response:', response.data) // Debug log
-      setPosts(response.data.posts || response.data || [])
-    } catch (err) {
-      console.error('Error fetching posts:', err)
-      setError('Failed to load services')
-    } finally {
-      setLoading(false)
-    }
+    // Add timeout to prevent infinite loading
+    const timeout = setTimeout(() => {
+      if (loading || categoriesLoading) {
+        console.error('Loading timeout - API calls took too long');
+      }
+    }, 10000) // 10 second timeout
+
+    return () => clearTimeout(timeout)
+  }, [dispatch])
+
+  // Add debugging for posts as well
+  useEffect(() => {
+    console.log('Posts from Redux:', posts);
+    console.log('Categories from Redux:', categories);
+    console.log('Loading states:', { loading, categoriesLoading, error });
+    
+    // If we've been loading for too long, show mock data
+    const mockTimeout = setTimeout(() => {
+      if ((loading || categoriesLoading) && (!posts || posts.length === 0)) {
+        console.warn('Loading taking too long, consider showing fallback content');
+      }
+    }, 5000)
+    
+    return () => clearTimeout(mockTimeout)
+  }, [posts, categories, loading, categoriesLoading, error])
+
+  const handleRetry = () => {
+    dispatch(clearError())
+    dispatch(fetchPosts())
+    dispatch(fetchCategories())
   }
 
   const buildServiceGrid = () => {
-    if (loading) {
+    console.log('BuildServiceGrid - Loading states:', { loading, categoriesLoading, error });
+    console.log('Posts length:', posts?.length || 0);
+    
+    // Show loading state - but with timeout to prevent infinite loading
+    if (loading || categoriesLoading) {
       return (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {Array.from({ length: 8 }).map((_, index) => (
             <div key={index} className="relative rounded-xl overflow-hidden bg-gray-800 animate-pulse">
               <div className="w-full h-48 bg-gray-700"></div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-white text-sm">Loading...</span>
+              </div>
             </div>
           ))}
         </div>
       )
     }
 
+    // Show error state
     if (error) {
+      console.error('Error in buildServiceGrid:', error);
       return (
         <div className="text-center py-12">
           <p className="text-red-400">{error}</p>
           <button 
-            onClick={fetchPosts}
+            onClick={handleRetry}
             className="mt-4 px-6 py-2 bg-[#A95BAB] text-white rounded-lg hover:bg-[#A95BAB]/80 transition-colors"
           >
             Try Again
@@ -74,10 +126,18 @@ export default function PopularServicesSection({ customImages }) {
       )
     }
 
-    if (posts.length === 0) {
+    // Show empty state
+    if (!posts || posts.length === 0) {
+      console.log('No posts found, showing empty state');
       return (
         <div className="text-center py-12">
           <p className="text-gray-400">No services available at the moment.</p>
+          <button 
+            onClick={handleRetry}
+            className="mt-4 px-6 py-2 bg-[#A95BAB] text-white rounded-lg hover:bg-[#A95BAB]/80 transition-colors"
+          >
+            Retry
+          </button>
         </div>
       )
     }
@@ -85,48 +145,73 @@ export default function PopularServicesSection({ customImages }) {
     return (
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {posts.slice(0, 8).map((post, index) => {
-          const categoryName = categoryMap[post.categoryId] || 'Other'
-          const imageUrl = post.photos && post.photos.length > 0 ? post.photos[0].url : null
+          const categoryName = getCategoryName(post.categoryId)
           
-          console.log('Post:', post.postId, 'Image URL:', imageUrl) // Debug log
+          // Get image URL from API attachments
+          let apiImageUrl = null;
+          if (post.attachments && Array.isArray(post.attachments) && post.attachments.length > 0) {
+            // Handle different attachment structures
+            const attachment = post.attachments[0];
+            if (typeof attachment === 'string') {
+              // If attachment is directly a URL string
+              apiImageUrl = attachment;
+            } else if (attachment && typeof attachment === 'object') {
+              // If attachment is an object, try common URL properties
+              apiImageUrl = attachment.url || attachment.src || attachment.path || attachment.link;
+            }
+          }
+          
+          // Fallback images only if API image is not available
+          const fallbackImages = [
+            '/image/Service1.jpg',
+            '/image/Service2.jpg', 
+            '/image/Service3.jpg',
+            '/image/Service4.jpg',
+            '/image/Artist1.jpg',
+            '/image/Artist2.jpg',
+            '/image/Artist3.jpg',
+            '/image/Artist4.jpg'
+          ];
+          
+          // Prioritize API image, fallback to static images
+          const displayImage = apiImageUrl || fallbackImages[index % fallbackImages.length];
+          
+          console.log(`Rendering post ${index}:`, {
+            postId: post.postId,
+            categoryId: post.categoryId,
+            categoryName,
+            apiImageUrl,
+            displayImage,
+            hasPhotos: post.photos?.length || 0
+          });
           
           return (
-            <div key={post.postId} className="relative rounded-xl overflow-hidden group cursor-pointer transform hover:scale-105 transition-all duration-500 ease-out">
-              {imageUrl ? (
-                <div className="relative">
-                  <img
-                    src={imageUrl}
-                    alt={categoryName}
-                    className="w-full h-48 object-cover transition-transform duration-500 ease-out group-hover:scale-110"
-                    onLoad={() => console.log('Image loaded successfully:', imageUrl)}
-                    onError={(e) => {
-                      console.error('Image failed to load:', imageUrl, e)
-                      // Fallback to placeholder if image fails to load
-                      e.target.style.display = 'none'
-                      const fallback = e.target.nextSibling
-                      if (fallback) fallback.style.display = 'flex'
-                    }}
-                    crossOrigin="anonymous"
-                    loading="lazy"
-                  />
-                  <div 
-                    className="w-full h-48 bg-gradient-to-br from-[#A95BAB] to-[#3F51B5] hidden items-center justify-center"
-                  >
-                    <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                    <span className="ml-2 text-white text-sm">Image unavailable</span>
-                  </div>
-                </div>
-              ) : (
-                <div className="w-full h-48 bg-gradient-to-br from-[#A95BAB] to-[#3F51B5] flex items-center justify-center">
-                  <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                  </svg>
-                  <span className="ml-2 text-white text-sm">No image</span>
-                </div>
-              )}
-              
+            <div 
+              key={post.postId || index} 
+              className="relative rounded-xl overflow-hidden group cursor-pointer transform hover:scale-105 transition-all duration-300"
+              onClick={() => {
+                // Navigate to marketplace with category filter
+                navigate(`/marketplace?category=${encodeURIComponent(categoryName)}&section=services`)
+              }}
+            >
+              <img
+                src={displayImage}
+                alt={categoryName}
+                className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
+                onLoad={() => console.log(`✓ Image ${index} loaded successfully:`, displayImage)}
+                onError={(e) => {
+                  console.error(`✗ Image ${index} failed to load:`, displayImage);
+                  // If API image fails, try fallback
+                  if (apiImageUrl && e.target.src === apiImageUrl) {
+                    console.log(`Falling back to static image for post ${index}`);
+                    e.target.src = fallbackImages[index % fallbackImages.length];
+                  } else {
+                    // If even fallback fails, try a different one
+                    const altIndex = (index + 1) % fallbackImages.length;
+                    e.target.src = fallbackImages[altIndex];
+                  }
+                }}
+              />
               <HoverOverlay label={categoryName} />
             </div>
           )
@@ -138,7 +223,15 @@ export default function PopularServicesSection({ customImages }) {
   return (
     <section className="py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <SectionHeader title="Popular Services" />
+        <div className="flex items-center justify-between mb-16">
+          <SectionHeader title="Popular Services" />
+          <button
+            onClick={() => navigate('/marketplace?section=services')}
+            className="text-[#A95BAB] hover:text-[#A95BAB]/80 font-medium text-sm transition-colors"
+          >
+            See All →
+          </button>
+        </div>
         <div className="mt-16">
           {buildServiceGrid()}
         </div>

@@ -1,0 +1,93 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import { useParams, useNavigate } from "react-router-dom"
+import { useAppDispatch, useAppSelector } from "../../hook/useRedux"
+import { fetchPostById, updatePost, clearCurrentPost } from "../../store/slices/marketplaceSlice"
+import EditPostForm from "../../components/marketplace/EditPostForm"
+import MarketplaceNav from "../../components/marketplace/MarketplaceNav"
+
+const EditPostPage = () => {
+  const { postId } = useParams()
+  const navigate = useNavigate()
+  const dispatch = useAppDispatch()
+  const { currentPost, loading, error } = useAppSelector((state) => state.marketplace)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (postId) {
+      dispatch(fetchPostById(postId))
+    }
+
+    return () => {
+      dispatch(clearCurrentPost())
+    }
+  }, [dispatch, postId])
+
+  const handleSubmit = async (postData) => {
+    setIsSubmitting(true)
+    try {
+      await dispatch(updatePost({ postId, postData })).unwrap()
+      alert("Post updated successfully!")
+      navigate("/dashboard/my-posts")
+    } catch (error) {
+      alert("Failed to update post. Please try again.")
+      console.error("Update post error:", error)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleCancel = () => {
+    navigate("/dashboard/my-posts")
+  }
+
+  if (loading) {
+    return (
+      <div className="edit-post-page">
+        <MarketplaceNav />
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Loading post...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !currentPost) {
+    return (
+      <div className="edit-post-page">
+        <MarketplaceNav />
+        <div className="error-container">
+          <p>Error loading post: {error || "Post not found"}</p>
+          <button onClick={handleCancel} className="back-btn">
+            Back to My Posts
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="edit-post-page">
+      <MarketplaceNav />
+
+      <div className="page-header">
+        <button onClick={handleCancel} className="back-button">
+          ← Back to My Posts
+        </button>
+        <h1>Edit Post</h1>
+        <p>Update your availability post information</p>
+      </div>
+
+      <EditPostForm
+        initialData={currentPost}
+        onSubmit={handleSubmit}
+        onCancel={handleCancel}
+        isSubmitting={isSubmitting}
+      />
+    </div>
+  )
+}
+
+export default EditPostPage

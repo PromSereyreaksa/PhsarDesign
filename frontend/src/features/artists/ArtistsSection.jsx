@@ -1,9 +1,26 @@
 "use client"
 
+import { useEffect } from "react"
+import { useAppDispatch, useAppSelector } from "../../hook/useRedux"
 import SectionHeader from "../../components/common/SectionHeader"
+import { fetchArtists } from "../../store/slices/artistsSlice"
 
 export default function ArtistsSection({ customImages }) {
-  const artists = [
+  const dispatch = useAppDispatch()
+  const { artists, loading, error } = useAppSelector((state) => state.artists)
+
+  useEffect(() => {
+    if (artists.length === 0) {
+      dispatch(fetchArtists())
+    }
+  }, [dispatch, artists.length])
+
+  const getArtistColor = (index) => {
+    const colors = ['#A95BAB', '#3F51B5', '#00BCD4', '#4CAF50', '#FF9800']
+    return colors[index % colors.length]
+  }
+
+  const getFallbackArtists = () => [
     {
       name: 'Prom Sereyreaksa',
       role: 'UI/UX Designer',
@@ -36,10 +53,47 @@ export default function ArtistsSection({ customImages }) {
     },
   ]
 
+  const transformedArtists = artists.length > 0 ? artists.map((artist, index) => ({
+    name: `${artist.user.firstName} ${artist.user.lastName}`,
+    role: artist.specialties?.split(',')[0]?.trim() || 'Creative Artist',
+    bio: artist.user.bio || 'Passionate about creating amazing digital experiences',
+    color: getArtistColor(index),
+    skills: artist.skills || '',
+    availability: artist.availability,
+    rating: artist.rating,
+    hourlyRate: artist.hourlyRate,
+    portfolioUrl: artist.portfolioUrl
+  })).slice(0, 5) : getFallbackArtists()
+
+  if (loading && artists.length === 0) {
+    return (
+      <section className="py-20 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 relative z-10">
+          <SectionHeader 
+            title="Featured Artists"
+            subtitle="Meet our talented creative professionals"
+          />
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#A95BAB]"></div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   const buildArtistGrid = () => {
+    if (error && artists.length === 0) {
+      return (
+        <div className="text-center py-12">
+          <p className="text-red-400 mb-4">{error}</p>
+          <p className="text-gray-400">Showing fallback artists</p>
+        </div>
+      )
+    }
+
     return (
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 md:gap-8">
-        {artists.map((artist, index) => (
+        {transformedArtists.map((artist, index) => (
           <ArtistCard
             key={index}
             artist={artist}
