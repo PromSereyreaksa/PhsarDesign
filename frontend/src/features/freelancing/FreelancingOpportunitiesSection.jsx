@@ -1,10 +1,12 @@
 "use client"
 
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import SectionHeader from "../../components/common/SectionHeader"
 import HoverOverlay from "../../components/common/HoverOverlay"
 
 export default function FreelancingOpportunitiesSection({ customImages, titleRef }) {
+  const navigate = useNavigate()
   const artworks = [
     { color: '#A95BAB', category: 'Logo Design' },
     { color: '#3F51B5', category: 'Graphic Design' },
@@ -21,7 +23,14 @@ export default function FreelancingOpportunitiesSection({ customImages, titleRef
           const hasCustomImage = customImages && index < customImages.length && customImages[index]
           
           return (
-            <div key={index} className="relative rounded-xl overflow-hidden group cursor-pointer">
+            <div 
+              key={index} 
+              className="relative rounded-xl overflow-hidden group cursor-pointer"
+              onClick={() => {
+                // Navigate to marketplace with category filter for jobs
+                navigate(`/marketplace?category=${encodeURIComponent(artwork.category)}&section=jobs`)
+              }}
+            >
               {hasCustomImage ? (
                 <div className="relative">
                   <img
@@ -68,7 +77,15 @@ export default function FreelancingOpportunitiesSection({ customImages, titleRef
   return (
     <section className="py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <SectionHeader title="Freelancing Opportunities" titleRef={titleRef} />
+        <div className="flex items-center justify-between mb-16">
+          <SectionHeader title="Freelancing Opportunities" titleRef={titleRef} />
+          <button
+            onClick={() => navigate('/marketplace?section=jobs')}
+            className="text-[#A95BAB] hover:text-[#A95BAB]/80 font-medium text-sm transition-colors"
+          >
+            See All →
+          </button>
+        </div>
         <div className="mt-16">
           {buildMasonryGrid()}
         </div>

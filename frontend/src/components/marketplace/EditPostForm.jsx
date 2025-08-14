@@ -31,7 +31,7 @@ const EditPostForm = ({ initialData, onSubmit, onCancel, isSubmitting = false })
         location: initialData.location || "",
         skills: initialData.skills || [],
         category: initialData.category || "",
-        photos: initialData.photos || [],
+        photos: initialData.attachments || [],
       })
     }
   }, [initialData])
@@ -143,61 +143,92 @@ const EditPostForm = ({ initialData, onSubmit, onCancel, isSubmitting = false })
   }
 
   return (
-    <div className="create-post-form">
-      <form onSubmit={handleSubmit} className="form-container">
-        {/* Basic Information */}
-        <div className="form-section">
-          <h3>Basic Information</h3>
+    <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000] py-8">
+      <div className="max-w-4xl mx-auto px-6">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-gray-800/20 backdrop-blur border border-gray-700/50 rounded-2xl p-8"
+        >
+          {/* Basic Information */}
+          <div className="mb-8">
+            <h3 className="text-2xl font-bold text-white mb-6">Basic Information</h3>
 
-          <div className="form-group">
-            <label htmlFor="title">Title *</label>
-            <input
-              type="text"
-              id="title"
-              name="title"
-              value={formData.title}
-              onChange={handleInputChange}
-              placeholder="e.g., Professional Logo Design Available"
-              required
-            />
+            <div className="space-y-6">
+              <div>
+                <label htmlFor="title" className="block text-sm font-medium text-gray-300 mb-2">
+                  Title *
+                </label>
+                <input
+                  type="text"
+                  id="title"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Professional Logo Design Available"
+                  className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-[#A95BAB] focus:border-[#A95BAB] transition-all"
+                  required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="category" className="block text-sm font-medium text-gray-300 mb-2">
+                  Category *
+                </label>
+                <select
+                  id="category"
+                  name="category"
+                  value={formData.category}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-lg text-white focus:ring-2 focus:ring-[#A95BAB] focus:border-[#A95BAB] transition-all"
+                  required
+                >
+                  <option value="">Select a category</option>
+                  {categories.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-2">
+                  Description *
+                </label>
+                <textarea
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  placeholder="Describe your services, experience, and what makes you unique..."
+                  rows={6}
+                  className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-[#A95BAB] focus:border-[#A95BAB] transition-all resize-none"
+                  required
+                />
+              </div>
+            </div>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="category">Category *</label>
-            <select id="category" name="category" value={formData.category} onChange={handleInputChange} required>
-              <option value="">Select a category</option>
-              {categories.map((category) => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
-              ))}
-            </select>
+          {/* Form Actions */}
+          <div className="flex items-center justify-end space-x-4 pt-6 border-t border-gray-700/50">
+            <button
+              type="button"
+              onClick={onCancel}
+              disabled={isSubmitting}
+              className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-all duration-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="px-8 py-3 bg-[#A95BAB] hover:bg-[#A95BAB]/80 text-white rounded-lg transition-all duration-300 transform hover:scale-105 font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            >
+              {isSubmitting ? "Updating Post..." : "Update Post"}
+            </button>
           </div>
-
-          <div className="form-group">
-            <label htmlFor="description">Description *</label>
-            <textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              placeholder="Describe your services, experience, and what makes you unique..."
-              rows={6}
-              required
-            />
-          </div>
-        </div>
-
-        {/* Form Actions */}
-        <div className="form-actions">
-          <button type="button" onClick={onCancel} className="cancel-btn" disabled={isSubmitting}>
-            Cancel
-          </button>
-          <button type="submit" className="submit-btn" disabled={isSubmitting}>
-            {isSubmitting ? "Updating Post..." : "Update Post"}
-          </button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   )
 }

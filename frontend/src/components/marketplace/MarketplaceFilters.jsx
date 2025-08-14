@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Filter, X, ChevronDown, ChevronUp } from "lucide-react"
+import { Filter, ChevronDown, ChevronUp, Users, User } from "lucide-react"
 
 const MarketplaceFilters = ({ filters, onFilterChange }) => {
   const [isExpanded, setIsExpanded] = useState(false)
@@ -34,6 +34,21 @@ const MarketplaceFilters = ({ filters, onFilterChange }) => {
     { label: "Deadline Soon", value: "deadline" },
   ]
 
+  const sectionFilters = [
+    {
+      label: "Artists Only",
+      value: "artist",
+      icon: User,
+      description: "Show only artist profiles and portfolios",
+    },
+    {
+      label: "Artists + Others",
+      value: "all",
+      icon: Users,
+      description: "Show all creative professionals and services",
+    },
+  ]
+
   const handleFilterChange = (key, value) => {
     onFilterChange({ [key]: value })
   }
@@ -54,6 +69,7 @@ const MarketplaceFilters = ({ filters, onFilterChange }) => {
       location: "",
       skills: [],
       sortBy: "newest",
+      section: "all",
     })
   }
 
@@ -86,8 +102,37 @@ const MarketplaceFilters = ({ filters, onFilterChange }) => {
           </button>
         </div>
 
+        <div className="mb-6">
+          <div className="flex items-center space-x-1 bg-gray-700/30 rounded-lg p-1">
+            {sectionFilters.map((section) => {
+              const IconComponent = section.icon
+              const isActive = (filters.section || "all") === section.value
+
+              return (
+                <button
+                  key={section.value}
+                  onClick={() => handleFilterChange("section", section.value)}
+                  className={`flex items-center space-x-2 px-4 py-3 rounded-lg transition-all duration-300 flex-1 ${
+                    isActive
+                      ? "bg-[#A95BAB] text-white shadow-lg transform scale-105"
+                      : "text-gray-300 hover:text-white hover:bg-gray-600/50"
+                  }`}
+                >
+                  <IconComponent className="w-4 h-4" />
+                  <div className="text-left">
+                    <div className="font-medium">{section.label}</div>
+                    <div className="text-xs opacity-75">{section.description}</div>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
         {/* Main Filters Row */}
-        <div className={`grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-4 ${!isExpanded ? 'hidden md:grid' : ''}`}>
+        <div
+          className={`grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-4 ${!isExpanded ? "hidden md:grid" : ""}`}
+        >
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-300">Category</label>
             <select
@@ -165,7 +210,7 @@ const MarketplaceFilters = ({ filters, onFilterChange }) => {
                     key={skill}
                     className={`px-3 py-2 rounded-lg text-sm transition-colors ${
                       (filters.skills || []).includes(skill)
-                        ? "bg-purple-600 text-white"
+                        ? "bg-[#A95BAB] text-white"
                         : "bg-gray-700 text-gray-300 hover:bg-gray-600"
                     }`}
                     onClick={() => handleSkillToggle(skill)}
@@ -182,17 +227,17 @@ const MarketplaceFilters = ({ filters, onFilterChange }) => {
         <div className="flex flex-wrap items-center justify-between gap-4 mt-4">
           <div className="flex flex-wrap gap-2">
             {Object.entries(filters).map(([key, value]) => {
-              if (!value || (Array.isArray(value) && value.length === 0)) return null
+              if (!value || (Array.isArray(value) && value.length === 0) || key === "section") return null
 
               return (
                 <span
                   key={key}
-                  className="inline-flex items-center gap-2 px-3 py-1 bg-purple-600 text-white text-sm rounded-full"
+                  className="inline-flex items-center gap-2 px-3 py-1 bg-[#A95BAB] text-white text-sm rounded-full"
                 >
                   {key}: {Array.isArray(value) ? value.join(", ") : value}
                   <button
                     onClick={() => handleFilterChange(key, Array.isArray(value) ? [] : "")}
-                    className="hover:bg-purple-700 rounded-full p-1"
+                    className="hover:bg-[#A95BAB]/80 rounded-full p-1"
                   >
                     ×
                   </button>
@@ -201,7 +246,9 @@ const MarketplaceFilters = ({ filters, onFilterChange }) => {
             })}
           </div>
 
-          {Object.values(filters).some((v) => v && (Array.isArray(v) ? v.length > 0 : true)) && (
+          {Object.entries(filters).some(
+            ([key, value]) => key !== "section" && value && (Array.isArray(value) ? value.length > 0 : true),
+          ) && (
             <button
               className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
               onClick={clearAllFilters}

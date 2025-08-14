@@ -6,7 +6,6 @@ import { ArrowLeft, Clock, Star, MapPin, User, ChevronLeft, ChevronRight, Tag } 
 import { useAppDispatch, useAppSelector } from "../../hook/useRedux"
 import { fetchPostById, clearCurrentPost, fetchPosts } from "../../store/slices/marketplaceSlice"
 import PostCard from "../../components/marketplace/PostCard"
-import SimplePostCard from "../../components/marketplace/SimplePostCard"
 import AuthNavbar from "../../components/layout/navigation/AuthNavbar"
 
 const PostDetailPage = () => {
@@ -15,8 +14,6 @@ const PostDetailPage = () => {
   const dispatch = useAppDispatch()
   const { currentPost, posts, loading, error } = useAppSelector((state) => state.marketplace)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const [isAnimating, setIsAnimating] = useState(false)
-  const [slideDirection, setSlideDirection] = useState('') // 'left' or 'right'
 
   useEffect(() => {
     if (slug) {
@@ -111,59 +108,32 @@ const PostDetailPage = () => {
   )
 
   const nextImage = () => {
-    if (isAnimating || imageUrls.length <= 1) return
-    setIsAnimating(true)
-    setSlideDirection('right')
-    setTimeout(() => {
-      setCurrentImageIndex((prev) => (prev + 1) % imageUrls.length)
-      setTimeout(() => {
-        setSlideDirection('')
-        setIsAnimating(false)
-      }, 50)
-    }, 300)
+    setCurrentImageIndex((prev) => (prev + 1) % imageUrls.length)
   }
 
   const prevImage = () => {
-    if (isAnimating || imageUrls.length <= 1) return
-    setIsAnimating(true)
-    setSlideDirection('left')
-    setTimeout(() => {
-      setCurrentImageIndex((prev) => (prev - 1 + imageUrls.length) % imageUrls.length)
-      setTimeout(() => {
-        setSlideDirection('')
-        setIsAnimating(false)
-      }, 50)
-    }, 300)
-  }
-
-  const handleThumbnailClick = (targetIndex) => {
-    if (isAnimating || targetIndex === currentImageIndex || imageUrls.length <= 1) return
-    setIsAnimating(true)
-    const direction = targetIndex > currentImageIndex ? 'right' : 'left'
-    setSlideDirection(direction)
-    setTimeout(() => {
-      setCurrentImageIndex(targetIndex)
-      setTimeout(() => {
-        setSlideDirection('')
-        setIsAnimating(false)
-      }, 50)
-    }, 300)
+    setCurrentImageIndex((prev) => (prev - 1 + imageUrls.length) % imageUrls.length)
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000]">
       <AuthNavbar />
       
+      {/* Back Button */}
+      <div className="pt-28 px-6">
+        <div className="max-w-7xl mx-auto">
+          <button
+            onClick={handleBack}
+            className="inline-flex items-center space-x-2 mb-8 px-4 py-2 bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl text-gray-300 hover:text-white hover:border-gray-600/60 transition-all"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Marketplace</span>
+          </button>
+        </div>
+      </div>
+
       {/* Main Content Grid */}
-      <div className="pt-28 max-w-7xl mx-auto px-6 pb-12">
-        {/* Back Button - aligned with the carousel */}
-        <button
-          onClick={handleBack}
-          className="inline-flex items-center space-x-2 mb-8 px-4 py-2 bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl text-gray-300 hover:text-white hover:border-gray-600/60 transition-all"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to Marketplace</span>
-        </button>
+      <div className="max-w-7xl mx-auto px-6 pb-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Left Side - Large Square Carousel */}
           <div className="space-y-4">
@@ -171,24 +141,11 @@ const PostDetailPage = () => {
             <div className="relative aspect-square bg-gray-900/60 backdrop-blur-xl border border-gray-700/40 rounded-2xl overflow-hidden">
               {imageUrls.length > 0 ? (
                 <>
-                  <div className="relative w-full h-full">
-                    {/* Image Container with clean slide animation */}
-                    <div className="relative w-full h-full overflow-hidden">
-                      <div 
-                        className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ease-in-out ${
-                          slideDirection === 'right' ? '-translate-x-full opacity-0' :
-                          slideDirection === 'left' ? 'translate-x-full opacity-0' :
-                          'translate-x-0 opacity-100'
-                        }`}
-                      >
-                        <img
-                          src={imageUrls[currentImageIndex]}
-                          alt={`${currentPost.title} ${currentImageIndex + 1}`}
-                          className="max-w-full max-h-full object-contain"
-                        />
-                      </div>
-                    </div>
-                  </div>
+                  <img
+                    src={imageUrls[currentImageIndex]}
+                    alt={currentPost.title}
+                    className="w-full h-full object-cover"
+                  />
                   
                   {/* Navigation Arrows */}
                   {imageUrls.length > 1 && (
@@ -223,7 +180,7 @@ const PostDetailPage = () => {
                       {imageUrls.map((_, index) => (
                         <button
                           key={index}
-                          onClick={() => handleThumbnailClick(index)}
+                          onClick={() => setCurrentImageIndex(index)}
                           className={`w-3 h-3 rounded-full transition-all ${
                             index === currentImageIndex ? 'bg-white' : 'bg-white/40'
                           }`}
@@ -245,7 +202,7 @@ const PostDetailPage = () => {
                 {imageUrls.map((url, index) => (
                   <button
                     key={index}
-                    onClick={() => handleThumbnailClick(index)}
+                    onClick={() => setCurrentImageIndex(index)}
                     className={`flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 transition-all ${
                       index === currentImageIndex ? 'border-[#A95BAB]' : 'border-gray-700/40'
                     }`}
@@ -297,9 +254,9 @@ const PostDetailPage = () => {
             </div>
 
             {/* Artist Info */}
-            <div className="bg-gray-900/60 backdrop-blur-xl border border-gray-700/40 rounded-2xl p-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 rounded-full border-2 border-gray-700/40 overflow-hidden">
+            <div className="bg-gray-900/60 backdrop-blur-xl border border-gray-700/40 rounded-2xl p-6">
+              <div className="flex items-center space-x-4">
+                <div className="w-16 h-16 rounded-full border-2 border-gray-700/40 overflow-hidden">
                   {avatarUrl ? (
                     <img
                       src={avatarUrl}
@@ -308,43 +265,43 @@ const PostDetailPage = () => {
                     />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-[#A95BAB]/80 to-[#A95BAB]/60 flex items-center justify-center">
-                      <User className="w-6 h-6 text-white" />
+                      <User className="w-8 h-8 text-white" />
                     </div>
                   )}
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-medium text-white">{artistName}</h3>
-                  <p className="text-sm text-gray-400">Creative Professional</p>
+                  <h3 className="text-xl font-semibold text-white">{artistName}</h3>
+                  <p className="text-gray-400">Creative Professional</p>
                   {currentPost.artist?.rating && (
-                    <div className="flex items-center space-x-1 mt-1">
-                      <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                      <span className="text-xs text-gray-300">{currentPost.artist.rating}</span>
+                    <div className="flex items-center space-x-1 mt-2">
+                      <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                      <span className="text-sm text-gray-300">{currentPost.artist.rating}</span>
                     </div>
                   )}
                 </div>
               </div>
             </div>
 
-            {/* Description - no background, just text */}
-            <div className="space-y-2">
-              <h3 className="text-base font-medium text-white">Description</h3>
-              <p className="text-sm text-gray-300 leading-relaxed">
+            {/* Description */}
+            <div className="bg-gray-900/60 backdrop-blur-xl border border-gray-700/40 rounded-2xl p-6">
+              <h3 className="text-lg font-semibold text-white mb-4">Description</h3>
+              <p className="text-gray-300 leading-relaxed">
                 {currentPost.description || "No description available for this post."}
               </p>
             </div>
 
             {/* Skills */}
             {currentPost.skills && (
-              <div className="bg-gray-900/60 backdrop-blur-xl border border-gray-700/40 rounded-2xl p-4">
-                <h3 className="text-base font-medium text-white mb-3 flex items-center space-x-2">
-                  <Tag className="w-4 h-4" />
+              <div className="bg-gray-900/60 backdrop-blur-xl border border-gray-700/40 rounded-2xl p-6">
+                <h3 className="text-lg font-semibold text-white mb-4 flex items-center space-x-2">
+                  <Tag className="w-5 h-5" />
                   <span>Skills Required</span>
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {currentPost.skills.split(',').map((skill, index) => (
                     <span
                       key={index}
-                      className="px-2 py-1 bg-gray-700/50 backdrop-blur-sm rounded-full text-xs text-gray-300 border border-gray-600/30"
+                      className="px-3 py-2 bg-gray-700/50 backdrop-blur-sm rounded-full text-sm text-gray-300 border border-gray-600/30"
                     >
                       {skill.trim()}
                     </span>
@@ -368,13 +325,18 @@ const PostDetailPage = () => {
         {/* More from this Artist Section */}
         {sameArtistPosts.length > 0 && (
           <div className="mt-16">
-            <h2 className="text-2xl font-bold text-white mb-8">
-              More from {artistName}
-            </h2>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-2xl font-bold text-white">
+                More from {artistName}
+              </h2>
+              <span className="text-gray-400 text-sm">
+                {sameArtistPosts.length} more post{sameArtistPosts.length !== 1 ? 's' : ''}
+              </span>
+            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sameArtistPosts.slice(0, 3).map((post) => (
-                <SimplePostCard key={post.postId} post={post} />
+              {sameArtistPosts.slice(0, 6).map((post) => (
+                <PostCard key={post.postId} post={post} />
               ))}
             </div>
           </div>

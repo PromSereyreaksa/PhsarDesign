@@ -27,7 +27,7 @@ api.interceptors.request.use(
 // Get all artists
 export const getArtists = async () => {
   try {
-    const response = await api.get("/artists")
+    const response = await api.get("/api/artists")
     return response.data
   } catch (error) {
     console.error("Error fetching artists:", error)
