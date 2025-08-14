@@ -1,0 +1,100 @@
+.edit-post-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #202020 0%, #000000 100%);
+  color: white;
+  padding: 2rem;
+}
+
+.page-header {
+  max-width: 800px;
+  margin: 0 auto 2rem auto;
+  text-align: center;
+}
+
+.page-header h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, #a95bab, #e91e63);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.page-header p {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+}
+
+.back-button {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(169, 91, 171, 0.3);
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  margin-bottom: 2rem;
+  transition: all 0.2s;
+}
+
+.back-button:hover {
+  background: rgba(169, 91, 171, 0.2);
+  border-color: rgba(169, 91, 171, 0.4);
+}
+
+.loading-container,
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(169, 91, 171, 0.3);
+  border-top: 3px solid #a95bab;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.back-btn {
+  background: linear-gradient(135deg, #a95bab, #e91e63);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-top: 1rem;
+  transition: transform 0.2s;
+}
+
+.back-btn:hover {
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .edit-post-page {
+    padding: 1rem;
+  }
+
+  .page-header h1 {
+    font-size: 2rem;
+  }
+}
