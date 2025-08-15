@@ -9,6 +9,7 @@ import { Card, CardContent } from "../../components/ui/card"
 import { Avatar, AvatarImage, AvatarFallback } from "../../components/ui/avatar"
 import AuthNavbar from "../../components/layout/navigation/AuthNavbar"
 import AuthFooter from "../../components/layout/footer/AuthFooter"
+import { usersAPI } from "../../services/api"
 
 export default function ArtistProfile() {
   const { userId } = useParams()
@@ -16,8 +17,8 @@ export default function ArtistProfile() {
   const { user } = useSelector((state) => state.auth)
   const [isOwner, setIsOwner] = useState(false)
   const [artistData, setArtistData] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
 
-  // Mock artist data - replace with API call
   const mockArtistData = {
     id: userId || "1",
     name: "Emma Wilson",
@@ -84,16 +85,76 @@ export default function ArtistProfile() {
   }
 
   useEffect(() => {
-    // In a real app, fetch artist data based on userId
-    setArtistData(mockArtistData)
+    const fetchUserData = async () => {
+      if (user && (userId === user.userId || !userId)) {
+        setIsOwner(true)
+        setIsLoading(true)
 
-    // Check if current user is viewing their own profile
-    if (user && (userId === user.userId || !userId)) {
-      setIsOwner(true)
+        try {
+          console.log("[v0] Fetching fresh user data from API for userId:", user.userId)
+          const response = await usersAPI.getById(user.userId)
+          const freshUserData = response.data
+
+          console.log("[v0] Fresh user data received:", freshUserData)
+
+          setArtistData({
+            ...mockArtistData,
+            id: freshUserData.userId,
+            name: `${freshUserData.firstName} ${freshUserData.lastName}`,
+            username: `@${freshUserData.firstName?.toLowerCase()}${freshUserData.lastName?.toLowerCase()}`,
+            avatar: freshUserData.avatar || mockArtistData.avatar,
+            bio: freshUserData.about || freshUserData.bio || mockArtistData.bio,
+            location: freshUserData.location || "Location not specified",
+            joinDate: mockArtistData.joinDate,
+            skills: freshUserData.skills ? freshUserData.skills.split(",").filter(Boolean) : mockArtistData.skills,
+            tools: freshUserData.tools ? freshUserData.tools.split(",").filter(Boolean) : [],
+            rating: mockArtistData.rating,
+            totalReviews: mockArtistData.totalReviews,
+            totalProjects: mockArtistData.totalProjects,
+            responseTime: freshUserData.responseTime ? `${freshUserData.responseTime} hours` : "Not specified",
+            availability: freshUserData.availability || "Not specified",
+            hourlyRate: freshUserData.hourlyRate ? `$${freshUserData.hourlyRate}/hour` : "Not specified",
+            posts: mockArtistData.posts,
+            reviews: mockArtistData.reviews,
+            coverImage: mockArtistData.coverImage,
+          })
+        } catch (error) {
+          console.error("[v0] Error fetching fresh user data:", error)
+          setArtistData({
+            ...mockArtistData,
+            id: user.userId,
+            name: `${user.firstName} ${user.lastName}`,
+            username: `@${user.firstName?.toLowerCase()}${user.lastName?.toLowerCase()}`,
+            avatar: user.avatar || mockArtistData.avatar,
+            bio: user.about || user.bio || mockArtistData.bio,
+            location: user.location || "Location not specified",
+            joinDate: mockArtistData.joinDate,
+            skills: user.skills || mockArtistData.skills,
+            tools: user.tools || [],
+            rating: mockArtistData.rating,
+            totalReviews: mockArtistData.totalReviews,
+            totalProjects: mockArtistData.totalProjects,
+            responseTime: user.responseTime ? `${user.responseTime} hours` : "Not specified",
+            availability: user.availability || "Not specified",
+            hourlyRate: user.hourlyRate ? `$${user.hourlyRate}/hour` : "Not specified",
+            posts: mockArtistData.posts,
+            reviews: mockArtistData.reviews,
+            coverImage: mockArtistData.coverImage,
+          })
+        } finally {
+          setIsLoading(false)
+        }
+      } else {
+        setArtistData(mockArtistData)
+        setIsOwner(false)
+      }
     }
+
+    fetchUserData()
   }, [userId, user])
 
   const handleEditProfile = () => {
+    console.log("[v0] Edit Profile button clicked - navigating to /profile/edit")
     navigate("/profile/edit")
   }
 
@@ -101,10 +162,10 @@ export default function ArtistProfile() {
     navigate(`/marketplace/edit/${postId}`)
   }
 
-  if (!artistData) {
+  if (!artistData || isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000] flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+        <div className="text-white">{isLoading ? "Loading fresh data..." : "Loading..."}</div>
       </div>
     )
   }
@@ -114,18 +175,15 @@ export default function ArtistProfile() {
       <AuthNavbar />
 
       <div className="pt-20">
-        {/* Cover Image & Profile Header */}
         <div className="relative">
           <div className="h-64 md:h-80 relative overflow-hidden">
             <img src={artistData.coverImage || "/placeholder.svg"} alt="Cover" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-black/40" />
           </div>
 
-          {/* Profile Info Overlay */}
           <div className="absolute bottom-0 left-0 right-0 p-6">
             <div className="max-w-7xl mx-auto">
               <div className="flex flex-col md:flex-row items-start md:items-end gap-6">
-                {/* Avatar */}
                 <div className="relative">
                   <Avatar className="w-32 h-32 border-4 border-white/20 bg-white/10 backdrop-blur-sm">
                     <AvatarImage src={artistData.avatar || "/placeholder.svg"} alt={artistData.name} />
@@ -147,11 +205,20 @@ export default function ArtistProfile() {
                   )}
                 </div>
 
-                {/* Basic Info */}
                 <div className="flex-1 text-white">
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
-                      <h1 className="text-3xl font-bold mb-2">{artistData.name}</h1>
+                      <div className="flex items-center gap-4 mb-2">
+                        <h1 className="text-3xl font-bold">{artistData.name}</h1>
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1">
+                            <Star className="w-5 h-5 text-yellow-400 fill-current" />
+                            <span className="text-xl font-semibold text-yellow-400">{artistData.rating}</span>
+                          </div>
+                          <div className="text-gray-300">•</div>
+                          <div className="text-lg font-medium text-[#A95BAB]">{artistData.totalProjects} projects</div>
+                        </div>
+                      </div>
                       <p className="text-gray-300 mb-2">{artistData.username}</p>
                       <div className="flex items-center gap-4 text-sm text-gray-300">
                         <div className="flex items-center gap-1">
@@ -181,13 +248,18 @@ export default function ArtistProfile() {
                     )}
 
                     {isOwner && (
-                      <Button
-                        onClick={handleEditProfile}
-                        className="bg-white/10 hover:bg-white/20 border border-white/20 text-white"
-                      >
-                        <Edit className="w-4 h-4 mr-2" />
-                        Edit Profile
-                      </Button>
+                      <div className="flex gap-3">
+                        <Button
+                          onClick={handleEditProfile}
+                          className="bg-white/10 hover:bg-white/20 border border-white/20 text-white"
+                        >
+                          <Edit className="w-4 h-4 mr-2" />
+                          Edit Profile
+                        </Button>
+                        <Button onClick={() => navigate("/dashboard")} className="bg-[#A95BAB] hover:bg-[#A95BAB]/80">
+                          Dashboard
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -196,30 +268,14 @@ export default function ArtistProfile() {
           </div>
         </div>
 
-        {/* Main Content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="grid lg:grid-cols-3 gap-8">
-            {/* Left Sidebar */}
             <div className="space-y-6">
-              {/* About */}
               <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
                 <CardContent className="p-6">
                   <h3 className="text-xl font-bold text-white mb-4">About</h3>
                   <p className="text-gray-300 leading-relaxed mb-6">{artistData.bio}</p>
 
-                  {/* Stats */}
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-[#A95BAB]">{artistData.rating}</div>
-                      <div className="text-sm text-gray-400">Rating</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-[#A95BAB]">{artistData.totalProjects}</div>
-                      <div className="text-sm text-gray-400">Projects</div>
-                    </div>
-                  </div>
-
-                  {/* Details */}
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-400">Response Time</span>
@@ -227,7 +283,9 @@ export default function ArtistProfile() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-400">Availability</span>
-                      <span className="text-green-400">{artistData.availability}</span>
+                      <span className={artistData.availability === "Available" ? "text-green-400" : "text-red-400"}>
+                        {artistData.availability}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-400">Hourly Rate</span>
@@ -237,11 +295,10 @@ export default function ArtistProfile() {
                 </CardContent>
               </Card>
 
-              {/* Skills */}
               <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
                 <CardContent className="p-6">
-                  <h3 className="text-xl font-bold text-white mb-4">Skills</h3>
-                  <div className="flex flex-wrap gap-2">
+                  <h3 className="text-xl font-bold text-white mb-4">Skills & Expertise</h3>
+                  <div className="flex flex-wrap gap-2 mb-6">
                     {artistData.skills.map((skill, index) => (
                       <span
                         key={index}
@@ -251,13 +308,80 @@ export default function ArtistProfile() {
                       </span>
                     ))}
                   </div>
+
+                  <h3 className="text-xl font-bold text-white mb-4">Tools & Software</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {artistData.tools?.map((tool, index) => (
+                      <span
+                        key={index}
+                        className="px-3 py-1 bg-[#A95BAB]/10 text-[#A95BAB] rounded-full text-sm border border-[#A95BAB]/20"
+                      >
+                        {tool}
+                      </span>
+                    ))}
+                    {(!artistData.tools || artistData.tools.length === 0) && (
+                      <span className="text-gray-400 text-sm">No tools specified</span>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
+
+              <div>
+                <h2 className="text-2xl font-bold text-white mb-6">Reviews ({artistData.totalReviews})</h2>
+
+                {artistData.reviews.length > 0 ? (
+                  <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
+                    {artistData.reviews.map((review) => (
+                      <Card key={review.id} className="bg-white/5 border-white/10 backdrop-blur-sm">
+                        <CardContent className="p-6">
+                          <div className="flex items-start gap-4">
+                            <Avatar className="w-10 h-10">
+                              <AvatarImage src={review.clientAvatar || "/placeholder.svg"} alt={review.clientName} />
+                              <AvatarFallback className="bg-[#A95BAB] text-white">
+                                {review.clientName
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between mb-2">
+                                <div>
+                                  <h4 className="font-semibold text-white">{review.clientName}</h4>
+                                  <p className="text-sm text-gray-400">{review.project}</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <div className="flex">
+                                    {[...Array(5)].map((_, i) => (
+                                      <Star
+                                        key={i}
+                                        className={`w-4 h-4 ${
+                                          i < review.rating ? "text-yellow-400 fill-current" : "text-gray-600"
+                                        }`}
+                                      />
+                                    ))}
+                                  </div>
+                                  <span className="text-sm text-gray-400">{review.date}</span>
+                                </div>
+                              </div>
+                              <p className="text-gray-300">{review.comment}</p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+                    <CardContent className="p-8 text-center">
+                      <p className="text-gray-400">No reviews yet.</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
             </div>
 
-            {/* Main Content */}
             <div className="lg:col-span-2 space-y-8">
-              {/* Portfolio/Posts */}
               <div>
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-bold text-white">Portfolio</h2>
@@ -330,61 +454,6 @@ export default function ArtistProfile() {
                           Add Your First Work
                         </Button>
                       )}
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-
-              {/* Reviews */}
-              <div>
-                <h2 className="text-2xl font-bold text-white mb-6">Reviews ({artistData.totalReviews})</h2>
-
-                {artistData.reviews.length > 0 ? (
-                  <div className="space-y-4">
-                    {artistData.reviews.map((review) => (
-                      <Card key={review.id} className="bg-white/5 border-white/10 backdrop-blur-sm">
-                        <CardContent className="p-6">
-                          <div className="flex items-start gap-4">
-                            <Avatar className="w-10 h-10">
-                              <AvatarImage src={review.clientAvatar || "/placeholder.svg"} alt={review.clientName} />
-                              <AvatarFallback className="bg-[#A95BAB] text-white">
-                                {review.clientName
-                                  .split(" ")
-                                  .map((n) => n[0])
-                                  .join("")}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1">
-                              <div className="flex items-center justify-between mb-2">
-                                <div>
-                                  <h4 className="font-semibold text-white">{review.clientName}</h4>
-                                  <p className="text-sm text-gray-400">{review.project}</p>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <div className="flex">
-                                    {[...Array(5)].map((_, i) => (
-                                      <Star
-                                        key={i}
-                                        className={`w-4 h-4 ${
-                                          i < review.rating ? "text-yellow-400 fill-current" : "text-gray-600"
-                                        }`}
-                                      />
-                                    ))}
-                                  </div>
-                                  <span className="text-sm text-gray-400">{review.date}</span>
-                                </div>
-                              </div>
-                              <p className="text-gray-300">{review.comment}</p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                ) : (
-                  <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
-                    <CardContent className="p-8 text-center">
-                      <p className="text-gray-400">No reviews yet.</p>
                     </CardContent>
                   </Card>
                 )}

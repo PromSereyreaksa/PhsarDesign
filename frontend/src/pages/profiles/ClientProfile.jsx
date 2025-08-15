@@ -94,16 +94,39 @@ export default function ClientProfile() {
   }
 
   useEffect(() => {
-    // In a real app, fetch client data based on userId
-    setClientData(mockClientData)
-
-    // Check if current user is viewing their own profile
+    // If viewing own profile, use real user data; otherwise use mock data
     if (user && (userId === user.userId || !userId)) {
       setIsOwner(true)
+      setClientData({
+        ...mockClientData,
+        id: user.userId,
+        companyName: user.role === "client" ? `${user.firstName} ${user.lastName}` : mockClientData.companyName,
+        contactName: `${user.firstName} ${user.lastName}`,
+        username: `@${user.firstName?.toLowerCase()}${user.lastName?.toLowerCase()}`,
+        avatar: user.avatar || mockClientData.avatar,
+        // Use real data if available, fallback to mock data
+        bio: user.bio || user.about || mockClientData.bio,
+        industry: user.industry || mockClientData.industry,
+        location: user.location || mockClientData.location,
+        joinDate: user.joinDate || mockClientData.joinDate,
+        companySize: user.companySize || mockClientData.companySize,
+        website: user.website || mockClientData.website,
+        rating: user.rating || mockClientData.rating,
+        totalReviews: user.totalReviews || mockClientData.totalReviews,
+        totalProjects: user.totalProjects || mockClientData.totalProjects,
+        responseTime: user.responseTime || mockClientData.responseTime,
+        projectsPosted: user.projectsPosted || mockClientData.projectsPosted,
+        reviews: user.reviews || mockClientData.reviews,
+        coverImage: user.coverImage || mockClientData.coverImage,
+      })
+    } else {
+      setClientData(mockClientData)
+      setIsOwner(false)
     }
   }, [userId, user])
 
   const handleEditProfile = () => {
+    console.log("[v0] Edit Profile button clicked - navigating to /profile/edit")
     navigate("/profile/edit")
   }
 
@@ -174,7 +197,17 @@ export default function ClientProfile() {
                 <div className="flex-1 text-white">
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
-                      <h1 className="text-3xl font-bold mb-2">{clientData.companyName}</h1>
+                      <div className="flex items-center gap-4 mb-2">
+                        <h1 className="text-3xl font-bold">{clientData.companyName}</h1>
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1">
+                            <Star className="w-5 h-5 text-yellow-400 fill-current" />
+                            <span className="text-xl font-semibold text-yellow-400">{clientData.rating}</span>
+                          </div>
+                          <div className="text-gray-300">•</div>
+                          <div className="text-lg font-medium text-[#A95BAB]">{clientData.totalProjects} projects</div>
+                        </div>
+                      </div>
                       <p className="text-gray-300 mb-2">{clientData.username}</p>
                       <div className="flex items-center gap-4 text-sm text-gray-300">
                         <div className="flex items-center gap-1">
@@ -230,18 +263,6 @@ export default function ClientProfile() {
                   <h3 className="text-xl font-bold text-white mb-4">About</h3>
                   <p className="text-gray-300 leading-relaxed mb-6">{clientData.bio}</p>
 
-                  {/* Stats */}
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-[#A95BAB]">{clientData.rating}</div>
-                      <div className="text-sm text-gray-400">Rating</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-[#A95BAB]">{clientData.totalProjects}</div>
-                      <div className="text-sm text-gray-400">Projects</div>
-                    </div>
-                  </div>
-
                   {/* Company Details */}
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between">
@@ -295,6 +316,61 @@ export default function ClientProfile() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Reviews */}
+              <div>
+                <h2 className="text-2xl font-bold text-white mb-6">Reviews from Artists ({clientData.totalReviews})</h2>
+
+                {clientData.reviews.length > 0 ? (
+                  <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
+                    {clientData.reviews.map((review) => (
+                      <Card key={review.id} className="bg-white/5 border-white/10 backdrop-blur-sm">
+                        <CardContent className="p-6">
+                          <div className="flex items-start gap-4">
+                            <Avatar className="w-10 h-10">
+                              <AvatarImage src={review.artistAvatar || "/placeholder.svg"} alt={review.artistName} />
+                              <AvatarFallback className="bg-[#A95BAB] text-white">
+                                {review.artistName
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between mb-2">
+                                <div>
+                                  <h4 className="font-semibold text-white">{review.artistName}</h4>
+                                  <p className="text-sm text-gray-400">{review.project}</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <div className="flex">
+                                    {[...Array(5)].map((_, i) => (
+                                      <Star
+                                        key={i}
+                                        className={`w-4 h-4 ${
+                                          i < review.rating ? "text-yellow-400 fill-current" : "text-gray-600"
+                                        }`}
+                                      />
+                                    ))}
+                                  </div>
+                                  <span className="text-sm text-gray-400">{review.date}</span>
+                                </div>
+                              </div>
+                              <p className="text-gray-300">{review.comment}</p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+                    <CardContent className="p-8 text-center">
+                      <p className="text-gray-400">No reviews yet.</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
             </div>
 
             {/* Main Content */}
@@ -377,61 +453,6 @@ export default function ClientProfile() {
                           Post Your First Project
                         </Button>
                       )}
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-
-              {/* Reviews */}
-              <div>
-                <h2 className="text-2xl font-bold text-white mb-6">Reviews from Artists ({clientData.totalReviews})</h2>
-
-                {clientData.reviews.length > 0 ? (
-                  <div className="space-y-4">
-                    {clientData.reviews.map((review) => (
-                      <Card key={review.id} className="bg-white/5 border-white/10 backdrop-blur-sm">
-                        <CardContent className="p-6">
-                          <div className="flex items-start gap-4">
-                            <Avatar className="w-10 h-10">
-                              <AvatarImage src={review.artistAvatar || "/placeholder.svg"} alt={review.artistName} />
-                              <AvatarFallback className="bg-[#A95BAB] text-white">
-                                {review.artistName
-                                  .split(" ")
-                                  .map((n) => n[0])
-                                  .join("")}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1">
-                              <div className="flex items-center justify-between mb-2">
-                                <div>
-                                  <h4 className="font-semibold text-white">{review.artistName}</h4>
-                                  <p className="text-sm text-gray-400">{review.project}</p>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <div className="flex">
-                                    {[...Array(5)].map((_, i) => (
-                                      <Star
-                                        key={i}
-                                        className={`w-4 h-4 ${
-                                          i < review.rating ? "text-yellow-400 fill-current" : "text-gray-600"
-                                        }`}
-                                      />
-                                    ))}
-                                  </div>
-                                  <span className="text-sm text-gray-400">{review.date}</span>
-                                </div>
-                              </div>
-                              <p className="text-gray-300">{review.comment}</p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                ) : (
-                  <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
-                    <CardContent className="p-8 text-center">
-                      <p className="text-gray-400">No reviews yet.</p>
                     </CardContent>
                   </Card>
                 )}
