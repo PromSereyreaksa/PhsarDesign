@@ -53,13 +53,9 @@ export default function LandingPage() {
     }
   }, [apiCategories, servicePosts, artists, marketplacePosts])
 
-  // Handle navigation with authentication check
+  // Handle navigation - always go to the requested path
   const handleNavigation = (path) => {
-    if (isAuthenticated) {
-      navigate('/home')
-    } else {
-      navigate(path)
-    }
+    navigate(path)
   }
 
   // Mock artwork data for masonry grid - enhanced with real data
