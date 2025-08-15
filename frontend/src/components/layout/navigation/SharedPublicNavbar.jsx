@@ -44,19 +44,14 @@ export default function SharedPublicNavbar({
     return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase() || 'U'
   }
 
-  // Handle About navigation based on current page
+  // Handle About navigation - always go to /about page and scroll to top
   const handleAboutClick = () => {
-    if (location.pathname === "/") {
-      // If on landing page, scroll to about section
-      smoothScroll("about")
-    } else {
-      // If on other pages, navigate to about page and scroll to top
-      navigate('/about')
-      // Scroll to top after navigation
-      setTimeout(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' })
-      }, 100)
-    }
+    // Always navigate to about page
+    navigate('/about')
+    // Scroll to top immediately
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }, 100)
     setIsMenuOpen(false)
   }
 
