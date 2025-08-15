@@ -141,27 +141,19 @@ const DropdownItem = ({ text, items = [], isMobile = false }) => {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Nav Item - Simple Text with Brightness Effect */}
-      <div 
-        className={`cursor-pointer transition-all duration-300 ease-out px-${isMobile ? "2" : "4"} py-2 
-                   relative group`}
-      >
-        
-        <div className="flex items-center space-x-1 relative z-10">
+      {/* Nav Item */}
+      <div className={`cursor-pointer transition-all duration-300 px-${isMobile ? "2" : "4"} py-2`}>
+        <div className="flex items-center space-x-1">
           <span
-            className={`relative font-medium text-white transition-all duration-300
-                      ${isMobile ? "text-sm" : "text-base"}
-                      group-hover:brightness-125 group-hover:text-[#A95BAB]`}
-            style={{
-              textShadow: isHovered ? '0 0 8px rgba(169, 91, 171, 0.6)' : 'none'
-            }}
+            className={`text-white hover:text-[#A95BAB] transition-colors duration-300 font-medium ${
+              isMobile ? "text-sm" : "text-base"
+            }`}
           >
             {text}
           </span>
           {hasDropdown && (
             <ChevronRight
-              className={`w-4 h-4 text-white transition-all duration-300 ease-out
-                         group-hover:text-[#A95BAB] ${
+              className={`w-4 h-4 text-white transition-transform duration-300 ${
                 isHovered ? "rotate-90" : "rotate-0"
               }`}
             />
@@ -169,27 +161,21 @@ const DropdownItem = ({ text, items = [], isMobile = false }) => {
         </div>
       </div>
       
-      {/* Clean Dropdown Menu - No Effects */}
+      {/* Dropdown Menu */}
       {hasDropdown && isHovered && (
-        <div className="absolute top-full left-0 w-72 rounded-xl shadow-2xl z-50 
-                       animate-in fade-in-0 zoom-in-95 duration-150 overflow-hidden">
-          {/* Simple glass background */}
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-xl border border-white/10 rounded-xl"></div>
-          <div className="relative p-2">
+        <div className="absolute top-full left-0 w-72 bg-[#202020] border border-gray-700 rounded-lg shadow-lg z-50 animate-in fade-in-0 zoom-in-95 duration-150">
+          <div className="p-2">
             {items.map((item, index) => (
               <div
                 key={index}
                 onClick={() => handleDropdownItemClick(item.href)}
-                className="flex items-center justify-between p-3 rounded-lg 
-                         hover:bg-white/5 transition-colors duration-200 cursor-pointer group"
+                className="flex items-center justify-between p-3 rounded-lg hover:bg-white/10 transition-colors duration-200 cursor-pointer"
               >
-                <div className="flex items-center space-x-3 relative z-10">
-                  <item.icon className="w-5 h-5 text-white group-hover:text-gray-200 transition-colors" />
-                  <span className="text-white font-medium whitespace-nowrap 
-                                 group-hover:text-gray-100 transition-colors">{item.title}</span>
+                <div className="flex items-center space-x-3">
+                  <item.icon className="w-5 h-5 text-white" />
+                  <span className="text-white font-medium whitespace-nowrap">{item.title}</span>
                 </div>
-                <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-300 
-                                       transition-colors relative z-10" />
+                <ChevronRight className="w-4 h-4 text-gray-400" />
               </div>
             ))}
           </div>
@@ -201,10 +187,8 @@ const DropdownItem = ({ text, items = [], isMobile = false }) => {
 
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50">
-      {/* Subtle Liquid Glass background */}
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-xl border-b border-white/10"></div>
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-[#202020]/98 backdrop-blur-sm shadow-lg">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           {/* Logo with gradient text */}
           <div className="flex items-center">
@@ -222,22 +206,17 @@ const DropdownItem = ({ text, items = [], isMobile = false }) => {
             </div>
           </div>
 
-          {/* Right section - Simple Notifications and Profile */}
+          {/* Right section - Notifications and Profile */}
           <div className="flex items-center space-x-2">
-            <button className="p-2 text-white transition-all duration-300 ease-out
-                             rounded-lg group">
-              <Bell className="transition-all duration-300 ease-out w-5 h-5
-                             group-hover:text-[#A95BAB] group-hover:brightness-125
-                             group-hover:drop-shadow-[0_0_6px_rgba(169,91,171,0.6)]" />
+            <button className="p-2 text-white hover:text-[#A95BAB] transition-colors duration-500 ease-out">
+              <Bell />
             </button>
             
             {/* User Profile Dropdown */}
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-                className="flex items-center space-x-2 p-2 rounded-lg 
-                         hover:bg-white/5 transition-all duration-300 ease-out
-                         group hover:backdrop-blur-sm"
+                className="flex items-center space-x-2 p-2 rounded-lg hover:bg-white/10 transition-colors duration-300"
               >
                 {/* User Avatar */}
                 <div className="w-8 h-8 bg-[#A95BAB] rounded-full flex items-center justify-center">

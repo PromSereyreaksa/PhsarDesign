@@ -45,7 +45,7 @@ export default function AboutPage() {
       icon: Award,
       title: "Our Values",
       description:
-        "Quality, integrity, innovation, and community. We believe in fair compensation and meaningful creative partnerships.",
+        "From one creative to another - we champion endless variety, reliable partnerships, transparent standardized pricing, and art-focused collaboration. Every feature is designed with artistic vision in mind.",
     },
   ]
 
