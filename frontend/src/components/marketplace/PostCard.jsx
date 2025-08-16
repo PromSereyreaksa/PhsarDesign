@@ -39,20 +39,17 @@ const PostCard = ({ post }) => {
 
   return (
     <div className="group relative h-full">
-      {/* Subtle Liquid Glass Base - Toned down reflections */}
-      <div className="absolute -inset-1 bg-gradient-to-br from-white/8 via-white/2 to-white/8 opacity-0 group-hover:opacity-100 transition-all duration-700 rounded-3xl blur-xl"></div>
-      <div className="absolute -inset-0.5 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-60 transition-all duration-500 rounded-2xl"></div>
+      {/* Softer shining light reflection effect */}
+      <div className="absolute -inset-0.5 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-60 transition-all duration-700 rounded-2xl blur-sm"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-white/3 opacity-0 group-hover:opacity-70 transition-all duration-500 rounded-2xl"></div>
       
-      {/* Subtle light refraction sweep */}
+      {/* Softer moving light sweep effect */}
       <div className="absolute inset-0 rounded-2xl overflow-hidden">
-        <div className="absolute -inset-20 bg-gradient-to-r from-transparent via-white/15 to-transparent -skew-x-12 translate-x-[-300%] group-hover:translate-x-[300%] transition-transform duration-2000 ease-out opacity-0 group-hover:opacity-50"></div>
+        <div className="absolute -inset-10 bg-gradient-to-r from-transparent via-white/15 to-transparent -skew-x-12 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000 ease-out opacity-0 group-hover:opacity-60"></div>
       </div>
       
-      {/* Gentle magnifying edge effect */}
-      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/4 via-transparent to-white/4 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:scale-[1.01] group-hover:shadow-xl group-hover:shadow-black/10"></div>
-      
       <div
-        className="relative backdrop-blur-md bg-black/20 border border-white/10 rounded-2xl overflow-hidden cursor-pointer transition-all duration-500 group-hover:backdrop-blur-lg group-hover:bg-black/15 group-hover:border-white/20 hover:shadow-xl hover:shadow-black/20 hover:-translate-y-2 hover:scale-[1.01] h-full flex flex-col"
+        className="relative backdrop-blur-md bg-white/5 border border-white/10 rounded-2xl overflow-hidden cursor-pointer transition-all duration-500 hover:bg-white/10 hover:border-white/20 hover:backdrop-blur-xl hover:shadow-2xl hover:shadow-white/5 hover:-translate-y-2 hover:scale-[1.02] h-full flex flex-col"
         onClick={handleViewDetails}
       >
       {/* Image Section */}
@@ -69,22 +66,22 @@ const PostCard = ({ post }) => {
           </div>
         )}
         
-        {/* Glass overlay with enhanced refraction */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent group-hover:from-black/60 group-hover:via-black/10 transition-all duration-500" />
+        {/* Glass overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         
-        {/* Multiple images indicator with liquid glass styling */}
+        {/* Multiple images indicator */}
         {imageUrls.length > 1 && (
           <div className="absolute bottom-3 right-3">
-            <div className="flex items-center space-x-1 px-3 py-1.5 bg-black/60 backdrop-blur-xl border border-white/30 rounded-full shadow-lg">
-              <div className="w-2 h-2 bg-white rounded-full shadow-sm"></div>
-              <span className="text-white text-xs font-medium">+{imageUrls.length - 1}</span>
+            <div className="flex items-center space-x-1 px-2 py-1 bg-black/50 backdrop-blur-sm border border-white/20 rounded-full">
+              <div className="w-2 h-2 bg-white rounded-full"></div>
+              <span className="text-white text-xs">+{imageUrls.length - 1}</span>
             </div>
           </div>
         )}
         
-        {/* Category badge with enhanced glass effect */}
+        {/* Category badge */}
         <div className="absolute top-3 left-3">
-          <span className="px-3 py-1.5 bg-black/70 backdrop-blur-xl border border-white/30 rounded-full text-white text-xs font-medium shadow-lg">
+          <span className="px-3 py-1 bg-black/50 backdrop-blur-sm border border-white/20 rounded-full text-white text-xs font-medium">
             {post.category?.name || "Service"}
           </span>
         </div>
@@ -133,7 +130,7 @@ const PostCard = ({ post }) => {
               {post.skills.split(',').slice(0, 3).map((skill, index) => (
                 <span
                   key={index}
-                  className="px-2 py-1 bg-black/20 backdrop-blur-sm rounded-full text-xs text-gray-300 border border-white/10"
+                  className="px-2 py-1 bg-white/10 backdrop-blur-sm rounded-full text-xs text-gray-300 border border-white/20"
                 >
                   {skill.trim()}
                 </span>
