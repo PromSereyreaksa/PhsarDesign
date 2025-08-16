@@ -14,6 +14,10 @@ import PostDetailPage from "../pages/Marketplace/PostDetailPage"
 import CreatePostPage from "../pages/Marketplace/CreatePost"
 import EditPostPage from "../pages/Marketplace/EditPostPage"
 import MyPostsPage from "../pages/Dashboard/MyPostsPage"
+import ArtistProfile from "../pages/profiles/ArtistProfile.jsx"
+import ClientProfile from "../pages/profiles/ClientProfile.jsx"
+import EditProfile from "../pages/profiles/EditProfile.jsx"
+import ProfileRouter from "../pages/profiles/ProfileRouter.jsx"
 
 function App() {
   return (
@@ -60,6 +64,42 @@ function App() {
           element={
             <ProtectedRoute>
               <MyPostsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Profile routes */}
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfileRouter />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile/artist/:userId"
+          element={
+            <ProtectedRoute>
+              <ArtistProfile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile/client/:userId"
+          element={
+            <ProtectedRoute>
+              <ClientProfile />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Profile Edit route */}
+        <Route
+          path="/profile/edit"
+          element={
+            <ProtectedRoute>
+              <EditProfile />
             </ProtectedRoute>
           }
         />

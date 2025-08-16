@@ -1,6 +1,6 @@
 import axios from "axios"
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api"
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/"
 
 // Create axios instance with default config
 const api = axios.create({
@@ -67,7 +67,7 @@ export const getAllAvailabilityPosts = (filters = {}) => {
     sortBy: filters.sortBy === 'newest' ? 'createdAt' : (filters.sortBy === 'oldest' ? 'createdAt' : (filters.sortBy || 'createdAt')),
     sortOrder: filters.sortBy === 'newest' ? 'DESC' : (filters.sortBy === 'oldest' ? 'ASC' : (filters.sortOrder || 'DESC'))
   }
-
+  
   Object.entries(paramMapping).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== "") {
       if (Array.isArray(value)) {
