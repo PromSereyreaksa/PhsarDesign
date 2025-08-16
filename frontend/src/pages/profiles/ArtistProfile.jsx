@@ -2,19 +2,21 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { useSelector } from "react-redux"
+import { useSelector, useDispatch } from "react-redux"
 import { Star, MapPin, Calendar, Edit, MessageSquare, Heart, Eye } from "lucide-react"
 import { Button } from "../../components/ui/button"
 import { Card, CardContent } from "../../components/ui/card"
 import { Avatar, AvatarImage, AvatarFallback } from "../../components/ui/avatar"
 import AuthNavbar from "../../components/layout/navigation/AuthNavbar"
 import AuthFooter from "../../components/layout/footer/AuthFooter"
-import { usersAPI } from "../../services/api"
+import { usersAPI, artistsAPI } from "../../services/api"
+import { updateProfile } from "../../store/slices/authSlice"
 
 export default function ArtistProfile() {
   const { userId } = useParams()
   const navigate = useNavigate()
   const { user } = useSelector((state) => state.auth)
+  const dispatch = useDispatch()
   const [isOwner, setIsOwner] = useState(false)
   const [artistData, setArtistData] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -92,45 +94,123 @@ export default function ArtistProfile() {
 
         try {
           console.log("[v0] Fetching fresh user data from API for userId:", user.userId)
-          const response = await usersAPI.getById(user.userId)
-          const freshUserData = response.data
+          const [userResponse, artistResponse] = await Promise.all([
+            usersAPI.getById(user.userId),
+            artistsAPI.getByUserId(user.userId),
+          ])
+
+          const freshUserData = userResponse.data
+          const artistProfileData = artistResponse.data
 
           console.log("[v0] Fresh user data received:", freshUserData)
+          console.log("[v0] Artist profile data received:", artistProfileData)
+
+          const avatarFromBackend =
+            freshUserData.avatar || freshUserData.avatarURL || freshUserData.profileImage || null
+          console.log("[v0] Avatar field from backend:", avatarFromBackend)
+          console.log("[v0] Current Redux avatar:", user.avatar)
+
+          const updatedUserData = {
+            ...user,
+            ...freshUserData,
+            avatar: avatarFromBackend,
+          }
+          dispatch(updateProfile(updatedUserData))
+          console.log("[v0] Updated Redux state with fresh avatar:", avatarFromBackend)
+
+          let processedAvatarUrl = null
+          if (avatarFromBackend && typeof avatarFromBackend === "string" && avatarFromBackend.trim() !== "") {
+            const avatarUrl = avatarFromBackend.trim()
+            processedAvatarUrl = avatarUrl.includes("?")
+              ? `${avatarUrl}&t=${Date.now()}`
+              : `${avatarUrl}?t=${Date.now()}`
+            console.log("[v0] Processed avatar URL:", processedAvatarUrl)
+          } else {
+            console.log("[v0] No valid avatar URL found, will use fallback initials")
+          }
 
           setArtistData({
             ...mockArtistData,
             id: freshUserData.userId,
             name: `${freshUserData.firstName} ${freshUserData.lastName}`,
             username: `@${freshUserData.firstName?.toLowerCase()}${freshUserData.lastName?.toLowerCase()}`,
-            avatar: freshUserData.avatar || mockArtistData.avatar,
+            avatar: processedAvatarUrl, // Use processed avatar or null for fallback
             bio: freshUserData.about || freshUserData.bio || mockArtistData.bio,
             location: freshUserData.location || "Location not specified",
             joinDate: mockArtistData.joinDate,
-            skills: freshUserData.skills ? freshUserData.skills.split(",").filter(Boolean) : mockArtistData.skills,
-            tools: freshUserData.tools ? freshUserData.tools.split(",").filter(Boolean) : [],
+            skills: artistProfileData?.skills
+              ? artistProfileData.skills
+                  .split(",")
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+              : mockArtistData.skills,
+            tools: artistProfileData?.specialties
+              ? artistProfileData.specialties
+                  .split(",")
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+              : artistProfileData?.tools
+                ? artistProfileData.tools
+                    .split(",")
+                    .map((s) => s.trim())
+                    .filter(Boolean)
+                : [],
             rating: mockArtistData.rating,
             totalReviews: mockArtistData.totalReviews,
             totalProjects: mockArtistData.totalProjects,
-            responseTime: freshUserData.responseTime ? `${freshUserData.responseTime} hours` : "Not specified",
-            availability: freshUserData.availability || "Not specified",
-            hourlyRate: freshUserData.hourlyRate ? `$${freshUserData.hourlyRate}/hour` : "Not specified",
+            responseTime: artistProfileData?.responseTime ? `${artistProfileData.responseTime} hours` : "Not specified",
+            availability: artistProfileData?.availability || "Not specified",
+            hourlyRate: artistProfileData?.hourlyRate ? `$${artistProfileData.hourlyRate}/hour` : "Not specified",
             posts: mockArtistData.posts,
             reviews: mockArtistData.reviews,
             coverImage: mockArtistData.coverImage,
           })
         } catch (error) {
           console.error("[v0] Error fetching fresh user data:", error)
+
+          let fallbackAvatarUrl = null
+          if (user.avatar && typeof user.avatar === "string" && user.avatar.trim() !== "") {
+            const avatarUrl = user.avatar.trim()
+            fallbackAvatarUrl = avatarUrl.includes("?")
+              ? `${avatarUrl}&t=${Date.now()}`
+              : `${avatarUrl}?t=${Date.now()}`
+            console.log("[v0] Using fallback avatar from Redux:", fallbackAvatarUrl)
+          } else {
+            console.log("[v0] No valid avatar in Redux state, will use initials fallback")
+          }
+
           setArtistData({
             ...mockArtistData,
             id: user.userId,
             name: `${user.firstName} ${user.lastName}`,
             username: `@${user.firstName?.toLowerCase()}${user.lastName?.toLowerCase()}`,
-            avatar: user.avatar || mockArtistData.avatar,
+            avatar: fallbackAvatarUrl, // Use fallback avatar or null
             bio: user.about || user.bio || mockArtistData.bio,
             location: user.location || "Location not specified",
             joinDate: mockArtistData.joinDate,
-            skills: user.skills || mockArtistData.skills,
-            tools: user.tools || [],
+            skills: user.skills
+              ? Array.isArray(user.skills)
+                ? user.skills
+                : user.skills
+                    .split(",")
+                    .map((s) => s.trim())
+                    .filter(Boolean)
+              : mockArtistData.skills,
+            tools: user.specialties
+              ? Array.isArray(user.specialties)
+                ? user.specialties
+                : user.specialties
+                    .split(",")
+                    .map((s) => s.trim())
+                    .filter(Boolean)
+              : user.tools
+                ? Array.isArray(user.tools)
+                  ? user.tools
+                  : user.tools
+                      .split(",")
+                      .map((s) => s.trim())
+                      .filter(Boolean)
+                : [],
             rating: mockArtistData.rating,
             totalReviews: mockArtistData.totalReviews,
             totalProjects: mockArtistData.totalProjects,
@@ -151,7 +231,7 @@ export default function ArtistProfile() {
     }
 
     fetchUserData()
-  }, [userId, user])
+  }, [userId]) // Removed user?.avatar from dependencies to prevent unnecessary re-fetches
 
   const handleEditProfile = () => {
     console.log("[v0] Edit Profile button clicked - navigating to /profile/edit")
@@ -186,7 +266,22 @@ export default function ArtistProfile() {
               <div className="flex flex-col md:flex-row items-start md:items-end gap-6">
                 <div className="relative">
                   <Avatar className="w-32 h-32 border-4 border-white/20 bg-white/10 backdrop-blur-sm">
-                    <AvatarImage src={artistData.avatar || "/placeholder.svg"} alt={artistData.name} />
+                    {artistData.avatar ? (
+                      <AvatarImage
+                        key={artistData.avatar}
+                        src={artistData.avatar || "/placeholder.svg"}
+                        alt={artistData.name}
+                        onLoad={() => {
+                          console.log("[v0] ✅ Avatar image loaded successfully!")
+                          console.log("[v0] Avatar URL that loaded:", artistData.avatar)
+                        }}
+                        onError={(e) => {
+                          console.log("[v0] ❌ Avatar image failed to load!")
+                          console.log("[v0] Failed avatar URL:", artistData.avatar)
+                          console.log("[v0] Error details:", e)
+                        }}
+                      />
+                    ) : null}
                     <AvatarFallback className="text-2xl font-bold text-white bg-[#A95BAB]">
                       {artistData.name
                         .split(" ")

@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import { useSelector, useDispatch } from "react-redux"
 import { useNavigate } from "react-router-dom"
 import { updateProfile } from "../../store/slices/authSlice"
-import { usersAPI, uploadAPI } from "../../services/api"
+import { usersAPI, uploadAPI, artistsAPI } from "../../services/api"
 import { Plus, X, ToggleLeft, ToggleRight } from "lucide-react"
 import AuthNavbar from "../../components/layout/navigation/AuthNavbar"
 import AuthFooter from "../../components/layout/footer/AuthFooter"
@@ -25,90 +25,17 @@ const EditProfile = () => {
   const [isUploadingImage, setIsUploadingImage] = useState(false)
   const [error, setError] = useState("")
   const [hasChanges, setHasChanges] = useState(false)
+  const [isFetchingUserData, setIsFetchingUserData] = useState(true)
+  const [freshUserData, setFreshUserData] = useState(null)
 
   console.log("[v0] EditProfile component loaded, auth state:", { user, token })
 
-  // Redirect if no user
   const redirectIfNoUser = () => {
     if (!user) {
       console.log("[v0] No user found in Redux store, redirecting to login")
       navigate("/login")
     }
   }
-
-  useEffect(() => {
-    redirectIfNoUser()
-  }, [user])
-
-  // Helper function to parse location string into city and country
-  const parseLocation = (locationStr) => {
-    if (!locationStr) return { city: "", country: "" }
-    const parts = locationStr.split(",").map((part) => part.trim())
-    return {
-      city: parts[0] || "",
-      country: parts[1] || "",
-    }
-  }
-
-  // Helper function to parse availability string to boolean
-  const parseAvailability = (availabilityStr) => {
-    return availabilityStr === "Available"
-  }
-
-  // Initialize form data based on user role
-  const getInitialFormData = () => {
-    if (!user) {
-      console.log("[v0] Cannot initialize form data - user is null")
-      return null
-    }
-
-    console.log("[v0] Initializing form data for user:", user)
-
-    const isArtist = user?.role === "freelancer" || user?.role === "artist"
-
-    const data = {
-      // Common fields for all users
-      about: user?.about || user?.bio || "",
-      avatar: user?.avatar || "",
-      bio: user?.bio || user?.about || "",
-      website: user?.website || "",
-      location: parseLocation(user?.location),
-      phoneNumber: user?.phoneNumber || "",
-      firstName: user?.firstName || "",
-      lastName: user?.lastName || "",
-
-      // Artist-specific fields (empty if not artist)
-      skills: isArtist ? (user?.skills ? user.skills.split(",").filter(Boolean) : []) : [],
-      tools: isArtist ? (user?.tools ? user.tools.split(",").filter(Boolean) : []) : [],
-      availability: isArtist ? (user?.availability ? parseAvailability(user.availability) : true) : false,
-      responseTime: isArtist ? user?.responseTime || "" : "",
-      hourlyRate: isArtist ? user?.hourlyRate || "" : "",
-    }
-
-    console.log("[v0] Initialized form data:", data)
-    return data
-  }
-
-  useEffect(() => {
-    // Store initial form data for change detection
-    const data = getInitialFormData()
-    setInitialFormData(data)
-    setFormData(data)
-  }, [user])
-
-  useEffect(() => {
-    if (initialFormData) {
-      const hasFormChanges = JSON.stringify(formData) !== JSON.stringify(initialFormData)
-      setHasChanges(hasFormChanges)
-    }
-  }, [formData, initialFormData])
-
-  useEffect(() => {
-    console.log("[v0] EditProfile component mounted successfully")
-    return () => {
-      console.log("[v0] EditProfile component unmounting")
-    }
-  }, [])
 
   const serviceCategories = [
     "Graphic Design",
@@ -144,6 +71,9 @@ const EditProfile = () => {
     if (user?.firstName && user?.lastName) {
       return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
     }
+    if (user?.firstName) {
+      return user.firstName[0].toUpperCase()
+    }
     return "U"
   }
 
@@ -164,6 +94,7 @@ const EditProfile = () => {
         [name]: value,
       }))
     }
+    setHasChanges(true)
   }
 
   const handleImageUpload = async (e) => {
@@ -198,7 +129,7 @@ const EditProfile = () => {
 
       // Step 2: Upload image to Cloudinary through our API
       // Create a new FormData instance
-      const formData = new FormData()
+      const formDataObj = new FormData()
 
       // First, verify we have a valid file
       if (!(file instanceof File)) {
@@ -216,8 +147,8 @@ const EditProfile = () => {
       })
 
       // Add both common field names to try all possibilities
-      formData.append("avatar", file, file.name)
-      formData.append("userId", user.userId) // Add user ID for association
+      formDataObj.append("avatar", file, file.name)
+      formDataObj.append("userId", user.userId) // Add user ID for association
 
       // Log file details
       console.log("[v0] Preparing upload:", {
@@ -230,7 +161,7 @@ const EditProfile = () => {
       // Log the exact FormData contents
       console.log(
         "[v0] FormData fields:",
-        Array.from(formData.entries())
+        Array.from(formDataObj.entries())
           .map(
             ([key, value]) =>
               `${key}: ${value instanceof File ? `File(${value.name}, ${value.type}, ${value.size} bytes)` : value}`,
@@ -240,7 +171,7 @@ const EditProfile = () => {
 
       // Log the FormData contents
       console.log("[v0] FormData entries:")
-      for (const pair of formData.entries()) {
+      for (const pair of formDataObj.entries()) {
         console.log(
           `- ${pair[0]}: ${pair[1] instanceof File ? `File(${pair[1].name}, ${pair[1].type}, ${pair[1].size} bytes)` : pair[1]}`,
         )
@@ -248,7 +179,7 @@ const EditProfile = () => {
 
       // Make the API call
       // Make the API call and capture the full response
-      const response = await uploadAPI.uploadAvatar(formData)
+      const response = await uploadAPI.uploadAvatar(formDataObj)
 
       console.log("[v0] Full upload response:", response)
 
@@ -320,6 +251,7 @@ const EditProfile = () => {
       ...prev,
       skills: prev.skills.includes(skill) ? prev.skills.filter((s) => s !== skill) : [...prev.skills, skill],
     }))
+    setHasChanges(true)
   }
 
   const handleAddCustomSkill = () => {
@@ -330,6 +262,7 @@ const EditProfile = () => {
         skills: [...prev.skills, newSkill.trim()],
       }))
       setNewSkill("")
+      setHasChanges(true)
     }
   }
 
@@ -339,6 +272,7 @@ const EditProfile = () => {
       ...prev,
       skills: prev.skills.filter((skill) => skill !== skillToRemove),
     }))
+    setHasChanges(true)
   }
 
   const handleToolToggle = (tool) => {
@@ -347,6 +281,7 @@ const EditProfile = () => {
       ...prev,
       tools: prev.tools.includes(tool) ? prev.tools.filter((t) => t !== tool) : [...prev.tools, tool],
     }))
+    setHasChanges(true)
   }
 
   const handleRemoveTool = (toolToRemove) => {
@@ -355,6 +290,7 @@ const EditProfile = () => {
       ...prev,
       tools: prev.tools.filter((tool) => tool !== toolToRemove),
     }))
+    setHasChanges(true)
   }
 
   const handleAddCustom = () => {
@@ -376,6 +312,7 @@ const EditProfile = () => {
         }
       }
       setNewSkill("")
+      setHasChanges(true)
     }
   }
 
@@ -384,37 +321,59 @@ const EditProfile = () => {
       ...prev,
       availability: !prev.availability,
     }))
+    setHasChanges(true)
   }
 
   const validateForm = () => {
     const errors = []
 
-    // Validate responseTime - must be number
-    if (formData.responseTime && isNaN(Number(formData.responseTime))) {
-      errors.push("Response time must be a number")
-    }
-
-    // Validate hourlyRate - must be number
-    if (formData.hourlyRate && isNaN(Number(formData.hourlyRate))) {
-      errors.push("Hourly rate must be a number")
-    }
-
-    // Validate website - must be valid URL format
-    if (formData.website && formData.website.trim()) {
-      try {
-        // Add https:// if no protocol specified
-        const urlString = formData.website.startsWith("http") ? formData.website : `https://${formData.website}`
-        new URL(urlString) // This will throw if invalid
-      } catch {
-        errors.push("Website must be a valid URL format (e.g., www.example.com)")
+    // Validate responseTime - must be 0-168 integer
+    if (isArtist && formData.responseTime !== "" && formData.responseTime !== null) {
+      const responseTime = Number(formData.responseTime)
+      if (isNaN(responseTime) || responseTime < 0 || responseTime > 168 || !Number.isInteger(responseTime)) {
+        errors.push("Response time must be a whole number between 0-168 hours")
       }
     }
 
-    // Validate phoneNumber - must be numeric or valid phone format
+    // Validate hourlyRate - must be 0-10000 number
+    if (isArtist && formData.hourlyRate !== "" && formData.hourlyRate !== null) {
+      const hourlyRate = Number(formData.hourlyRate)
+      if (isNaN(hourlyRate) || hourlyRate < 0 || hourlyRate > 10000) {
+        errors.push("Hourly rate must be a number between 0-10000")
+      }
+    }
+
+    // Validate website - must include https:// protocol
+    if (formData.website && formData.website.trim()) {
+      const websiteValue = formData.website.trim()
+      if (!websiteValue.startsWith("https://") && !websiteValue.startsWith("http://")) {
+        // This is fine, we'll add https:// in formatWebsiteUrl
+      }
+      try {
+        const urlToTest = websiteValue.startsWith("http") ? websiteValue : `https://${websiteValue}`
+        new URL(urlToTest)
+      } catch {
+        errors.push("Website must be a valid URL (e.g., www.example.com or https://example.com)")
+      }
+    }
+
+    // Validate phoneNumber - must match backend phone regex
     if (formData.phoneNumber && formData.phoneNumber.trim()) {
-      const phonePattern = /^[+]?[1-9][\d]{0,15}$|^[\d\s\-$$$$]{10,}$/
-      if (!phonePattern.test(formData.phoneNumber.replace(/\s/g, ""))) {
-        errors.push("Phone number must be in a valid format")
+      const phonePattern = /^[+]?[\d\s\-()]{10,}$/
+      if (!phonePattern.test(formData.phoneNumber.trim())) {
+        errors.push("Phone number must be at least 10 digits with optional +, spaces, dashes, or parentheses")
+      }
+    }
+
+    // Validate bio length
+    if (formData.about && formData.about.length > 1000) {
+      errors.push("Bio must be 1000 characters or less")
+    }
+
+    // Validate location format
+    if (formData.location && (formData.location.city || formData.location.country)) {
+      if (!formData.location.city && !formData.location.country) {
+        errors.push("Please provide either city or country for location")
       }
     }
 
@@ -438,41 +397,112 @@ const EditProfile = () => {
 
     setIsLoading(true)
 
+    let apiData = {}
+
     try {
-      // Helper function to format website URL
       const formatWebsiteUrl = (url) => {
-        if (!url) return ""
-        if (url.startsWith("http://") || url.startsWith("https://")) return url
-        return `https://${url}`
+        if (!url || !url.trim()) return null
+        const trimmedUrl = url.trim()
+        if (trimmedUrl.startsWith("http://") || trimmedUrl.startsWith("https://")) {
+          return trimmedUrl
+        }
+        return `https://${trimmedUrl}`
       }
 
-      // Prepare profile update data
-      const apiData = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        about: formData.about,
+      console.log("[v0] Raw formData before processing:", JSON.stringify(formData, null, 2))
+      console.log("[v0] User role:", user?.role)
+      console.log("[v0] isArtist:", isArtist)
+
+      apiData = {
+        firstName: formData.firstName || "",
+        lastName: formData.lastName || "",
+        bio: formData.about?.trim() || "",
         location:
-          formData.location.city && formData.location.country
-            ? `${formData.location.city}, ${formData.location.country}`
-            : formData.location.city || formData.location.country || "",
-        phoneNumber: formData.phoneNumber,
-        website: formatWebsiteUrl(formData.website),
+          formData.location && (formData.location.city || formData.location.country)
+            ? `${formData.location.city || ""}, ${formData.location.country || ""}`.replace(/^,\s*|,\s*$/g, "")
+            : "",
+        phoneNumber: formData.phoneNumber?.trim() || "",
       }
 
-      // Add artist-specific fields only if user is an artist
+      const websiteUrl = formatWebsiteUrl(formData.website)
+      if (websiteUrl) {
+        apiData.website = websiteUrl
+      }
+
       if (isArtist) {
-        apiData.skills = formData.skills && formData.skills.length > 0 ? formData.skills.join(",") : ""
-        apiData.tools = formData.tools && formData.tools.length > 0 ? formData.tools.join(",") : ""
-        apiData.availability = formData.availability ? "Available" : "Not Available"
-        apiData.responseTime = formData.responseTime ? Number(formData.responseTime) : ""
-        apiData.hourlyRate = formData.hourlyRate ? Number(formData.hourlyRate) : ""
+        console.log("[v0] Processing artist fields:", {
+          rawSkills: formData.skills,
+          rawTools: formData.tools,
+          rawAvailability: formData.availability,
+          skillsType: typeof formData.skills,
+          toolsType: typeof formData.tools,
+          availabilityType: typeof formData.availability,
+        })
+
+        apiData.skills = Array.isArray(formData.skills) && formData.skills.length > 0 ? formData.skills.join(", ") : ""
+        apiData.tools = Array.isArray(formData.tools) && formData.tools.length > 0 ? formData.tools.join(", ") : ""
+
+        if (formData.availability === true || formData.availability === "Available") {
+          apiData.availability = "Available"
+        } else if (formData.availability === false || formData.availability === "Not Available") {
+          apiData.availability = "Not Available"
+        } else {
+          apiData.availability = "Busy" // Default fallback
+        }
+
+        if (formData.responseTime && !isNaN(Number(formData.responseTime))) {
+          const responseTime = Number(formData.responseTime)
+          apiData.responseTime = Math.min(Math.max(responseTime, 0), 168) // Clamp between 0-168
+        } else {
+          apiData.responseTime = 0 // Send 0 instead of null to avoid length errors
+        }
+
+        if (formData.hourlyRate && !isNaN(Number(formData.hourlyRate))) {
+          const hourlyRate = Number(formData.hourlyRate)
+          apiData.hourlyRate = Math.min(Math.max(hourlyRate, 0), 10000) // Clamp between 0-10000
+        } else {
+          apiData.hourlyRate = 0 // Send 0 instead of null to avoid length errors
+        }
+
+        console.log("[v0] Processed artist fields:", {
+          skills: apiData.skills,
+          tools: apiData.tools,
+          availability: apiData.availability,
+          responseTime: apiData.responseTime,
+          hourlyRate: apiData.hourlyRate,
+        })
       } else {
-        // Add client-specific fields
         apiData.industry = formData.industry || ""
         apiData.companySize = formData.companySize || ""
       }
 
-      console.log("Sending update to API:", apiData)
+      if (formData.avatar && formData.avatar !== initialFormData?.avatar) {
+        apiData.avatar = formData.avatar
+      }
+
+      console.log("[v0] Final API data being sent:", JSON.stringify(apiData, null, 2))
+      console.log(
+        "[v0] API data field types:",
+        Object.entries(apiData).reduce((acc, [key, value]) => {
+          acc[key] = {
+            type: typeof value,
+            value: value,
+            isNull: value === null,
+            isUndefined: value === undefined,
+            isEmpty: value === "",
+            isArray: Array.isArray(value),
+            length: Array.isArray(value) ? value.length : typeof value === "string" ? value.length : "N/A",
+          }
+          return acc
+        }, {}),
+      )
+
+      console.log("[v0] Making API call to update user:", {
+        userId: user.userId,
+        endpoint: `/api/users/${user.userId}`,
+        method: "PATCH",
+        dataSize: JSON.stringify(apiData).length,
+      })
 
       // Make API call to update profile using usersAPI service
       const { data: updatedUser } = await usersAPI.update(user.userId, apiData)
@@ -482,13 +512,23 @@ const EditProfile = () => {
 
       console.log("[v0] Profile updated successfully:", updatedUser)
 
+      setInitialFormData(formData)
+      setHasChanges(false)
+
       // Show success message (you can replace with toast notification)
       alert("Profile updated successfully!")
 
       navigate("/profile")
     } catch (error) {
       console.error("[v0] Profile update error:", error)
-      setError(error.message || "Failed to update profile. Please try again.")
+      console.error("[v0] Error response:", error.response)
+      console.error("[v0] Error response data (JSON):", JSON.stringify(error.response?.data, null, 2))
+      console.error("[v0] Error response status:", error.response?.status)
+      console.error("[v0] Error response headers (JSON):", JSON.stringify(error.response?.headers, null, 2))
+      console.error("[v0] Error config (JSON):", JSON.stringify(error.config, null, 2))
+      console.error("[v0] Request data that was sent:", JSON.stringify(apiData, null, 2))
+
+      setError(error.response?.data?.message || error.message || "Failed to update profile. Please try again.")
     } finally {
       setIsLoading(false)
     }
@@ -499,7 +539,145 @@ const EditProfile = () => {
     navigate("/profile")
   }
 
+  const getInitialFormData = () => {
+    const userData = freshUserData || user
+
+    if (!userData) {
+      console.log("[v0] Cannot initialize form data - user data is null")
+      return null
+    }
+
+    console.log("[v0] Initializing form data with fresh backend data:", userData)
+
+    const isArtist = userData?.role === "freelancer" || userData?.role === "artist"
+
+    const data = {
+      // Common fields for all users
+      about: userData?.about || userData?.bio || "",
+      avatar: userData?.avatar || "",
+      bio: userData?.bio || userData?.about || "",
+      website: userData?.website || "",
+      location: parseLocation(userData?.location),
+      phoneNumber: userData?.phoneNumber || "",
+      firstName: userData?.firstName || "",
+      lastName: userData?.lastName || "",
+
+      // Artist-specific fields (empty if not artist)
+      skills: isArtist
+        ? userData?.skills
+          ? userData.skills.split(",").filter(Boolean)
+          : userData?.specialties
+            ? userData.specialties.split(",").filter(Boolean)
+            : []
+        : [],
+      tools: isArtist
+        ? userData?.tools
+          ? userData.tools.split(",").filter(Boolean)
+          : userData?.specialties
+            ? userData.specialties.split(",").filter(Boolean)
+            : []
+        : [],
+      availability: isArtist ? (userData?.availability ? parseAvailability(userData.availability) : true) : false,
+      responseTime: isArtist ? userData?.responseTime || "" : "",
+      hourlyRate: isArtist ? userData?.hourlyRate || "" : "",
+    }
+
+    console.log("[v0] Initialized form data with backend data:", data)
+    return data
+  }
+
+  const fetchFreshUserData = async () => {
+    if (!user?.userId) return
+
+    try {
+      setIsFetchingUserData(true)
+      console.log("[v0] Fetching fresh user data for form initialization")
+
+      // Fetch both user data and artist data if user is an artist
+      const [userResponse, artistResponse] = await Promise.all([
+        usersAPI.getById(user.userId),
+        user.role === "freelancer" || user.role === "artist"
+          ? artistsAPI.getByUserId(user.userId).catch(() => null)
+          : Promise.resolve(null),
+      ])
+
+      const combinedData = {
+        ...userResponse.data,
+        ...(artistResponse?.data || {}),
+      }
+
+      console.log("[v0] Fresh user data fetched:", combinedData)
+      setFreshUserData(combinedData)
+    } catch (error) {
+      console.error("[v0] Error fetching fresh user data:", error)
+      // Fallback to Redux user data if API fails
+      setFreshUserData(user)
+    } finally {
+      setIsFetchingUserData(false)
+    }
+  }
+
+  useEffect(() => {
+    redirectIfNoUser()
+  }, [user])
+
+  useEffect(() => {
+    if (user?.userId) {
+      fetchFreshUserData()
+    }
+  }, [user?.userId])
+
+  useEffect(() => {
+    if (!isFetchingUserData && (freshUserData || user)) {
+      const data = getInitialFormData()
+      setInitialFormData(data)
+      setFormData(data)
+    }
+  }, [freshUserData, user, isFetchingUserData])
+
+  useEffect(() => {
+    console.log("[v0] EditProfile component mounted successfully")
+    return () => {
+      console.log("[v0] EditProfile component unmounting")
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!initialFormData || !formData) {
+      setHasChanges(false)
+      return
+    }
+
+    // Deep comparison to detect changes
+    const hasFormChanges = JSON.stringify(formData) !== JSON.stringify(initialFormData)
+    setHasChanges(hasFormChanges)
+  }, [formData, initialFormData])
+
+  const parseLocation = (locationStr) => {
+    if (!locationStr) return { city: "", country: "" }
+    const parts = locationStr.split(",").map((part) => part.trim())
+    return {
+      city: parts[0] || "",
+      country: parts[1] || "",
+    }
+  }
+
+  const parseAvailability = (availabilityStr) => {
+    return availabilityStr === "Available"
+  }
+
   console.log("[v0] EditProfile rendering with formData:", formData)
+
+  if (isFetchingUserData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your profile data...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000]">
@@ -566,7 +744,7 @@ const EditProfile = () => {
                   <input
                     type="text"
                     name="firstName"
-                    value={formData.firstName}
+                    value={formData?.firstName || ""} // Added null check for formData
                     onChange={handleInputChange}
                     className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#A95BAB] focus:ring-1 focus:ring-[#A95BAB]"
                   />
@@ -576,7 +754,7 @@ const EditProfile = () => {
                   <input
                     type="text"
                     name="lastName"
-                    value={formData.lastName}
+                    value={formData?.lastName || ""} // Added null check for formData
                     onChange={handleInputChange}
                     className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#A95BAB] focus:ring-1 focus:ring-[#A95BAB]"
                   />
@@ -586,7 +764,7 @@ const EditProfile = () => {
                   <input
                     type="tel"
                     name="phoneNumber"
-                    value={formData.phoneNumber}
+                    value={formData?.phoneNumber || ""} // Added null check for formData
                     onChange={handleInputChange}
                     placeholder="e.g., +1 (555) 123-4567"
                     className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#A95BAB] focus:ring-1 focus:ring-[#A95BAB]"
@@ -597,7 +775,7 @@ const EditProfile = () => {
                   <input
                     type="url"
                     name="website"
-                    value={formData.website}
+                    value={formData?.website || ""} // Added null check for formData
                     onChange={handleInputChange}
                     placeholder="e.g., www.yoursite.com"
                     className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#A95BAB] focus:ring-1 focus:ring-[#A95BAB]"
@@ -614,7 +792,7 @@ const EditProfile = () => {
                   <input
                     type="text"
                     name="city"
-                    value={formData.location.city}
+                    value={formData?.location?.city || ""} // Added null checks for formData and location
                     onChange={handleInputChange}
                     placeholder="e.g., New York"
                     className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#A95BAB] focus:ring-1 focus:ring-[#A95BAB]"
@@ -625,7 +803,7 @@ const EditProfile = () => {
                   <input
                     type="text"
                     name="country"
-                    value={formData.location.country}
+                    value={formData?.location?.country || ""} // Added null checks for formData and location
                     onChange={handleInputChange}
                     placeholder="e.g., United States"
                     className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#A95BAB] focus:ring-1 focus:ring-[#A95BAB]"
@@ -640,10 +818,10 @@ const EditProfile = () => {
               <div className="relative">
                 <textarea
                   name="about"
-                  value={formData.about}
+                  value={formData?.about || ""} // Added null check for formData
                   onChange={handleInputChange}
                   rows={aboutExpanded ? 8 : 4}
-                  maxLength={500}
+                  maxLength={1000}
                   className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-[#A95BAB] focus:ring-1 focus:ring-[#A95BAB] resize-none transition-all"
                   placeholder="Tell us about yourself, your skills, and experience..."
                 />
@@ -655,7 +833,8 @@ const EditProfile = () => {
                   {aboutExpanded ? "Collapse" : "Expand"}
                 </button>
               </div>
-              <p className="text-sm text-gray-400 mt-2">{formData.about.length}/500 characters</p>
+              <p className="text-sm text-gray-400 mt-2">{(formData?.about || "").length}/1000 characters</p>{" "}
+              {/* Added null check for formData.about */}
             </div>
 
             {isArtist && (
@@ -672,7 +851,7 @@ const EditProfile = () => {
                         type="button"
                         onClick={() => handleSkillToggle(category)}
                         className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
-                          formData.skills.includes(category)
+                          (formData?.skills || []).includes(category) // Added null check for formData.skills
                             ? "bg-[#A95BAB] text-white shadow-lg shadow-[#A95BAB]/25"
                             : "bg-gray-700/50 text-gray-300 hover:bg-gray-600/50 hover:text-white"
                         }`}
@@ -693,7 +872,7 @@ const EditProfile = () => {
                         type="button"
                         onClick={() => handleToolToggle(tool)}
                         className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
-                          formData.tools.includes(tool)
+                          (formData?.tools || []).includes(tool) // Added null check for formData.tools
                             ? "bg-[#A95BAB] text-white shadow-lg shadow-[#A95BAB]/25"
                             : "bg-gray-700/50 text-gray-300 hover:bg-gray-600/50 hover:text-white"
                         }`}
@@ -744,49 +923,57 @@ const EditProfile = () => {
                 </div>
 
                 {/* Selected Skills */}
-                {formData.skills.length > 0 && (
+                {(formData?.skills || []).length > 0 && ( // Added null check for formData.skills
                   <div className="mb-6">
                     <p className="text-sm font-medium text-gray-300 mb-3">Selected Skills</p>
                     <div className="flex flex-wrap gap-2">
-                      {formData.skills.map((skill) => (
-                        <span
-                          key={skill}
-                          className="inline-flex items-center space-x-2 px-3 py-1 bg-[#A95BAB] text-white rounded-full text-sm font-medium"
-                        >
-                          <span>{skill}</span>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveSkill(skill)}
-                            className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
+                      {(formData?.skills || []).map(
+                        (
+                          skill, // Added null check for formData.skills
+                        ) => (
+                          <span
+                            key={skill}
+                            className="inline-flex items-center space-x-2 px-3 py-1 bg-[#A95BAB] text-white rounded-full text-sm font-medium"
                           >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </span>
-                      ))}
+                            <span>{skill}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveSkill(skill)}
+                              className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </span>
+                        ),
+                      )}
                     </div>
                   </div>
                 )}
 
                 {/* Selected Tools */}
-                {formData.tools.length > 0 && (
+                {(formData?.tools || []).length > 0 && ( // Added null check for formData.tools
                   <div className="mb-6">
                     <p className="text-sm font-medium text-gray-300 mb-3">Selected Tools</p>
                     <div className="flex flex-wrap gap-2">
-                      {formData.tools.map((tool) => (
-                        <span
-                          key={tool}
-                          className="inline-flex items-center space-x-2 px-3 py-1 bg-[#A95BAB]/80 text-white rounded-full text-sm font-medium"
-                        >
-                          <span>{tool}</span>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveTool(tool)}
-                            className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
+                      {(formData?.tools || []).map(
+                        (
+                          tool, // Added null check for formData.tools
+                        ) => (
+                          <span
+                            key={tool}
+                            className="inline-flex items-center space-x-2 px-3 py-1 bg-[#A95BAB]/80 text-white rounded-full text-sm font-medium"
                           >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </span>
-                      ))}
+                            <span>{tool}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveTool(tool)}
+                              className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </span>
+                        ),
+                      )}
                     </div>
                   </div>
                 )}
@@ -798,10 +985,11 @@ const EditProfile = () => {
               <div className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-lg">
                 <div>
                   <p className="text-white font-medium">
-                    {formData.availability ? "Available for new projects" : "Not Available"}
+                    {formData?.availability ? "Available for new projects" : "Not Available"}{" "}
+                    {/* Added null check for formData.availability */}
                   </p>
                   <p className="text-sm text-gray-400">
-                    {formData.availability
+                    {formData?.availability // Added null check for formData.availability
                       ? "Clients can see you're accepting new work"
                       : "Your profile will show you're currently not available"}
                   </p>
@@ -810,7 +998,8 @@ const EditProfile = () => {
                   onClick={handleAvailabilityToggle}
                   className="text-[#A95BAB] hover:text-[#A95BAB]/80 transition-colors"
                 >
-                  {formData.availability ? <ToggleRight className="w-8 h-8" /> : <ToggleLeft className="w-8 h-8" />}
+                  {formData?.availability ? <ToggleRight className="w-8 h-8" /> : <ToggleLeft className="w-8 h-8" />}{" "}
+                  {/* Added null check for formData.availability */}
                 </button>
               </div>
             </div>
@@ -825,7 +1014,7 @@ const EditProfile = () => {
                     min="1"
                     max="72"
                     name="responseTime"
-                    value={formData.responseTime}
+                    value={formData?.responseTime || ""} // Added null check for formData
                     onChange={handleInputChange}
                     placeholder="e.g., 2"
                     className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#A95BAB] focus:ring-1 focus:ring-[#A95BAB]"
@@ -838,7 +1027,7 @@ const EditProfile = () => {
                     min="0"
                     step="1"
                     name="hourlyRate"
-                    value={formData.hourlyRate}
+                    value={formData?.hourlyRate || ""} // Added null check for formData
                     onChange={handleInputChange}
                     placeholder="e.g., 75"
                     className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#A95BAB] focus:ring-1 focus:ring-[#A95BAB]"
@@ -851,7 +1040,7 @@ const EditProfile = () => {
                       <input
                         type="text"
                         name="industry"
-                        value={formData.industry}
+                        value={formData?.industry || ""} // Added null check for formData
                         onChange={handleInputChange}
                         placeholder="e.g., Technology"
                         className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#A95BAB] focus:ring-1 focus:ring-[#A95BAB]"
@@ -862,7 +1051,7 @@ const EditProfile = () => {
                       <input
                         type="text"
                         name="companySize"
-                        value={formData.companySize}
+                        value={formData?.companySize || ""} // Added null check for formData
                         onChange={handleInputChange}
                         placeholder="e.g., 50-200 employees"
                         className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#A95BAB] focus:ring-1 focus:ring-[#A95BAB]"
