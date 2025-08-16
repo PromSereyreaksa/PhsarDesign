@@ -2,27 +2,29 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { useSelector } from "react-redux"
-import { Star, MapPin, Calendar, Edit, MessageSquare, Building, Users } from "lucide-react"
+import { useSelector, useDispatch } from "react-redux"
+import { Star, MapPin, Calendar, Edit, MessageSquare } from "lucide-react"
 import { Button } from "../../components/ui/button"
 import { Card, CardContent } from "../../components/ui/card"
 import { Avatar, AvatarImage, AvatarFallback } from "../../components/ui/avatar"
 import AuthNavbar from "../../components/layout/navigation/AuthNavbar"
 import AuthFooter from "../../components/layout/footer/AuthFooter"
+import { usersAPI } from "../../services/api"
+import { updateProfile } from "../../store/slices/authSlice"
 
 export default function ClientProfile() {
   const { userId } = useParams()
   const navigate = useNavigate()
+  const dispatch = useDispatch()
   const { user } = useSelector((state) => state.auth)
   const [isOwner, setIsOwner] = useState(false)
   const [clientData, setClientData] = useState(null)
 
-  // Mock client data - replace with API call
   const mockClientData = {
     id: userId || "1",
-    companyName: "TechCorp Solutions",
-    contactName: "John Smith",
-    username: "@techcorp",
+    firstName: "John",
+    lastName: "Smith",
+    username: "@johnsmith",
     avatar: "/professional-business-logo.png",
     coverImage: "/modern-office.png",
     bio: "Leading technology company specializing in innovative software solutions. We partner with talented designers and developers to bring cutting-edge products to market.",
@@ -31,10 +33,10 @@ export default function ClientProfile() {
     joinDate: "January 2023",
     companySize: "50-200 employees",
     website: "www.techcorp.com",
+    phoneNumber: "+1 (555) 123-4567",
     rating: 4.8,
     totalReviews: 45,
     totalProjects: 23,
-    responseTime: "4 hours",
     projectsPosted: [
       {
         id: 1,
@@ -76,7 +78,7 @@ export default function ClientProfile() {
         artistAvatar: "/female-artist-portrait.png",
         rating: 5,
         comment:
-          "TechCorp was an amazing client to work with. Clear communication, fair payment, and great feedback throughout the project.",
+          "John was an amazing client to work with. Clear communication, fair payment, and great feedback throughout the project.",
         date: "1 week ago",
         project: "Mobile App Design",
       },
@@ -94,36 +96,78 @@ export default function ClientProfile() {
   }
 
   useEffect(() => {
-    // If viewing own profile, use real user data; otherwise use mock data
-    if (user && (userId === user.userId || !userId)) {
-      setIsOwner(true)
-      setClientData({
-        ...mockClientData,
-        id: user.userId,
-        companyName: user.role === "client" ? `${user.firstName} ${user.lastName}` : mockClientData.companyName,
-        contactName: `${user.firstName} ${user.lastName}`,
-        username: `@${user.firstName?.toLowerCase()}${user.lastName?.toLowerCase()}`,
-        avatar: user.avatar || mockClientData.avatar,
-        // Use real data if available, fallback to mock data
-        bio: user.bio || user.about || mockClientData.bio,
-        industry: user.industry || mockClientData.industry,
-        location: user.location || mockClientData.location,
-        joinDate: user.joinDate || mockClientData.joinDate,
-        companySize: user.companySize || mockClientData.companySize,
-        website: user.website || mockClientData.website,
-        rating: user.rating || mockClientData.rating,
-        totalReviews: user.totalReviews || mockClientData.totalReviews,
-        totalProjects: user.totalProjects || mockClientData.totalProjects,
-        responseTime: user.responseTime || mockClientData.responseTime,
-        projectsPosted: user.projectsPosted || mockClientData.projectsPosted,
-        reviews: user.reviews || mockClientData.reviews,
-        coverImage: user.coverImage || mockClientData.coverImage,
-      })
-    } else {
-      setClientData(mockClientData)
-      setIsOwner(false)
+    const fetchAndUpdateClientData = async () => {
+      let freshUserData = user
+
+      if (user && (userId === user.userId || !userId)) {
+        try {
+          console.log("[v0] Fetching fresh user data for client profile...")
+          const response = await usersAPI.getById(user.userId)
+          freshUserData = response.data
+          console.log("[v0] Fresh user data received:", freshUserData)
+
+          let processedAvatarUrl = null
+          const possibleAvatarFields = ["avatar", "avatarUrl", "profileImage"]
+
+          for (const field of possibleAvatarFields) {
+            if (freshUserData[field]) {
+              processedAvatarUrl = freshUserData[field]
+              console.log(`[v0] Found avatar in field '${field}':`, processedAvatarUrl)
+              break
+            }
+          }
+
+          if (processedAvatarUrl) {
+            const separator = processedAvatarUrl.includes("?") ? "&" : "?"
+            processedAvatarUrl = `${processedAvatarUrl}${separator}t=${Date.now()}`
+            console.log("[v0] Processed avatar URL with cache-busting:", processedAvatarUrl)
+          }
+
+          const updatedUserData = {
+            ...freshUserData,
+            avatar: processedAvatarUrl || freshUserData.avatar,
+          }
+          dispatch(updateProfile(updatedUserData))
+          freshUserData = updatedUserData
+        } catch (error) {
+          console.error("[v0] Error fetching fresh user data:", error)
+        }
+      }
+
+      if (freshUserData && (userId === freshUserData.userId || !userId)) {
+        setIsOwner(true)
+        setClientData({
+          ...mockClientData,
+          id: freshUserData.userId,
+          firstName: freshUserData.firstName || "",
+          lastName: freshUserData.lastName || "",
+          username:
+            freshUserData.firstName && freshUserData.lastName
+              ? `@${freshUserData.firstName.toLowerCase()}${freshUserData.lastName.toLowerCase()}`
+              : mockClientData.username,
+          avatar: freshUserData.avatar || mockClientData.avatar,
+          bio: freshUserData.bio || freshUserData.about || "",
+          industry: freshUserData.industry || "",
+          location: freshUserData.location || "",
+          companySize: freshUserData.companySize || "",
+          website: freshUserData.website || "",
+          phoneNumber: freshUserData.phoneNumber || "",
+          joinDate: freshUserData.joinDate || mockClientData.joinDate,
+          rating: freshUserData.rating || mockClientData.rating,
+          totalReviews: freshUserData.totalReviews || mockClientData.totalReviews,
+          totalProjects: freshUserData.totalProjects || mockClientData.totalProjects,
+          projectsPosted: freshUserData.projectsPosted || mockClientData.projectsPosted,
+          reviews: freshUserData.reviews || mockClientData.reviews,
+          coverImage: freshUserData.coverImage || mockClientData.coverImage,
+        })
+      } else {
+        setClientData(mockClientData)
+        setIsOwner(false)
+      }
     }
-  }, [userId, user])
+
+    fetchAndUpdateClientData()
+  }, [userId, user, dispatch])
 
   const handleEditProfile = () => {
     console.log("[v0] Edit Profile button clicked - navigating to /profile/edit")
@@ -160,26 +204,29 @@ export default function ClientProfile() {
       <AuthNavbar />
 
       <div className="pt-20">
-        {/* Cover Image & Profile Header */}
         <div className="relative">
           <div className="h-64 md:h-80 relative overflow-hidden">
             <img src={clientData.coverImage || "/placeholder.svg"} alt="Cover" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-black/40" />
           </div>
 
-          {/* Profile Info Overlay */}
           <div className="absolute bottom-0 left-0 right-0 p-6">
             <div className="max-w-7xl mx-auto">
               <div className="flex flex-col md:flex-row items-start md:items-end gap-6">
-                {/* Avatar */}
                 <div className="relative">
                   <Avatar className="w-32 h-32 border-4 border-white/20 bg-white/10 backdrop-blur-sm">
-                    <AvatarImage src={clientData.avatar || "/placeholder.svg"} alt={clientData.companyName} />
+                    <AvatarImage
+                      src={clientData.avatar || "/placeholder.svg"}
+                      alt={`${clientData.firstName} ${clientData.lastName}`}
+                      onLoad={() => console.log("[v0] Client avatar loaded successfully:", clientData.avatar)}
+                      onError={(e) => {
+                        console.log("[v0] Client avatar failed to load:", clientData.avatar)
+                        console.log("[v0] Error details:", e)
+                      }}
+                    />
                     <AvatarFallback className="text-2xl font-bold text-white bg-[#A95BAB]">
-                      {clientData.companyName
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
+                      {clientData.firstName?.[0]}
+                      {clientData.lastName?.[0]}
                     </AvatarFallback>
                   </Avatar>
                   {isOwner && (
@@ -193,12 +240,13 @@ export default function ClientProfile() {
                   )}
                 </div>
 
-                {/* Basic Info */}
                 <div className="flex-1 text-white">
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
                       <div className="flex items-center gap-4 mb-2">
-                        <h1 className="text-3xl font-bold">{clientData.companyName}</h1>
+                        <h1 className="text-3xl font-bold">
+                          {clientData.firstName} {clientData.lastName}
+                        </h1>
                         <div className="flex items-center gap-3">
                           <div className="flex items-center gap-1">
                             <Star className="w-5 h-5 text-yellow-400 fill-current" />
@@ -252,39 +300,41 @@ export default function ClientProfile() {
           </div>
         </div>
 
-        {/* Main Content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="grid lg:grid-cols-3 gap-8">
-            {/* Left Sidebar */}
             <div className="space-y-6">
-              {/* About */}
               <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-bold text-white mb-4">About</h3>
-                  <p className="text-gray-300 leading-relaxed mb-6">{clientData.bio}</p>
+                <CardContent className="p-8">
+                  <h3 className="text-xl font-bold text-white mb-6">About</h3>
+                  {clientData.bio && <p className="text-gray-300 leading-relaxed mb-8">{clientData.bio}</p>}
 
-                  {/* Company Details */}
-                  <div className="space-y-3 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Industry</span>
-                      <span className="text-white">{clientData.industry}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Company Size</span>
-                      <span className="text-white">{clientData.companySize}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Response Time</span>
-                      <span className="text-white">{clientData.responseTime}</span>
-                    </div>
+                  <div className="space-y-4 text-sm">
+                    {clientData.industry && (
+                      <div className="flex justify-between py-2">
+                        <span className="text-gray-400">Industry</span>
+                        <span className="text-white font-medium">{clientData.industry}</span>
+                      </div>
+                    )}
+                    {clientData.companySize && (
+                      <div className="flex justify-between py-2">
+                        <span className="text-gray-400">Company Size</span>
+                        <span className="text-white font-medium">{clientData.companySize}</span>
+                      </div>
+                    )}
+                    {clientData.phoneNumber && (
+                      <div className="flex justify-between py-2">
+                        <span className="text-gray-400">Phone</span>
+                        <span className="text-white font-medium">{clientData.phoneNumber}</span>
+                      </div>
+                    )}
                     {clientData.website && (
-                      <div className="flex justify-between">
+                      <div className="flex justify-between py-2">
                         <span className="text-gray-400">Website</span>
                         <a
                           href={`https://${clientData.website}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-[#A95BAB] hover:text-[#A95BAB]/80"
+                          className="text-[#A95BAB] hover:text-[#A95BAB]/80 font-medium"
                         >
                           {clientData.website}
                         </a>
@@ -294,30 +344,6 @@ export default function ClientProfile() {
                 </CardContent>
               </Card>
 
-              {/* Company Info */}
-              <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-bold text-white mb-4">Company Info</h3>
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <Building className="w-5 h-5 text-[#A95BAB]" />
-                      <div>
-                        <div className="text-white font-medium">{clientData.industry}</div>
-                        <div className="text-sm text-gray-400">Industry</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Users className="w-5 h-5 text-[#A95BAB]" />
-                      <div>
-                        <div className="text-white font-medium">{clientData.companySize}</div>
-                        <div className="text-sm text-gray-400">Team Size</div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Reviews */}
               <div>
                 <h2 className="text-2xl font-bold text-white mb-6">Reviews from Artists ({clientData.totalReviews})</h2>
 
@@ -373,18 +399,16 @@ export default function ClientProfile() {
               </div>
             </div>
 
-            {/* Main Content */}
             <div className="lg:col-span-2 space-y-8">
-              {/* Posted Projects */}
               <div>
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-white">Posted Projects</h2>
+                  <h2 className="text-2xl font-bold text-white">Posts</h2>
                   {isOwner && (
                     <Button
                       onClick={() => navigate("/marketplace/create")}
                       className="bg-[#A95BAB] hover:bg-[#A95BAB]/80"
                     >
-                      Post New Project
+                      Create New Post
                     </Button>
                   )}
                 </div>
@@ -444,13 +468,13 @@ export default function ClientProfile() {
                 ) : (
                   <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
                     <CardContent className="p-8 text-center">
-                      <p className="text-gray-400">No projects posted yet.</p>
+                      <p className="text-gray-400">No posts yet.</p>
                       {isOwner && (
                         <Button
                           onClick={() => navigate("/marketplace/create")}
                           className="mt-4 bg-[#A95BAB] hover:bg-[#A95BAB]/80"
                         >
-                          Post Your First Project
+                          Create Your First Post
                         </Button>
                       )}
                     </CardContent>

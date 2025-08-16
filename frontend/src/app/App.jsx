@@ -17,6 +17,7 @@ import MyPostsPage from "../pages/Dashboard/MyPostsPage"
 import ArtistProfile from "../pages/profiles/ArtistProfile.jsx"
 import ClientProfile from "../pages/profiles/ClientProfile.jsx"
 import EditProfile from "../pages/profiles/EditProfile.jsx"
+import ProfileRouter from "../pages/profiles/ProfileRouter.jsx"
 
 function App() {
   return (
@@ -72,7 +73,7 @@ function App() {
           path="/profile"
           element={
             <ProtectedRoute>
-              <ArtistProfile />
+              <ProfileRouter />
             </ProtectedRoute>
           }
         />
