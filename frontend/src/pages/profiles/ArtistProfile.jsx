@@ -9,7 +9,7 @@ import { Card, CardContent } from "../../components/ui/card"
 import { Avatar, AvatarImage, AvatarFallback } from "../../components/ui/avatar"
 import AuthNavbar from "../../components/layout/navigation/AuthNavbar"
 import AuthFooter from "../../components/layout/footer/AuthFooter"
-import { usersAPI, artistsAPI } from "../../services/api"
+import { usersAPI, artistsAPI, availabilityPostsAPI } from "../../services/api"
 import { updateProfile } from "../../store/slices/authSlice"
 
 export default function ArtistProfile() {
@@ -20,6 +20,8 @@ export default function ArtistProfile() {
   const [isOwner, setIsOwner] = useState(false)
   const [artistData, setArtistData] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [posts, setPosts] = useState([])
+  const [postsLoading, setPostsLoading] = useState(false)
 
   const mockArtistData = {
     id: userId || "1",
@@ -37,32 +39,6 @@ export default function ArtistProfile() {
     responseTime: "2 hours",
     availability: "Available",
     hourlyRate: "$75/hour",
-    posts: [
-      {
-        id: 1,
-        title: "Fantasy Character Design",
-        image: "/placeholder-wv6ds.png",
-        likes: 234,
-        views: 1200,
-        category: "Character Design",
-      },
-      {
-        id: 2,
-        title: "Digital Portrait Commission",
-        image: "/digital-portrait.png",
-        likes: 189,
-        views: 890,
-        category: "Digital Art",
-      },
-      {
-        id: 3,
-        title: "Game UI Concept",
-        image: "/stylized-game-ui.png",
-        likes: 156,
-        views: 670,
-        category: "UI/UX Design",
-      },
-    ],
     reviews: [
       {
         id: 1,
@@ -84,6 +60,37 @@ export default function ArtistProfile() {
         project: "Brand Illustration",
       },
     ],
+  }
+
+  const fetchArtistPosts = async (artistUserId) => {
+    setPostsLoading(true)
+    try {
+      console.log("[v0] Fetching posts for artist userId:", artistUserId)
+      const response = await availabilityPostsAPI.getByArtist(artistUserId)
+      console.log("[v0] Posts API response:", response.data)
+
+      // Transform API data to match the expected post structure
+      const transformedPosts = response.data.map((post) => ({
+        id: post.postId,
+        title: post.title,
+        image: post.attachments && post.attachments.length > 0 ? post.attachments[0] : null,
+        likes: post.likes || 0,
+        views: post.views || 0,
+        category: post.category?.name || "Service",
+        description: post.description,
+        budget: post.budget,
+        createdAt: post.createdAt,
+      }))
+
+      setPosts(transformedPosts)
+      console.log("[v0] Transformed posts:", transformedPosts)
+    } catch (error) {
+      console.error("[v0] Error fetching artist posts:", error)
+      // Fallback to empty array on error
+      setPosts([])
+    } finally {
+      setPostsLoading(false)
+    }
   }
 
   useEffect(() => {
@@ -161,10 +168,11 @@ export default function ArtistProfile() {
             responseTime: artistProfileData?.responseTime ? `${artistProfileData.responseTime} hours` : "Not specified",
             availability: artistProfileData?.availability || "Not specified",
             hourlyRate: artistProfileData?.hourlyRate ? `$${artistProfileData.hourlyRate}/hour` : "Not specified",
-            posts: mockArtistData.posts,
             reviews: mockArtistData.reviews,
             coverImage: mockArtistData.coverImage,
           })
+
+          await fetchArtistPosts(freshUserData.userId)
         } catch (error) {
           console.error("[v0] Error fetching fresh user data:", error)
 
@@ -217,16 +225,20 @@ export default function ArtistProfile() {
             responseTime: user.responseTime ? `${user.responseTime} hours` : "Not specified",
             availability: user.availability || "Not specified",
             hourlyRate: user.hourlyRate ? `$${user.hourlyRate}/hour` : "Not specified",
-            posts: mockArtistData.posts,
             reviews: mockArtistData.reviews,
             coverImage: mockArtistData.coverImage,
           })
+
+          await fetchArtistPosts(user.userId)
         } finally {
           setIsLoading(false)
         }
       } else {
         setArtistData(mockArtistData)
         setIsOwner(false)
+        if (userId) {
+          await fetchArtistPosts(userId)
+        }
       }
     }
 
@@ -490,16 +502,27 @@ export default function ArtistProfile() {
                   )}
                 </div>
 
-                {artistData.posts.length > 0 ? (
+                {postsLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="text-white">Loading portfolio...</div>
+                  </div>
+                ) : posts.length > 0 ? (
                   <div className="grid md:grid-cols-2 gap-6">
-                    {artistData.posts.map((post) => (
+                    {posts.map((post) => (
                       <Card
                         key={post.id}
                         className="bg-white/5 border-white/10 hover:bg-white/10 rounded-2xl overflow-hidden group cursor-pointer transform hover:scale-105 transition-all duration-500 ease-out"
+                        onClick={() => {
+                          const slug = post.title
+                            .toLowerCase()
+                            .replace(/[^a-z0-9]+/g, "-")
+                            .replace(/(^-|-$)/g, "")
+                          navigate(`/marketplace/${slug}-${post.id}`)
+                        }}
                       >
                         <div className="relative">
                           <img
-                            src={post.image || "/placeholder.svg"}
+                            src={post.image || "/placeholder.svg?height=200&width=400&query=portfolio work"}
                             alt={post.title}
                             className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
                           />

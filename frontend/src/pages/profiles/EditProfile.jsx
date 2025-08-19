@@ -5,7 +5,7 @@ import { useSelector, useDispatch } from "react-redux"
 import { useNavigate } from "react-router-dom"
 import { updateProfile } from "../../store/slices/authSlice"
 import { usersAPI, uploadAPI, artistsAPI } from "../../services/api"
-import { Plus, X, ToggleLeft, ToggleRight } from "lucide-react"
+import { Plus, X } from "lucide-react"
 import AuthNavbar from "../../components/layout/navigation/AuthNavbar"
 import AuthFooter from "../../components/layout/footer/AuthFooter"
 
@@ -981,58 +981,38 @@ const EditProfile = () => {
             )}
 
             <div className="mb-8">
-              <h2 className="text-xl font-semibold text-white mb-4">Availability Status</h2>
-              <div className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-lg">
-                <div>
-                  <p className="text-white font-medium">
-                    {formData?.availability ? "Available for new projects" : "Not Available"}{" "}
-                    {/* Added null check for formData.availability */}
-                  </p>
-                  <p className="text-sm text-gray-400">
-                    {formData?.availability // Added null check for formData.availability
-                      ? "Clients can see you're accepting new work"
-                      : "Your profile will show you're currently not available"}
-                  </p>
-                </div>
-                <button
-                  onClick={handleAvailabilityToggle}
-                  className="text-[#A95BAB] hover:text-[#A95BAB]/80 transition-colors"
-                >
-                  {formData?.availability ? <ToggleRight className="w-8 h-8" /> : <ToggleLeft className="w-8 h-8" />}{" "}
-                  {/* Added null check for formData.availability */}
-                </button>
-              </div>
-            </div>
-
-            <div className="mb-8">
               <h2 className="text-xl font-semibold text-white mb-4">Professional Details</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Response Time (hours)</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="72"
-                    name="responseTime"
-                    value={formData?.responseTime || ""} // Added null check for formData
-                    onChange={handleInputChange}
-                    placeholder="e.g., 2"
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#A95BAB] focus:ring-1 focus:ring-[#A95BAB]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Hourly Rate (USD)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="1"
-                    name="hourlyRate"
-                    value={formData?.hourlyRate || ""} // Added null check for formData
-                    onChange={handleInputChange}
-                    placeholder="e.g., 75"
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#A95BAB] focus:ring-1 focus:ring-[#A95BAB]"
-                  />
-                </div>
+                {isArtist && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Response Time (hours)</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="72"
+                        name="responseTime"
+                        value={formData?.responseTime || ""} // Added null check for formData
+                        onChange={handleInputChange}
+                        placeholder="e.g., 2"
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#A95BAB] focus:ring-1 focus:ring-[#A95BAB]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Hourly Rate (USD)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        name="hourlyRate"
+                        value={formData?.hourlyRate || ""} // Added null check for formData
+                        onChange={handleInputChange}
+                        placeholder="e.g., 75"
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#A95BAB] focus:ring-1 focus:ring-[#A95BAB]"
+                      />
+                    </div>
+                  </>
+                )}
                 {!isArtist && (
                   <>
                     <div>
