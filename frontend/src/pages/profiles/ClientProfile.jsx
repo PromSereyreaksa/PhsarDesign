@@ -3,13 +3,13 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { useSelector, useDispatch } from "react-redux"
-import { Star, MapPin, Calendar, Edit, MessageSquare } from "lucide-react"
+import { Star, MapPin, Calendar, Edit, MessageSquare, AlertCircle, RefreshCw, Eye, EyeOff } from "lucide-react"
 import { Button } from "../../components/ui/button"
 import { Card, CardContent } from "../../components/ui/card"
 import { Avatar, AvatarImage, AvatarFallback } from "../../components/ui/avatar"
 import AuthNavbar from "../../components/layout/navigation/AuthNavbar"
 import AuthFooter from "../../components/layout/footer/AuthFooter"
-import { usersAPI } from "../../services/api"
+import { clientsAPI, usersAPI } from "../../services/api"
 import { updateProfile } from "../../store/slices/authSlice"
 import Loader from "../../components/ui/Loader"
 
@@ -21,99 +21,87 @@ export default function ClientProfile() {
   const [isOwner, setIsOwner] = useState(false)
   const [clientData, setClientData] = useState(null)
   const { isLoading } = useSelector((state) => state.user)
+  const [isLoading, setIsLoading] = useState(false)
+  const [networkError, setNetworkError] = useState(false)
+  const [errorMessage, setErrorMessage] = useState("")
+  const [isPhonePublic, setIsPhonePublic] = useState(true)
 
-  const mockClientData = {
-    id: userId || "1",
-    firstName: "John",
-    lastName: "Smith",
-    username: "@johnsmith",
-    avatar: "/professional-business-logo.png",
-    coverImage: "/modern-office.png",
-    bio: "Leading technology company specializing in innovative software solutions. We partner with talented designers and developers to bring cutting-edge products to market.",
-    industry: "Technology",
-    location: "New York, NY",
-    joinDate: "January 2023",
-    companySize: "50-200 employees",
-    website: "www.techcorp.com",
-    phoneNumber: "+1 (555) 123-4567",
-    rating: 4.8,
-    totalReviews: 45,
-    totalProjects: 23,
-    projectsPosted: [
-      {
-        id: 1,
-        title: "Mobile App UI/UX Design",
-        description:
-          "Looking for a talented designer to create modern, user-friendly interface for our new mobile application.",
-        budget: "$2,000 - $5,000",
-        deadline: "2 weeks",
-        status: "Active",
-        applicants: 12,
-        category: "UI/UX Design",
-      },
-      {
-        id: 2,
-        title: "Brand Identity Package",
-        description:
-          "Complete brand identity design including logo, color palette, and brand guidelines for our new product line.",
-        budget: "$1,500 - $3,000",
-        deadline: "3 weeks",
-        status: "Completed",
-        applicants: 8,
-        category: "Branding",
-      },
-      {
-        id: 3,
-        title: "Website Redesign",
-        description: "Modern, responsive website redesign to improve user experience and conversion rates.",
-        budget: "$3,000 - $7,000",
-        deadline: "1 month",
-        status: "In Progress",
-        applicants: 15,
-        category: "Web Design",
-      },
-    ],
-    reviews: [
-      {
-        id: 1,
-        artistName: "Emma Wilson",
-        artistAvatar: "/female-artist-portrait.png",
-        rating: 5,
-        comment:
-          "John was an amazing client to work with. Clear communication, fair payment, and great feedback throughout the project.",
-        date: "1 week ago",
-        project: "Mobile App Design",
-      },
-      {
-        id: 2,
-        artistName: "Mike Rodriguez",
-        artistAvatar: "/male-designer-portrait.png",
-        rating: 5,
-        comment:
-          "Professional and responsive client. The project requirements were well-defined and the collaboration was smooth.",
-        date: "3 weeks ago",
-        project: "Brand Identity",
-      },
-    ],
-  }
+  const createDefaultClientData = (userData = {}) => ({
+    id: userData.userId || "",
+    firstName: userData.firstName || "",
+    lastName: userData.lastName || "",
+    username:
+      userData.firstName && userData.lastName
+        ? `@${userData.firstName.toLowerCase()}${userData.lastName.toLowerCase()}`
+        : "@user",
+    avatar: userData.avatarURL || userData.avatar || "/placeholder.svg",
+    bio: userData.bio || userData.about || "",
+    industry: userData.industry || "",
+    location: userData.location || "Location not specified",
+    companySize: userData.companySize || "",
+    website: userData.website || "",
+    phoneNumber: userData.phoneNumber || "",
+    joinDate: userData.joinDate || "Recently",
+    rating: userData.rating || 0,
+    totalReviews: userData.totalReviews || 0,
+    totalProjects: userData.totalProjects || 0,
+    projectsPosted: userData.projectsPosted || [],
+    reviews: userData.reviews || [],
+    coverImage: userData.coverImage || "/placeholder.svg",
+  })
 
   useEffect(() => {
     const fetchAndUpdateClientData = async () => {
+      if (isLoading || networkError) return
+      setIsLoading(true)
+      setNetworkError(false)
+      setErrorMessage("")
+
       let freshUserData = user
+      let clientProjects = []
+      let additionalClientData = {}
 
       if (user && (userId === user.userId || !userId)) {
         try {
-          console.log("[v0] Fetching fresh user data for client profile...")
-          const response = await usersAPI.getById(user.userId)
-          freshUserData = response.data
-          console.log("[v0] Fresh user data received:", freshUserData)
+          console.log("[v0] Fetching comprehensive client data...")
+
+          const [clientResponse, userResponse, projectsResponse] = await Promise.allSettled([
+            clientsAPI.getByUserId(user.userId),
+            usersAPI.getById(user.userId),
+            clientsAPI.getClientProjects ? clientsAPI.getClientProjects(user.userId) : Promise.resolve({ data: [] }),
+          ])
+
+          // Process client-specific data
+          if (clientResponse.status === "fulfilled") {
+            additionalClientData = clientResponse.value.data
+            console.log("[v0] Client-specific data received:", additionalClientData)
+          }
+
+          // Process user data
+          if (userResponse.status === "fulfilled") {
+            freshUserData = userResponse.value.data
+            console.log("[v0] User data received:", freshUserData)
+          }
+
+          // Process projects data
+          if (projectsResponse.status === "fulfilled") {
+            clientProjects = projectsResponse.value.data || []
+            console.log("[v0] Client projects received:", clientProjects)
+          }
+
+          const combinedData = {
+            ...freshUserData,
+            ...additionalClientData,
+            projectsPosted: clientProjects,
+            totalProjects: clientProjects.length,
+          }
 
           let processedAvatarUrl = null
-          const possibleAvatarFields = ["avatar", "avatarUrl", "profileImage"]
+          const possibleAvatarFields = ["avatarURL", "avatar", "avatarUrl", "profileImage"]
 
           for (const field of possibleAvatarFields) {
-            if (freshUserData[field]) {
-              processedAvatarUrl = freshUserData[field]
+            if (combinedData[field]) {
+              processedAvatarUrl = combinedData[field]
               console.log(`[v0] Found avatar in field '${field}':`, processedAvatarUrl)
               break
             }
@@ -126,50 +114,46 @@ export default function ClientProfile() {
           }
 
           const updatedUserData = {
-            ...freshUserData,
-            avatar: processedAvatarUrl || freshUserData.avatar,
+            ...combinedData,
+            avatar: processedAvatarUrl || combinedData.avatarURL || combinedData.avatar,
           }
+
           dispatch(updateProfile(updatedUserData))
           freshUserData = updatedUserData
         } catch (error) {
-          console.error("[v0] Error fetching fresh user data:", error)
+          console.error("[v0] Error fetching comprehensive client data:", error)
+
+          if (error.code === "ERR_NETWORK" || error.message === "Network Error") {
+            setNetworkError(true)
+            setErrorMessage(
+              "Unable to connect to server. Please check if the backend is running and CORS is configured properly.",
+            )
+            freshUserData = user
+          } else {
+            setErrorMessage("Failed to fetch client data. Using cached information.")
+          }
         }
       }
 
       if (freshUserData && (userId === freshUserData.userId || !userId)) {
         setIsOwner(true)
-        setClientData({
-          ...mockClientData,
-          id: freshUserData.userId,
-          firstName: freshUserData.firstName || "",
-          lastName: freshUserData.lastName || "",
-          username:
-            freshUserData.firstName && freshUserData.lastName
-              ? `@${freshUserData.firstName.toLowerCase()}${freshUserData.lastName.toLowerCase()}`
-              : mockClientData.username,
-          avatar: freshUserData.avatar || mockClientData.avatar,
-          bio: freshUserData.bio || freshUserData.about || "",
-          industry: freshUserData.industry || "",
-          location: freshUserData.location || "",
-          companySize: freshUserData.companySize || "",
-          website: freshUserData.website || "",
-          phoneNumber: freshUserData.phoneNumber || "",
-          joinDate: freshUserData.joinDate || mockClientData.joinDate,
-          rating: freshUserData.rating || mockClientData.rating,
-          totalReviews: freshUserData.totalReviews || mockClientData.totalReviews,
-          totalProjects: freshUserData.totalProjects || mockClientData.totalProjects,
-          projectsPosted: freshUserData.projectsPosted || mockClientData.projectsPosted,
-          reviews: freshUserData.reviews || mockClientData.reviews,
-          coverImage: freshUserData.coverImage || mockClientData.coverImage,
-        })
+        setClientData(
+          createDefaultClientData({
+            ...freshUserData,
+            projectsPosted: clientProjects,
+            totalProjects: clientProjects.length,
+          }),
+        )
       } else {
-        setClientData(mockClientData)
+        setClientData(createDefaultClientData())
         setIsOwner(false)
       }
+
+      setIsLoading(false)
     }
 
     fetchAndUpdateClientData()
-  }, [userId, user, dispatch])
+  }, [userId])
 
   const handleEditProfile = () => {
     console.log("[v0] Edit Profile button clicked - navigating to /profile/edit")
@@ -194,19 +178,40 @@ export default function ClientProfile() {
   }
 
   if (!clientData || isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000] flex items-center justify-center">
-        <div className="flex flex-col items-center">
-          <Loader />
-          <p className="text-white mt-4">{isLoading ? "Loading fresh data..." : "Loading..."}</p>
-        </div>
-      </div>
-    )
+  const handleRetry = () => {
+    setNetworkError(false)
+    setErrorMessage("")
+    setIsLoading(false)
   }
 
+  const handlePhonePrivacyToggle = () => {
+    setIsPhonePublic(!isPhonePublic)
+    // Here you would typically save this preference to the backend
+  }
+
+  
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000] relative">
       <AuthNavbar />
+
+      {networkError && (
+        <div className="bg-red-500/20 border-b border-red-500/30 px-6 py-4">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-3 text-red-200">
+              <AlertCircle className="w-5 h-5" />
+              <span className="text-sm">{errorMessage}</span>
+            </div>
+            <Button
+              size="sm"
+              onClick={handleRetry}
+              className="bg-red-500/20 hover:bg-red-500/30 text-red-200 border border-red-500/30"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Try Again
+            </Button>
+          </div>
+        </div>
+      )}
 
       <div className="pt-20">
         <div className="relative">
@@ -215,9 +220,9 @@ export default function ClientProfile() {
             <div className="absolute inset-0 bg-black/40" />
           </div>
 
-          <div className="absolute bottom-0 left-0 right-0 p-6">
+          <div className="absolute bottom-0 left-0 right-0 p-8">
             <div className="max-w-7xl mx-auto">
-              <div className="flex flex-col md:flex-row items-start md:items-end gap-6">
+              <div className="flex flex-col md:flex-row items-start md:items-end gap-8">
                 <div className="relative">
                   <Avatar className="w-32 h-32 border-4 border-white/20 bg-white/10 backdrop-blur-sm">
                     <AvatarImage
@@ -246,9 +251,9 @@ export default function ClientProfile() {
                 </div>
 
                 <div className="flex-1 text-white">
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
                     <div>
-                      <div className="flex items-center gap-4 mb-2">
+                      <div className="flex items-center gap-4 mb-3">
                         <h1 className="text-3xl font-bold">
                           {clientData.firstName} {clientData.lastName}
                         </h1>
@@ -261,7 +266,7 @@ export default function ClientProfile() {
                           <div className="text-lg font-medium text-[#A95BAB]">{clientData.totalProjects} projects</div>
                         </div>
                       </div>
-                      <p className="text-gray-300 mb-2">{clientData.username}</p>
+                      <p className="text-gray-300 mb-3">{clientData.username}</p>
                       <div className="flex items-center gap-4 text-sm text-gray-300">
                         <div className="flex items-center gap-1">
                           <MapPin className="w-4 h-4" />
@@ -305,36 +310,58 @@ export default function ClientProfile() {
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid lg:grid-cols-3 gap-8">
-            <div className="space-y-6">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 py-10">
+          <div className="grid lg:grid-cols-3 gap-10">
+            <div className="space-y-8">
               <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
                 <CardContent className="p-8">
                   <h3 className="text-xl font-bold text-white mb-6">About</h3>
-                  {clientData.bio && <p className="text-gray-300 leading-relaxed mb-8">{clientData.bio}</p>}
+                  {clientData.bio && <p className="text-gray-300 leading-relaxed mb-8 text-base">{clientData.bio}</p>}
 
-                  <div className="space-y-4 text-sm">
+                  <div className="space-y-4 mb-8">
                     {clientData.industry && (
-                      <div className="flex justify-between py-2">
-                        <span className="text-gray-400">Industry</span>
-                        <span className="text-white font-medium">{clientData.industry}</span>
+                      <div className="flex justify-between py-3 border-b border-white/10">
+                        <span className="text-gray-400 font-medium">Industry</span>
+                        <span className="text-white font-semibold">{clientData.industry}</span>
                       </div>
                     )}
                     {clientData.companySize && (
-                      <div className="flex justify-between py-2">
-                        <span className="text-gray-400">Company Size</span>
-                        <span className="text-white font-medium">{clientData.companySize}</span>
+                      <div className="flex justify-between py-3 border-b border-white/10">
+                        <span className="text-gray-400 font-medium">Company Size</span>
+                        <span className="text-white font-semibold">{clientData.companySize}</span>
                       </div>
                     )}
+                  </div>
+
+                  <div className="space-y-4 text-sm">
                     {clientData.phoneNumber && (
-                      <div className="flex justify-between py-2">
-                        <span className="text-gray-400">Phone</span>
-                        <span className="text-white font-medium">{clientData.phoneNumber}</span>
+                      <div className="flex justify-between items-center py-3">
+                        <span className="text-gray-400 font-medium">Phone</span>
+                        <div className="flex items-center gap-3">
+                          {isOwner ? (
+                            <>
+                              <span className="text-white font-medium">
+                                {isPhonePublic ? clientData.phoneNumber : "Hidden"}
+                              </span>
+                              <button
+                                onClick={handlePhonePrivacyToggle}
+                                className="text-[#A95BAB] hover:text-[#A95BAB]/80 transition-colors"
+                                title={isPhonePublic ? "Make phone private" : "Make phone public"}
+                              >
+                                {isPhonePublic ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                              </button>
+                            </>
+                          ) : (
+                            <span className="text-white font-medium">
+                              {isPhonePublic ? clientData.phoneNumber : "Private"}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     )}
                     {clientData.website && (
-                      <div className="flex justify-between py-2">
-                        <span className="text-gray-400">Website</span>
+                      <div className="flex justify-between py-3">
+                        <span className="text-gray-400 font-medium">Website</span>
                         <a
                           href={`https://${clientData.website}`}
                           target="_blank"
@@ -350,10 +377,10 @@ export default function ClientProfile() {
               </Card>
 
               <div>
-                <h2 className="text-2xl font-bold text-white mb-6">Reviews from Artists ({clientData.totalReviews})</h2>
+                <h2 className="text-2xl font-bold text-white mb-8">Reviews from Artists ({clientData.totalReviews})</h2>
 
                 {clientData.reviews.length > 0 ? (
-                  <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
+                  <div className="space-y-6 max-h-96 overflow-y-auto pr-2">
                     {clientData.reviews.map((review) => (
                       <Card key={review.id} className="bg-white/5 border-white/10 backdrop-blur-sm">
                         <CardContent className="p-6">
@@ -404,9 +431,9 @@ export default function ClientProfile() {
               </div>
             </div>
 
-            <div className="lg:col-span-2 space-y-8">
+            <div className="lg:col-span-2 space-y-10">
               <div>
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-8">
                   <h2 className="text-2xl font-bold text-white">Posts</h2>
                   {isOwner && (
                     <Button
@@ -419,38 +446,38 @@ export default function ClientProfile() {
                 </div>
 
                 {clientData.projectsPosted.length > 0 ? (
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     {clientData.projectsPosted.map((project) => (
                       <Card
                         key={project.id}
                         className="bg-white/5 border-white/10 hover:bg-white/10 backdrop-blur-sm transition-all duration-300"
                       >
-                        <CardContent className="p-6">
-                          <div className="flex items-start justify-between mb-4">
+                        <CardContent className="p-8">
+                          <div className="flex items-start justify-between mb-6">
                             <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-2">
+                              <div className="flex items-center gap-3 mb-3">
                                 <h3 className="text-xl font-semibold text-white">{project.title}</h3>
                                 <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(project.status)}`}>
                                   {project.status}
                                 </span>
                               </div>
-                              <p className="text-gray-300 mb-4">{project.description}</p>
+                              <p className="text-gray-300 mb-6 leading-relaxed">{project.description}</p>
 
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-sm">
                                 <div>
-                                  <span className="text-gray-400">Budget</span>
+                                  <span className="text-gray-400 block mb-1">Budget</span>
                                   <div className="text-white font-medium">{project.budget}</div>
                                 </div>
                                 <div>
-                                  <span className="text-gray-400">Deadline</span>
+                                  <span className="text-gray-400 block mb-1">Deadline</span>
                                   <div className="text-white font-medium">{project.deadline}</div>
                                 </div>
                                 <div>
-                                  <span className="text-gray-400">Applicants</span>
+                                  <span className="text-gray-400 block mb-1">Applicants</span>
                                   <div className="text-white font-medium">{project.applicants}</div>
                                 </div>
                                 <div>
-                                  <span className="text-gray-400">Category</span>
+                                  <span className="text-gray-400 block mb-1">Category</span>
                                   <div className="text-[#A95BAB] font-medium">{project.category}</div>
                                 </div>
                               </div>
@@ -460,7 +487,7 @@ export default function ClientProfile() {
                               <Button
                                 size="sm"
                                 onClick={() => handleEditPost(project.id)}
-                                className="bg-white/10 hover:bg-white/20 border border-white/20 text-white ml-4"
+                                className="bg-white/10 hover:bg-white/20 border border-white/20 text-white ml-6"
                               >
                                 <Edit className="w-4 h-4" />
                               </Button>
@@ -472,12 +499,12 @@ export default function ClientProfile() {
                   </div>
                 ) : (
                   <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
-                    <CardContent className="p-8 text-center">
-                      <p className="text-gray-400">No posts yet.</p>
+                    <CardContent className="p-10 text-center">
+                      <p className="text-gray-400 mb-4">No posts yet.</p>
                       {isOwner && (
                         <Button
                           onClick={() => navigate("/marketplace/create")}
-                          className="mt-4 bg-[#A95BAB] hover:bg-[#A95BAB]/80"
+                          className="bg-[#A95BAB] hover:bg-[#A95BAB]/80"
                         >
                           Create Your First Post
                         </Button>
