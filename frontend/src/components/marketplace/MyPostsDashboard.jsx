@@ -1,11 +1,13 @@
 "use client"
 
+import Loader from "../ui/Loader"
+
 const MyPostsDashboard = ({ posts, loading, error, onEdit, onDelete, onView, deleteConfirm, onCancelDelete }) => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-12 px-6">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#A95BAB] mb-4"></div>
-        <p className="text-gray-600">Loading your posts...</p>
+        <Loader />
+        <p className="text-gray-600 mt-4">Loading your posts...</p>
       </div>
     )
   }

@@ -12,10 +12,27 @@ export const fetchPostById = createAsyncThunk("marketplace/fetchPostById", async
   return response.data
 })
 
-export const createPost = createAsyncThunk("marketplace/createPost", async (postData) => {
-  const response = await marketplaceAPI.createAvailabilityPost(postData)
-  return response.data
-})
+export const createPost = createAsyncThunk(
+  "marketplace/createPost", 
+  async (postData, { rejectWithValue, getState }) => {
+    try {
+      const response = await marketplaceAPI.createAvailabilityPost(postData);
+      return response.data;
+    } catch (error) {
+      // Handle different types of errors
+      if (error.response?.status === 401) {
+        return rejectWithValue("Authentication required. Please log in.");
+      } else if (error.response?.status === 403) {
+        return rejectWithValue("Only artists can create availability posts.");
+      } else if (error.response?.data?.error) {
+        return rejectWithValue(error.response.data.error);
+      } else {
+        return rejectWithValue("Failed to create post. Please try again.");
+      }
+    }
+  }
+);
+
 
 export const updatePost = createAsyncThunk("marketplace/updatePost", async ({ postId, postData }) => {
   const response = await marketplaceAPI.updateAvailabilityPost(postId, postData)

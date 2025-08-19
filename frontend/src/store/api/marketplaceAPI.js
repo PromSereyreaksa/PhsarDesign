@@ -11,25 +11,65 @@ const api = axios.create({
 })
 
 // Add auth token to requests
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("authToken")
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-  return config
-})
 
-// Handle auth errors
+
+// 1. Request interceptor → attach token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("authToken") 
+               || localStorage.getItem("token") 
+               || sessionStorage.getItem("authToken") 
+               || sessionStorage.getItem("token");
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// 2. Response interceptor → refresh on 401
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem("authToken")
-      window.location.href = "/login"
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        const refreshResponse = await axios.post(
+          `${API_BASE_URL}/api/auth/refresh`,
+          {},
+          { withCredentials: true }
+        );
+
+        if (refreshResponse.data.token) {
+          // Update Redux store
+          const state = store.getState();
+          const user = state.auth.user;
+
+          store.dispatch(
+            loginSuccess({ user, token: refreshResponse.data.token })
+          );
+
+          // Retry with new token
+          originalRequest.headers.Authorization = `Bearer ${refreshResponse.data.token}`;
+          return api(originalRequest);
+        }
+      } catch (refreshError) {
+        const state = store.getState();
+        if (state.auth.isAuthenticated) {
+          store.dispatch(logout());
+        }
+        return Promise.reject(refreshError);
+      }
     }
-    return Promise.reject(error)
-  },
-)
+
+    return Promise.reject(error);
+  }
+);
 
 // Availability Posts API endpoints
 export const getAllAvailabilityPosts = (filters = {}) => {
@@ -143,7 +183,14 @@ export const getAvailabilityPostBySlug = (slug) => {
 }
 
 export const createAvailabilityPost = (postData) => {
-  return api.post("/api/availability-posts", postData)
+  const isFormData = typeof FormData !== 'undefined' && postData instanceof FormData;
+  return api.post(
+    "/api/availability-posts",
+    postData,
+    isFormData
+      ? { headers: { "Content-Type": undefined } }
+      : undefined
+  )
 }
 
 export const updateAvailabilityPost = (postId, postData) => {
@@ -161,13 +208,11 @@ export const getMyAvailabilityPosts = () => {
 export const uploadImages = (files) => {
   const formData = new FormData()
   files.forEach((file, index) => {
-    formData.append(`photos`, file)
+    formData.append("attachments", file)
   })
 
   return api.post("/api/upload/images", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
+    headers: { "Content-Type": undefined },
   })
 }
 

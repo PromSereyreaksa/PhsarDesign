@@ -11,6 +11,7 @@ import AuthNavbar from "../../components/layout/navigation/AuthNavbar"
 import AuthFooter from "../../components/layout/footer/AuthFooter"
 import { usersAPI } from "../../services/api"
 import { updateProfile } from "../../store/slices/authSlice"
+import Loader from "../../components/ui/Loader"
 
 export default function ClientProfile() {
   const { userId } = useParams()
@@ -19,6 +20,7 @@ export default function ClientProfile() {
   const { user } = useSelector((state) => state.auth)
   const [isOwner, setIsOwner] = useState(false)
   const [clientData, setClientData] = useState(null)
+  const { isLoading } = useSelector((state) => state.user)
 
   const mockClientData = {
     id: userId || "1",
@@ -191,10 +193,13 @@ export default function ClientProfile() {
     }
   }
 
-  if (!clientData) {
+  if (!clientData || isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000] flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+        <div className="flex flex-col items-center">
+          <Loader />
+          <p className="text-white mt-4">{isLoading ? "Loading fresh data..." : "Loading..."}</p>
+        </div>
       </div>
     )
   }

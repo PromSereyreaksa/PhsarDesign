@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import { Link, useNavigate, useLocation } from "react-router-dom"
 import { useDispatch, useSelector } from "react-redux"
 import { Eye, EyeOff, ArrowLeft } from "lucide-react"
@@ -151,7 +151,13 @@ export default function LoginPage() {
                   className="w-full bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-xl py-3 font-semibold"
                   disabled={loading}
                 >
-                  {loading ? "Signing in..." : "Sign In"}
+                  {loading ? (
+                    <div className="flex items-center justify-center">
+                      <span className="ml-2">Signing in...</span>
+                    </div>
+                  ) : (
+                    "Sign In"
+                  )}
                 </Button>
               </form>
             )}

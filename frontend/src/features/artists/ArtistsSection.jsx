@@ -1,8 +1,12 @@
 "use client"
 
+import React from 'react'
 import { useEffect } from "react"
 import { useAppDispatch, useAppSelector } from "../../hook/useRedux"
+import { useNavigate } from 'react-router-dom'
 import SectionHeader from "../../components/common/SectionHeader"
+import HoverOverlay from '../../components/common/HoverOverlay'
+import Loader from '../../components/ui/Loader'
 import { fetchArtists } from "../../store/slices/artistsSlice"
 
 export default function ArtistsSection({ customImages }) {
@@ -67,17 +71,10 @@ export default function ArtistsSection({ customImages }) {
 
   if (loading && artists.length === 0) {
     return (
-      <section className="py-20 relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <SectionHeader 
-            title="Featured Artists"
-            subtitle="Meet our talented creative professionals"
-          />
-          <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#A95BAB]"></div>
-          </div>
-        </div>
-      </section>
+      <div className="flex flex-col items-center justify-center py-12">
+        <Loader />
+        <p className="text-gray-400 mt-4">Loading artists...</p>
+      </div>
     )
   }
 

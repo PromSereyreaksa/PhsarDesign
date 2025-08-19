@@ -8,6 +8,7 @@ import { usersAPI, uploadAPI, artistsAPI } from "../../services/api"
 import { Plus, X, ToggleLeft, ToggleRight } from "lucide-react"
 import AuthNavbar from "../../components/layout/navigation/AuthNavbar"
 import AuthFooter from "../../components/layout/footer/AuthFooter"
+import Loader from "../../components/ui/Loader"
 
 const EditProfile = () => {
   const { user, token } = useSelector((state) => state.auth)
@@ -117,9 +118,9 @@ const EditProfile = () => {
       }
 
       // Validate file type
-      const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"]
+      const allowedTypes = ["image/jpeg", "image/png"]
       if (!allowedTypes.includes(file.type)) {
-        throw new Error("File must be an image (JPEG, PNG, GIF, or WebP)")
+        throw new Error("File must be an image (JPEG or PNG)")
       }
 
       console.log("[v0] File validation passed:", {
@@ -672,8 +673,8 @@ const EditProfile = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading your profile data...</p>
+          <Loader />
+          <p className="text-gray-600 mt-4">Loading your profile data...</p>
         </div>
       </div>
     )

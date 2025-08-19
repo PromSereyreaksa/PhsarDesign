@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from "../../hook/useRedux"
 import { fetchPostById, updatePost, clearCurrentPost } from "../../store/slices/marketplaceSlice"
 import EditPostForm from "../../components/marketplace/EditPostForm"
 import MarketplaceNav from "../../components/marketplace/MarketplaceNav"
+import Loader from "../../components/ui/Loader"
 
 const EditPostPage = () => {
   const { postId } = useParams()
@@ -46,9 +47,8 @@ const EditPostPage = () => {
     return (
       <div className="edit-post-page">
         <MarketplaceNav />
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Loading post...</p>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader />
         </div>
       </div>
     )
