@@ -20,7 +20,6 @@ export default function ClientProfile() {
   const { user } = useSelector((state) => state.auth)
   const [isOwner, setIsOwner] = useState(false)
   const [clientData, setClientData] = useState(null)
-  const { isLoading } = useSelector((state) => state.user)
   const [isLoading, setIsLoading] = useState(false)
   const [networkError, setNetworkError] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
@@ -521,4 +520,4 @@ export default function ClientProfile() {
       </div>
     </div>
   )
-}
+}}
