@@ -191,10 +191,10 @@ export const applicationsAPI = {
 // Upload API
 export const uploadAPI = {
   uploadImage: (formData) => api.post('/api/upload/image', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
+    headers: { 'Content-Type': undefined, 'Accept': 'application/json' }
   }),
   uploadImages: (formData) => api.post('/api/upload/images', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
+    headers: { 'Content-Type': undefined, 'Accept': 'application/json' }
   }),
   uploadAvatar: async (formData) => {
     // First, validate the FormData

@@ -1,13 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { useDispatch, useSelector } from "react-redux"
-import { Eye, EyeOff, ArrowLeft } from "lucide-react"
+// import { register } from "../../../store/actions/authActions"
+import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card"
 import { Button } from "../../../components/ui/button"
 import { Input } from "../../../components/ui/input"
 import { Label } from "../../../components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card"
+import { Eye, EyeOff, ArrowLeft } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select"
 import { authAPI } from "../../../services/api"
 import { loginStart, loginFailure } from "../../../store/slices/authSlice"
@@ -307,7 +308,13 @@ export default function RegisterPage() {
                   }
                 }}
               >
-                {loading ? "Creating Account..." : "Create Account"}
+                {loading ? (
+                  <div className="flex items-center justify-center">
+                    <span className="ml-2">Creating Account...</span>
+                  </div>
+                ) : (
+                  "Create Account"
+                )}
               </Button>
             </form>
 

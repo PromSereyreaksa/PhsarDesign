@@ -1,11 +1,14 @@
-import { useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Textarea } from '../ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import React, { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
+import { useDispatch, useSelector } from "react-redux"
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
+import { Button } from "../../components/ui/button"
+import { Input } from "../../components/ui/input"
+import { Label } from "../../components/ui/label"
+import { Textarea } from "../../components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select"
+import { Eye, EyeOff, Upload, ArrowLeft } from "lucide-react"
+import Loader from "../../components/ui/Loader"
 import { createClientProfile, createFreelancerProfile } from '../../store/actions/authActions';
 
 export default function ProfileSetup() {
@@ -204,7 +207,14 @@ export default function ProfileSetup() {
                 className="w-full bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-xl py-3 font-semibold"
                 disabled={loading}
               >
-                {loading ? 'Creating Profile...' : 'Complete Setup'}
+                {loading ? (
+                  <div className="flex items-center justify-center">
+                    <Loader />
+                    <span className="ml-2">Creating Profile...</span>
+                  </div>
+                ) : (
+                  'Complete Setup'
+                )}
               </Button>
             </form>
           </CardContent>

@@ -11,6 +11,7 @@ import AuthNavbar from "../../components/layout/navigation/AuthNavbar"
 import AuthFooter from "../../components/layout/footer/AuthFooter"
 import { clientsAPI, usersAPI } from "../../services/api"
 import { updateProfile } from "../../store/slices/authSlice"
+import Loader from "../../components/ui/Loader"
 
 export default function ClientProfile() {
   const { userId } = useParams()
@@ -19,6 +20,7 @@ export default function ClientProfile() {
   const { user } = useSelector((state) => state.auth)
   const [isOwner, setIsOwner] = useState(false)
   const [clientData, setClientData] = useState(null)
+  const { isLoading } = useSelector((state) => state.user)
   const [isLoading, setIsLoading] = useState(false)
   const [networkError, setNetworkError] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
@@ -175,6 +177,7 @@ export default function ClientProfile() {
     }
   }
 
+  if (!clientData || isLoading) {
   const handleRetry = () => {
     setNetworkError(false)
     setErrorMessage("")
@@ -186,14 +189,7 @@ export default function ClientProfile() {
     // Here you would typically save this preference to the backend
   }
 
-  if (!clientData) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000] flex items-center justify-center">
-        <div className="text-white">Loading...</div>
-      </div>
-    )
-  }
-
+  
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000] relative">
       <AuthNavbar />

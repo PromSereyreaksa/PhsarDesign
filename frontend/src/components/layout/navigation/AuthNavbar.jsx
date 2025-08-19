@@ -220,9 +220,9 @@ const DropdownItem = ({ text, items = [], isMobile = false }) => {
               >
                 {/* User Avatar */}
                 <div className="w-8 h-8 bg-[#A95BAB] rounded-full flex items-center justify-center">
-                  {user?.avatar ? (
+                  {user?.avatarURL ? (
                     <img
-                      src={user.avatar}
+                      src={user.avatarURL}
                       alt={user.firstName}
                       className="w-8 h-8 rounded-full object-cover"
                     />
@@ -304,4 +304,5 @@ const DropdownItem = ({ text, items = [], isMobile = false }) => {
       </div>
     </nav>
   )
+
 }

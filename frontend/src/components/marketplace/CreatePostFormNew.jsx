@@ -1,8 +1,11 @@
 "use client"
 
-import { useState } from "react"
-import { Plus, X, Upload, Trash2, DollarSign, Clock, MapPin, Tag } from "lucide-react"
-import { uploadImages } from "../../store/api/marketplaceAPI"
+import React, { useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { useAppDispatch } from "../../hook/useRedux"
+import { createPost } from "../../store/slices/marketplaceSlice"
+import { Trash2, Upload, X } from "lucide-react"
+import Loader from "../ui/Loader"
 
 const CreatePostForm = ({ onSubmit, onCancel, isSubmitting = false }) => {
   const [formData, setFormData] = useState({
@@ -370,7 +373,7 @@ const CreatePostForm = ({ onSubmit, onCancel, isSubmitting = false }) => {
 
             {uploadingImages && (
               <div className="flex items-center justify-center py-4">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#A95BAB]"></div>
+                <Loader />
                 <span className="ml-2 text-gray-300">Uploading...</span>
               </div>
             )}
@@ -418,8 +421,8 @@ const CreatePostForm = ({ onSubmit, onCancel, isSubmitting = false }) => {
           >
             {isSubmitting ? (
               <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Creating Post...
+                <Loader />
+                <span className="ml-2">Creating Post...</span>
               </div>
             ) : (
               "Create Post"

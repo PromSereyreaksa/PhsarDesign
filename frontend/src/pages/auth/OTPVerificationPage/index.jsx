@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import { useDispatch, useSelector } from "react-redux"
 import { ArrowLeft, RefreshCw } from "lucide-react"
@@ -252,8 +252,15 @@ export default function OTPVerification() {
                 <Button
                   type="submit"
                   className="w-full bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-xl py-3 font-semibold"
+                  disabled={loading || localLoading}
                 >
-                  {(loading || localLoading) ? "Verifying..." : "Verify Code"}
+                  {(loading || localLoading) ? (
+                    <div className="flex items-center justify-center">
+                      <span className="ml-2">Verify</span>
+                    </div>
+                  ) : (
+                    "Verify Code"
+                  )}
                 </Button>
               </form>
             )}

@@ -11,6 +11,7 @@ import AuthNavbar from "../../components/layout/navigation/AuthNavbar"
 import AuthFooter from "../../components/layout/footer/AuthFooter"
 import { usersAPI, artistsAPI, availabilityPostsAPI } from "../../services/api"
 import { updateProfile } from "../../store/slices/authSlice"
+import Loader from "../../components/ui/Loader"
 
 export default function ArtistProfile() {
   const { userId } = useParams()
@@ -257,7 +258,10 @@ export default function ArtistProfile() {
   if (!artistData || isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000] flex items-center justify-center">
-        <div className="text-white">{isLoading ? "Loading fresh data..." : "Loading..."}</div>
+        <div className="flex flex-col items-center">
+          <Loader />
+          <p className="text-white mt-4">{isLoading ? "Loading fresh data..." : "Loading..."}</p>
+        </div>
       </div>
     )
   }

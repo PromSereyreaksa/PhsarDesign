@@ -1,11 +1,12 @@
 "use client"
 
-import { useEffect } from "react"
+import React, { useEffect, useState } from 'react'
 import { useSelector, useDispatch } from "react-redux"
 import { useNavigate } from "react-router-dom"
 import SectionHeader from "../../components/common/SectionHeader"
 import HoverOverlay from "../../components/common/HoverOverlay"
 import { fetchPosts, fetchCategories, clearError } from "../../store/slices/postsSlice"
+import Loader from '../../components/ui/Loader'
 
 export default function PopularServicesSection({ customImages }) {
   const dispatch = useDispatch()
@@ -97,15 +98,9 @@ export default function PopularServicesSection({ customImages }) {
     // Show loading state - but with timeout to prevent infinite loading
     if (loading || categoriesLoading) {
       return (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {Array.from({ length: 8 }).map((_, index) => (
-            <div key={index} className="relative rounded-xl overflow-hidden bg-gray-800 animate-pulse">
-              <div className="w-full h-48 bg-gray-700"></div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-white text-sm">Loading...</span>
-              </div>
-            </div>
-          ))}
+        <div className="flex flex-col items-center justify-center py-12">
+          <Loader />
+          <p className="text-gray-400 mt-4">Loading services...</p>
         </div>
       )
     }

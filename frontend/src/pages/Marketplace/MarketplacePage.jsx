@@ -2,12 +2,13 @@
 
 import { useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
-import { Search } from "lucide-react"
+import { Search, ArrowLeft } from "lucide-react"
 import { useAppDispatch, useAppSelector } from "../../hook/useRedux"
 import { fetchPosts, setFilters } from "../../store/slices/marketplaceSlice"
 import MarketplaceFilters from "../../components/marketplace/MarketplaceFilters"
 import PostCard from "../../components/marketplace/PostCard"
 import AuthNavbar from "../../components/layout/navigation/AuthNavbar"
+import Loader from "../../components/ui/Loader"
 
 const MarketplacePage = () => {
   const dispatch = useAppDispatch()
@@ -42,8 +43,8 @@ const MarketplacePage = () => {
       <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000]">
         <AuthNavbar />
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-white">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#A95BAB] mb-4"></div>
-          <p className="text-lg text-gray-300">Loading marketplace...</p>
+          <Loader />
+          <p className="text-lg text-gray-300 mt-4">Loading marketplace...</p>
         </div>
       </div>
     )
@@ -71,15 +72,26 @@ const MarketplacePage = () => {
       <AuthNavbar />
 
       {/* Hero Section */}
-      <div className="pt-20 pb-12 text-center">
-        <h1 className="text-4xl md:text-5xl font-bold mb-4">
-          <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-            Marketplace
-          </span>
-        </h1>
-        <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-          Discover talented artists and quality services
-        </p>
+      <div className="pt-20 pb-12">
+        <div className="max-w-5xl mx-auto px-6">
+          <button
+            onClick={() => navigate('/home')}
+            className="inline-flex items-center text-gray-300 hover:text-[#A95BAB] mb-6 transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Home
+          </button>
+        </div>
+        <div className="text-center">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+            <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+              Marketplace
+            </span>
+          </h1>
+          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+            Discover talented artists and quality services
+          </p>
+        </div>
       </div>
 
       {/* Search and Filter Section */}

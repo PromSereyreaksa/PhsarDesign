@@ -7,6 +7,8 @@ import { useAppDispatch, useAppSelector } from "../../hook/useRedux"
 import { fetchPostById, clearCurrentPost, fetchPosts } from "../../store/slices/marketplaceSlice"
 import PostCard from "../../components/marketplace/PostCard"
 import AuthNavbar from "../../components/layout/navigation/AuthNavbar"
+import PostDetail from "../../components/marketplace/PostDetail"
+import Loader from "../../components/ui/Loader"
 
 const PostDetailPage = () => {
   const { slug } = useParams()
@@ -64,9 +66,9 @@ const PostDetailPage = () => {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000]">
         <AuthNavbar />
-        <div className="flex flex-col items-center justify-center min-h-[70vh] text-white">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#A95BAB] mb-4"></div>
-          <p className="text-lg text-gray-300">Loading post details...</p>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-white">
+          <Loader />
+          <p className="text-lg text-gray-300 mt-4">Loading post details...</p>
         </div>
       </div>
     )
