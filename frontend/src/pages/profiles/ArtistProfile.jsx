@@ -12,6 +12,17 @@ import AuthFooter from "../../components/layout/footer/AuthFooter"
 import { usersAPI, artistsAPI, availabilityPostsAPI } from "../../services/api"
 import { updateProfile } from "../../store/slices/authSlice"
 
+/**
+ * Render the ArtistProfile page for viewing an artist's public profile or the logged-in user's own profile.
+ *
+ * Displays header, cover, avatar, about, skills/tools, reviews and a portfolio grid. When mounted it loads
+ * profile details and portfolio posts from remote APIs, merges them with fallback/mock data, and updates
+ * Redux with refreshed user information for the owner view. Supports owner-specific actions (edit profile,
+ * add/edit portfolio items, navigate to dashboard) and visitor actions (message, follow). Shows loading and
+ * error-fallback states while fetching data.
+ *
+ * @returns {JSX.Element} The ArtistProfile React component tree.
+ */
 export default function ArtistProfile() {
   const { userId } = useParams()
   const navigate = useNavigate()

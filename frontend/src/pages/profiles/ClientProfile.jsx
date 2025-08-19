@@ -12,6 +12,24 @@ import AuthFooter from "../../components/layout/footer/AuthFooter"
 import { clientsAPI, usersAPI } from "../../services/api"
 import { updateProfile } from "../../store/slices/authSlice"
 
+/**
+ * ClientProfile React component that renders a user's public profile page.
+ *
+ * Renders a cover image, avatar, bio, contact info, reviews and projects. When viewing
+ * the current authenticated user's profile the component fetches comprehensive client
+ * data (user, client-specific data, and projects), updates the Redux profile state,
+ * and enables editing actions. For visitors it shows a public-facing view with privacy-aware
+ * phone display. The component includes loading and network-error handling with a retry
+ * control and exposes UI handlers for editing the profile, editing posts, retrying failed
+ * network loads, and toggling phone-number visibility.
+ *
+ * Side effects:
+ * - Fetches user/client data and projects (when viewing own profile) and dispatches an updated profile to Redux.
+ * - May set network error state and an error message when backend/network requests fail.
+ * - Uses navigation hooks to route to profile and post edit/create pages.
+ *
+ * @returns {JSX.Element} The profile page UI.
+ */
 export default function ClientProfile() {
   const { userId } = useParams()
   const navigate = useNavigate()
