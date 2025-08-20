@@ -1,15 +1,13 @@
 "use client"
 
+import { ArrowLeft, ChevronLeft, ChevronRight, Clock, MapPin, Star, Tag, User } from "lucide-react"
 import { useEffect, useState } from "react"
-import { useParams, useNavigate } from "react-router-dom"
-import { ArrowLeft, Clock, Star, MapPin, User, ChevronLeft, ChevronRight, Tag } from "lucide-react"
-import { useAppDispatch, useAppSelector } from "../../hook/useRedux"
-import { fetchPostById, clearCurrentPost, fetchPosts } from "../../store/slices/marketplaceSlice"
-import PostCard from "../../components/marketplace/PostCard"
+import { useNavigate, useParams } from "react-router-dom"
+import AuthNavbar from "../../components/layout/AuthNavbar"
 import SimplePostCard from "../../components/marketplace/SimplePostCard"
-import AuthNavbar from "../../components/layout/navigation/AuthNavbar"
-import PostDetail from "../../components/marketplace/PostDetail"
 import Loader from "../../components/ui/Loader"
+import { useAppDispatch, useAppSelector } from "../../hook/useRedux"
+import { clearCurrentPost, fetchPostById, fetchPosts } from "../../store/slices/marketplaceSlice"
 
 const PostDetailPage = () => {
   const { slug } = useParams()

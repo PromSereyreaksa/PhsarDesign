@@ -1,9 +1,8 @@
 "use client"
 
-import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import SectionHeader from "../../components/common/SectionHeader"
-import HoverOverlay from "../../components/common/HoverOverlay"
+import HoverOverlay from "../../../components/common/HoverOverlay"
+import SectionHeader from "../../../components/common/SectionHeader"
 
 export default function FreelancingOpportunitiesSection({ customImages, titleRef }) {
   const navigate = useNavigate()

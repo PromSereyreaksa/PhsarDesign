@@ -1,13 +1,13 @@
 "use client"
 
+import { ArrowLeft, Mail } from "lucide-react"
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { ArrowLeft, Mail } from "lucide-react"
 import { Button } from "../../../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card"
 import { Input } from "../../../components/ui/input"
 import { Label } from "../../../components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card"
-import { authAPI } from "../../../services/api"
+import { authAPI } from "../../../lib/api"
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("")

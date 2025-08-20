@@ -1,5 +1,5 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
-import { getArtists } from "../../services/artistsAPI"
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit"
+import { getArtists } from "../api/artistsAPI"
 
 // Async thunks for API calls
 export const fetchArtists = createAsyncThunk("artists/fetchArtists", async () => {

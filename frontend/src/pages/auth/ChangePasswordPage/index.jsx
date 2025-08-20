@@ -1,13 +1,13 @@
 "use client"
 
+import { ArrowLeft, CheckCircle, Eye, EyeOff } from "lucide-react"
 import { useState } from "react"
-import { useNavigate, useLocation } from "react-router-dom"
-import { Eye, EyeOff, ArrowLeft, CheckCircle } from "lucide-react"
+import { useLocation, useNavigate } from "react-router-dom"
 import { Button } from "../../../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card"
 import { Input } from "../../../components/ui/input"
 import { Label } from "../../../components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card"
-import { authAPI } from "../../../services/api"
+import { authAPI } from "../../../lib/api"
 
 export default function ChangePassword() {
   const [formData, setFormData] = useState({

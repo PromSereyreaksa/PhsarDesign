@@ -1,12 +1,12 @@
 "use client"
 
-import React, { useEffect, useState } from 'react'
-import { useSelector, useDispatch } from "react-redux"
+import { useEffect } from 'react'
+import { useDispatch, useSelector } from "react-redux"
 import { useNavigate } from "react-router-dom"
-import SectionHeader from "../../components/common/SectionHeader"
-import HoverOverlay from "../../components/common/HoverOverlay"
-import { fetchPosts, fetchCategories, clearError } from "../../store/slices/postsSlice"
-import Loader from '../../components/ui/Loader'
+import HoverOverlay from "../../../components/common/HoverOverlay"
+import SectionHeader from "../../../components/common/SectionHeader"
+import Loader from '../../../components/ui/Loader'
+import { clearError, fetchCategories, fetchPosts } from "../../../store/slices/postsSlice"
 
 export default function PopularServicesSection({ customImages }) {
   const dispatch = useDispatch()

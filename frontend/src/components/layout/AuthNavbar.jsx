@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
-import { useSelector, useDispatch } from "react-redux"
+import { Bell, Briefcase, ChevronRight, LayoutDashboard, LogOut, Plus, Search, Settings, User, Users } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import { useDispatch, useSelector } from "react-redux"
 import { useNavigate } from "react-router-dom"
-import { Bell, User, Settings, LayoutDashboard, LogOut, ChevronRight, Plus, Search, Users, Briefcase } from "lucide-react"
-import { logout } from "../../../store/slices/authSlice"
+import { logout } from "../../store/slices/authSlice"
 
 export default function AuthNavbar() {
   const [isHovered, setIsHovered] = useState({})

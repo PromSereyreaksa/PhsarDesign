@@ -1,14 +1,13 @@
 "use client"
 
+import { ArrowLeft, Search } from "lucide-react"
 import { useEffect } from "react"
-import { useNavigate, useLocation } from "react-router-dom"
-import { Search, ArrowLeft } from "lucide-react"
+import { useLocation, useNavigate } from "react-router-dom"
+import AuthNavbar from "../../components/layout/AuthNavbar"
+import PostCard from "../../components/marketplace/PostCard"
+import Loader from "../../components/ui/Loader"
 import { useAppDispatch, useAppSelector } from "../../hook/useRedux"
 import { fetchPosts, setFilters } from "../../store/slices/marketplaceSlice"
-import MarketplaceFilters from "../../components/marketplace/MarketplaceFilters"
-import PostCard from "../../components/marketplace/PostCard"
-import AuthNavbar from "../../components/layout/navigation/AuthNavbar"
-import Loader from "../../components/ui/Loader"
 
 const MarketplacePage = () => {
   const dispatch = useAppDispatch()
