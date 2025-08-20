@@ -1,17 +1,17 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
+import { Link, useNavigate } from "react-router-dom"
 // import { register } from "../../../store/actions/authActions"
-import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card"
+import { ArrowLeft, Eye, EyeOff } from "lucide-react"
 import { Button } from "../../../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card"
 import { Input } from "../../../components/ui/input"
 import { Label } from "../../../components/ui/label"
-import { Eye, EyeOff, ArrowLeft } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select"
-import { authAPI } from "../../../services/api"
-import { loginStart, loginFailure } from "../../../store/slices/authSlice"
+import { authAPI } from "../../../lib/api"
+import { loginFailure, loginStart } from "../../../store/slices/authSlice"
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({

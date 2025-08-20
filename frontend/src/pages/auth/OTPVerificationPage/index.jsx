@@ -1,15 +1,15 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from "react"
-import { useNavigate, useLocation } from "react-router-dom"
-import { useDispatch, useSelector } from "react-redux"
 import { ArrowLeft, RefreshCw } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import { useDispatch, useSelector } from "react-redux"
+import { useLocation, useNavigate } from "react-router-dom"
 import { Button } from "../../../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card"
 import { Input } from "../../../components/ui/input"
 import { Label } from "../../../components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card"
-import { authAPI } from "../../../services/api"
-import { loginStart, loginSuccess, loginFailure } from "../../../store/slices/authSlice"
+import { authAPI } from "../../../lib/api"
+import { loginFailure, loginStart, loginSuccess } from "../../../store/slices/authSlice"
 
 export default function OTPVerification() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""])

@@ -1,17 +1,17 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { ArrowRight, DollarSign, MessageSquare, Palette, Search, Shield, Sparkles, Star } from "lucide-react"
+import { useEffect, useState } from "react"
+import { useDispatch, useSelector } from "react-redux"
 import { Link, useNavigate } from "react-router-dom"
-import { useSelector, useDispatch } from "react-redux"
-import { ArrowRight, Palette, DollarSign, Shield, Star, Sparkles, Search, MessageSquare } from "lucide-react"
+import SharedPublicFooter from "../../../components/layout/SharedPublicFooter"
+import SharedPublicNavbar from "../../../components/layout/SharedPublicNavbar"
 import { Button } from "../../../components/ui/button"
-import { Input } from "../../../components/ui/input"
 import { Card, CardContent } from "../../../components/ui/card"
-import SharedPublicNavbar from "../../../components/layout/navigation/SharedPublicNavbar"
-import SharedPublicFooter from "../../../components/layout/footer/SharedPublicFooter"
-import { fetchPosts } from "../../../store/slices/marketplaceSlice"
+import { Input } from "../../../components/ui/input"
 import { fetchArtists } from "../../../store/slices/artistsSlice"
-import { fetchPosts as fetchPostsForServices, fetchCategories } from "../../../store/slices/postsSlice"
+import { fetchPosts } from "../../../store/slices/marketplaceSlice"
+import { fetchCategories, fetchPosts as fetchPostsForServices } from "../../../store/slices/postsSlice"
 
 export default function LandingPage() {
   const [email, setEmail] = useState("")

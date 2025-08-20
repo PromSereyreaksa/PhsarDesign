@@ -1,10 +1,10 @@
 "use client"
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
+import AuthNavbar from "../../components/layout/AuthNavbar"
+import CreatePostForm from "../../components/marketplace/CreatePostForm"
 import { useAppDispatch } from "../../hook/useRedux"
 import { createPost } from "../../store/slices/marketplaceSlice"
-import CreatePostForm from "../../components/marketplace/CreatePostForm"
-import AuthNavbar from "../../components/layout/navigation/AuthNavbar"
 
 const CreatePostPage = () => {
   const navigate = useNavigate()

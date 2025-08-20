@@ -1,13 +1,13 @@
 "use client"
 
 import { useRef } from "react"
-import HeroSectionAuth from "./components/HeroSectionAuth"
+import FooterSection from "../../components/layout/AuthFooter"
+import AuthNavbar from "../../components/layout/AuthNavbar"
+import ArtistsSection from "../public/LandingPage/ArtistsSection"
+import FreelancingOpportunitiesSection from "../public/LandingPage/FreelancingOpportunitiesSection"
+import PopularServicesSection from "../public/LandingPage/PopularServicesSection"
 import ExploreSection from "./components/ExploreSection"
-import FreelancingOpportunitiesSection from "../../../features/freelancing/FreelancingOpportunitiesSection"
-import PopularServicesSection from "../../../features/services/PopularServicesSection"
-import ArtistsSection from "../../../features/artists/ArtistsSection"
-import FooterSection from "../../../components/layout/footer/AuthFooter"
-import AuthNavbar from "../../../components/layout/navigation/AuthNavbar"
+import HeroSectionAuth from "./components/HeroSectionAuth"
 
 export default function HomePage() {
   const freelancingRef = useRef(null)

@@ -1,13 +1,13 @@
 "use client"
 
+import { ArrowRight, Award, CheckCircle, Clock, Globe, Heart, Linkedin, Mail, Send, Shield, Star, Target, Users } from "lucide-react"
 import { useState } from "react"
 import { Link } from "react-router-dom"
-import { ArrowRight, Users, Target, Award, Heart, CheckCircle, Star, Globe, Shield, Clock, Mail, Send, Linkedin, Menu, X } from "lucide-react"
+import SharedPublicFooter from "../../../components/layout/SharedPublicFooter"
+import SharedPublicNavbar from "../../../components/layout/SharedPublicNavbar"
 import { Button } from "../../../components/ui/button"
 import { Card, CardContent } from "../../../components/ui/card"
 import { Input } from "../../../components/ui/input"
-import SharedPublicNavbar from "../../../components/layout/navigation/SharedPublicNavbar"
-import SharedPublicFooter from "../../../components/layout/footer/SharedPublicFooter"
 
 export default function AboutPage() {
   const [email, setEmail] = useState("")

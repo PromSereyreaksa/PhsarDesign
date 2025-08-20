@@ -1,5 +1,5 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { availabilityPostsAPI, portfolioAPI } from '../../services/api';
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { availabilityPostsAPI, portfolioAPI } from '../../lib/api';
 
 // Async thunks
 export const fetchPosts = createAsyncThunk(

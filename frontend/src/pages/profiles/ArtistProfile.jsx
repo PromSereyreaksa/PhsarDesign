@@ -1,17 +1,17 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useParams, useNavigate } from "react-router-dom"
-import { useSelector, useDispatch } from "react-redux"
-import { Star, MapPin, Calendar, Edit, MessageSquare, Heart, Eye } from "lucide-react"
+import { Calendar, Edit, Eye, Heart, MapPin, MessageSquare, Star } from "lucide-react"
+import { useEffect, useState } from "react"
+import { useDispatch, useSelector } from "react-redux"
+import { useNavigate, useParams } from "react-router-dom"
+import AuthFooter from "../../components/layout/AuthFooter"
+import AuthNavbar from "../../components/layout/AuthNavbar"
+import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar"
 import { Button } from "../../components/ui/button"
 import { Card, CardContent } from "../../components/ui/card"
-import { Avatar, AvatarImage, AvatarFallback } from "../../components/ui/avatar"
-import AuthNavbar from "../../components/layout/navigation/AuthNavbar"
-import AuthFooter from "../../components/layout/footer/AuthFooter"
-import { usersAPI, artistsAPI, availabilityPostsAPI } from "../../services/api"
-import { updateProfile } from "../../store/slices/authSlice"
 import Loader from "../../components/ui/Loader"
+import { artistsAPI, availabilityPostsAPI, usersAPI } from "../../lib/api"
+import { updateProfile } from "../../store/slices/authSlice"
 
 export default function ArtistProfile() {
   const { userId } = useParams()

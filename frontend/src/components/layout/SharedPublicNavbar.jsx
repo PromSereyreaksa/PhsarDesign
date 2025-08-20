@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { ChevronRight, LayoutDashboard, LogOut, Menu, Settings, User, X } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import { useDispatch, useSelector } from "react-redux"
 import { Link, useLocation, useNavigate } from "react-router-dom"
-import { useSelector, useDispatch } from "react-redux"
-import { Menu, X, User, Settings, LayoutDashboard, LogOut, ChevronRight } from "lucide-react"
-import { Button } from "../../ui/button"
-import { logout } from "../../../store/slices/authSlice"
+import { logout } from "../../store/slices/authSlice"
+import { Button } from "../ui/button"
 
 export default function SharedPublicNavbar({ 
   showScrollLinks = true, 

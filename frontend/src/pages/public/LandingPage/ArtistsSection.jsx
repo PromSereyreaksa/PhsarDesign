@@ -1,13 +1,10 @@
 "use client"
 
-import React from 'react'
 import { useEffect } from "react"
-import { useAppDispatch, useAppSelector } from "../../hook/useRedux"
-import { useNavigate } from 'react-router-dom'
-import SectionHeader from "../../components/common/SectionHeader"
-import HoverOverlay from '../../components/common/HoverOverlay'
-import Loader from '../../components/ui/Loader'
-import { fetchArtists } from "../../store/slices/artistsSlice"
+import SectionHeader from "../../../components/common/SectionHeader"
+import Loader from '../../../components/ui/Loader'
+import { useAppDispatch, useAppSelector } from "../../../hook/useRedux"
+import { fetchArtists } from "../../../store/slices/artistsSlice"
 
 export default function ArtistsSection({ customImages }) {
   const dispatch = useAppDispatch()

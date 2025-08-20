@@ -1,0 +1,134 @@
+
+/frontend/src/components/layout/AuthNavbar.jsx
+  10:10  error  'isHovered' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u            no-unused-vars
+  42:9   error  'handleDropdownHover' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/frontend/src/components/marketplace/CreatePostForm.jsx
+  148:7  error  'removeAttachment' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  267:9  error  'handleSubmit' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u      no-unused-vars
+
+/frontend/src/components/marketplace/EditPostForm.jsx
+   19:10  error  'newSkill' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u           no-unused-vars
+   20:10  error  'uploadingImages' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u    no-unused-vars
+   50:9   error  'popularSkills' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u      no-unused-vars
+   73:9   error  'handleSkillAdd' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u     no-unused-vars
+   83:9   error  'handleSkillRemove' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+   90:9   error  'handleImageUpload' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  111:9   error  'handleImageRemove' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/frontend/src/components/marketplace/MyPostsDashboard.jsx
+  51:9  error  'totalLikes' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/frontend/src/components/marketplace/PostDetail.jsx
+  24:14  error  'error' is defined but never used  no-unused-vars
+
+/frontend/src/components/ui/multi-step-application-modal.jsx
+  10:27  error  'clientsAPI' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  10:39  error  'artistsAPI' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/frontend/src/components/ui/proposal-modal.jsx
+  179:30  error  'e' is defined but never used  no-unused-vars
+
+/frontend/src/components/ui/radio-group.jsx
+  19:11  error  'setIsOpen' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/frontend/src/pages/HomePage/components/HeroSectionAuth.jsx
+  8:43  error  'backgroundImageUrl' is defined but never used  no-unused-vars
+
+/frontend/src/pages/auth/ProfileSetup.jsx
+  1:27  error  'useEffect' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/frontend/src/pages/profiles/EditProfile.jsx
+  229:16  error  'e' is defined but never used                                                                             no-unused-vars
+  258:9   error  'handleAddCustomSkill' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u      no-unused-vars
+  320:9   error  'handleAvailabilityToggle' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/frontend/src/pages/public/AboutPage/index.jsx
+  14:10  error  'isMenuOpen' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u    no-unused-vars
+  16:9   error  'smoothScroll' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/frontend/src/pages/public/LandingPage/PopularServicesSection.jsx
+  11:50  error  'customImages' is defined but never used  no-unused-vars
+
+/frontend/src/pages/public/LandingPage/index.jsx
+   22:11  error  'isAuthenticated' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u     no-unused-vars
+   25:45  error  'marketplaceLoading' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+   26:29  error  'artistsLoading' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u      no-unused-vars
+   27:68  error  'servicesLoading' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u     no-unused-vars
+  283:9   error  'smoothScroll' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u        no-unused-vars
+
+/frontend/src/store/actions/applicationActions.js
+  18:3  error  Unnecessary try/catch wrapper  no-useless-catch
+  51:3  error  Unnecessary try/catch wrapper  no-useless-catch
+  61:3  error  Unnecessary try/catch wrapper  no-useless-catch
+  71:3  error  Unnecessary try/catch wrapper  no-useless-catch
+  81:3  error  Unnecessary try/catch wrapper  no-useless-catch
+
+/frontend/src/store/actions/index.js
+   45:3   error  Unnecessary try/catch wrapper         no-useless-catch
+   83:3   error  Unnecessary try/catch wrapper         no-useless-catch
+   93:3   error  Unnecessary try/catch wrapper         no-useless-catch
+  116:3   error  Unnecessary try/catch wrapper         no-useless-catch
+  137:3   error  Unnecessary try/catch wrapper         no-useless-catch
+  147:3   error  Unnecessary try/catch wrapper         no-useless-catch
+  182:3   error  Unnecessary try/catch wrapper         no-useless-catch
+  192:3   error  Unnecessary try/catch wrapper         no-useless-catch
+  202:3   error  Unnecessary try/catch wrapper         no-useless-catch
+  224:62  error  'dispatch' is defined but never used  no-unused-vars
+  225:3   error  Unnecessary try/catch wrapper         no-useless-catch
+  233:68  error  'dispatch' is defined but never used  no-unused-vars
+  234:3   error  Unnecessary try/catch wrapper         no-useless-catch
+  243:3   error  Unnecessary try/catch wrapper         no-useless-catch
+  253:67  error  'dispatch' is defined but never used  no-unused-vars
+  254:3   error  Unnecessary try/catch wrapper         no-useless-catch
+  262:73  error  'dispatch' is defined but never used  no-unused-vars
+  263:3   error  Unnecessary try/catch wrapper         no-useless-catch
+  272:3   error  Unnecessary try/catch wrapper         no-useless-catch
+  282:3   error  Unnecessary try/catch wrapper         no-useless-catch
+  292:58  error  'dispatch' is defined but never used  no-unused-vars
+  293:3   error  Unnecessary try/catch wrapper         no-useless-catch
+  301:63  error  'dispatch' is defined but never used  no-unused-vars
+  302:3   error  Unnecessary try/catch wrapper         no-useless-catch
+  311:3   error  Unnecessary try/catch wrapper         no-useless-catch
+  321:3   error  Unnecessary try/catch wrapper         no-useless-catch
+
+/frontend/src/store/actions/messageActions.js
+  18:3  error  Unnecessary try/catch wrapper  no-useless-catch
+  51:3  error  Unnecessary try/catch wrapper  no-useless-catch
+  61:3  error  Unnecessary try/catch wrapper  no-useless-catch
+  71:3  error  Unnecessary try/catch wrapper  no-useless-catch
+
+/frontend/src/store/actions/paymentActions.js
+   6:3   error  Unnecessary try/catch wrapper         no-useless-catch
+  15:60  error  'dispatch' is defined but never used  no-unused-vars
+  16:3   error  Unnecessary try/catch wrapper         no-useless-catch
+  25:3   error  Unnecessary try/catch wrapper         no-useless-catch
+  46:3   error  Unnecessary try/catch wrapper         no-useless-catch
+
+/frontend/src/store/actions/reviewActions.js
+  18:3  error  Unnecessary try/catch wrapper  no-useless-catch
+  63:3  error  Unnecessary try/catch wrapper  no-useless-catch
+  73:3  error  Unnecessary try/catch wrapper  no-useless-catch
+  83:3  error  Unnecessary try/catch wrapper  no-useless-catch
+
+/frontend/src/store/actions/userActions.js
+  18:3  error  Unnecessary try/catch wrapper  no-useless-catch
+  27:3  error  Unnecessary try/catch wrapper  no-useless-catch
+  48:3  error  Unnecessary try/catch wrapper  no-useless-catch
+  58:3  error  Unnecessary try/catch wrapper  no-useless-catch
+  68:3  error  Unnecessary try/catch wrapper  no-useless-catch
+
+/frontend/src/store/api/marketplaceAPI.js
+   50:25  error  'store' is not defined             no-undef
+   53:11  error  'store' is not defined             no-undef
+   54:13  error  'loginSuccess' is not defined      no-undef
+   62:23  error  'store' is not defined             no-undef
+   64:11  error  'store' is not defined             no-undef
+   64:26  error  'logout' is not defined            no-undef
+  210:24  error  'index' is defined but never used  no-unused-vars
+
+/frontend/src/store/slices/marketplaceSlice.js
+  17:39  error  'getState' is defined but never used  no-unused-vars
+
+✖ 87 problems (87 errors, 0 warnings)
+
