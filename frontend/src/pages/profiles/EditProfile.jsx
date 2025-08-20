@@ -6,9 +6,9 @@ import { useNavigate } from "react-router-dom"
 import { updateProfile } from "../../store/slices/authSlice"
 import { usersAPI, uploadAPI, artistsAPI } from "../../services/api"
 import { Plus, X } from "lucide-react"
-import AuthNavbar from "../../components/layout/navigation/AuthNavbar"
-import AuthFooter from "../../components/layout/footer/AuthFooter"
-import Loader from "../../components/ui/Loader"
+import AuthNavbar from "../../shared/components/layout/navigation/AuthNavbar"
+import AuthFooter from "../../shared/components/layout/footer/AuthFooter"
+import Loader from "../../shared/components/ui/Loader"
 
 const EditProfile = () => {
   const { user, token } = useSelector((state) => state.auth)

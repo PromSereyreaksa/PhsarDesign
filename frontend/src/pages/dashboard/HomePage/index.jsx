@@ -3,11 +3,11 @@
 import { useRef } from "react"
 import HeroSectionAuth from "./components/HeroSectionAuth"
 import ExploreSection from "./components/ExploreSection"
-import FreelancingOpportunitiesSection from "../../../features/freelancing/FreelancingOpportunitiesSection"
-import PopularServicesSection from "../../../features/services/PopularServicesSection"
-import ArtistsSection from "../../../features/artists/ArtistsSection"
-import FooterSection from "../../../components/layout/footer/AuthFooter"
-import AuthNavbar from "../../../components/layout/navigation/AuthNavbar"
+import FreelancingOpportunitiesSection from "../../../shared/components/sections/FreelancingOpportunitiesSection"
+import PopularServicesSection from "../../../shared/components/sections/PopularServicesSection"
+import ArtistsSection from "../../../shared/components/sections/ArtistsSection"
+import FooterSection from "../../../shared/components/layout/footer/AuthFooter"
+import AuthNavbar from "../../../shared/components/layout/navigation/AuthNavbar"
 
 export default function HomePage() {
   const freelancingRef = useRef(null)

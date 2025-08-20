@@ -3,12 +3,12 @@
 import { useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import { Search, ArrowLeft } from "lucide-react"
-import { useAppDispatch, useAppSelector } from "../../hook/useRedux"
+import { useAppDispatch, useAppSelector } from "../../shared/hooks/useRedux"
 import { fetchPosts, setFilters } from "../../store/slices/marketplaceSlice"
-import MarketplaceFilters from "../../components/marketplace/MarketplaceFilters"
-import PostCard from "../../components/marketplace/PostCard"
-import AuthNavbar from "../../components/layout/navigation/AuthNavbar"
-import Loader from "../../components/ui/Loader"
+import MarketplaceFilters from "../../shared/components/marketplace/MarketplaceFilters"
+import PostCard from "../../shared/components/marketplace/PostCard"
+import AuthNavbar from "../../shared/components/layout/navigation/AuthNavbar"
+import Loader from "../../shared/components/ui/Loader"
 
 const MarketplacePage = () => {
   const dispatch = useAppDispatch()

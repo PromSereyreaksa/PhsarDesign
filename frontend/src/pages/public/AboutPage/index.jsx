@@ -3,11 +3,11 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
 import { ArrowRight, Users, Target, Award, Heart, CheckCircle, Star, Globe, Shield, Clock, Mail, Send, Linkedin, Menu, X } from "lucide-react"
-import { Button } from "../../../components/ui/button"
-import { Card, CardContent } from "../../../components/ui/card"
-import { Input } from "../../../components/ui/input"
-import SharedPublicNavbar from "../../../components/layout/navigation/SharedPublicNavbar"
-import SharedPublicFooter from "../../../components/layout/footer/SharedPublicFooter"
+import { Button } from "../../../shared/components/ui/button"
+import { Card, CardContent } from "../../../shared/components/ui/card"
+import { Input } from "../../../shared/components/ui/input"
+import SharedPublicNavbar from "../../../shared/components/layout/navigation/SharedPublicNavbar"
+import SharedPublicFooter from "../../../shared/components/layout/footer/SharedPublicFooter"
 
 export default function AboutPage() {
   const [email, setEmail] = useState("")

@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { useDispatch, useSelector } from "react-redux"
-import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
-import { Button } from "../../components/ui/button"
-import { Input } from "../../components/ui/input"
-import { Label } from "../../components/ui/label"
-import { Textarea } from "../../components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select"
+import { Card, CardContent, CardHeader, CardTitle } from "../../shared/components/ui/card"
+import { Button } from "../../shared/components/ui/button"
+import { Input } from "../../shared/components/ui/input"
+import { Label } from "../../shared/components/ui/label"
+import { Textarea } from "../../shared/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../shared/components/ui/select"
 import { Eye, EyeOff, Upload, ArrowLeft } from "lucide-react"
-import Loader from "../../components/ui/Loader"
+import Loader from "../../shared/components/ui/Loader"
 import { createClientProfile, createFreelancerProfile } from '../../store/actions/authActions';
 
 export default function ProfileSetup() {
