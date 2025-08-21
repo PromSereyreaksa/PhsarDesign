@@ -1,14 +1,14 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { Loader2, Search, User, Users, X } from "lucide-react"
+import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Search, User, Users, X, Loader2 } from "lucide-react"
-import { Input } from "./input"
+import { artistsAPI, clientsAPI } from "../../lib/api.js"
+import { Avatar, AvatarFallback, AvatarImage } from "./avatar"
+import { Badge } from "./badge"
 import { Button } from "./button"
 import { Card, CardContent } from "./card"
-import { Badge } from "./badge"
-import { Avatar, AvatarFallback, AvatarImage } from "./avatar"
-import { artistsAPI, clientsAPI } from "../../services/api"
+import { Input } from "./input"
 
 export function GlobalSearch({ isOpen, onClose }) {
   const [query, setQuery] = useState("")
