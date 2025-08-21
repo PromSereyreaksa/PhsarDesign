@@ -21,27 +21,27 @@ const MyPostsPage = () => {
     navigate("/marketplace/create")
   }
 
-  const handleEdit = (postId) => {
-    navigate(`/marketplace/edit/${postId}`)
+  const handleEdit = (jobId) => {
+    navigate(`/marketplace/edit/${jobId}`)
   }
 
-  const handleDelete = async (postId) => {
-    if (deleteConfirm === postId) {
+  const handleDelete = async (jobId) => {
+    if (deleteConfirm === jobId) {
       try {
-        await dispatch(deletePost(postId)).unwrap()
+        await dispatch(deletePost(jobId)).unwrap()
         alert("Post deleted successfully!")
         setDeleteConfirm(null)
       } catch (error) {
-        alert("Failed to delete post. Please try again.")
+        alert(`Failed to delete post: ${error}`)
         console.error("Delete post error:", error)
       }
     } else {
-      setDeleteConfirm(postId)
+      setDeleteConfirm(jobId)
     }
   }
 
-  const handleView = (postId) => {
-    navigate(`/marketplace/${postId}`)
+  const handleView = (jobId) => {
+    navigate(`/marketplace/${jobId}`)
   }
 
   return (

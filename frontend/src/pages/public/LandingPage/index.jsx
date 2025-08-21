@@ -8,7 +8,6 @@ import SharedPublicFooter from "../../../components/layout/SharedPublicFooter"
 import SharedPublicNavbar from "../../../components/layout/SharedPublicNavbar"
 import { Button } from "../../../components/ui/button"
 import { Card, CardContent } from "../../../components/ui/card"
-import { Input } from "../../../components/ui/input"
 import { fetchArtists } from "../../../store/slices/artistsSlice"
 import { fetchPosts } from "../../../store/slices/marketplaceSlice"
 import { fetchCategories, fetchPosts as fetchPostsForServices } from "../../../store/slices/postsSlice"
@@ -590,8 +589,8 @@ export default function LandingPage() {
                   }}
                 >
                   <CardContent className="p-8 text-center relative z-10">
-                    <div className="w-16 h-16 bg-[#A95BAB]/20 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-[#A95BAB]/30 transition-colors duration-500 ease-out">
-                      <IconComponent className="h-8 w-8 text-[#A95BAB]" />
+                    <div className="mt-5 w-16 h-16 bg-[#A95BAB]/20 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-[#A95BAB]/30 transition-colors duration-500 ease-out">
+                      <IconComponent className="h-6 w-6 text-[#A95BAB]" />
                     </div>
                     <h3 className="font-semibold text-white mb-3 text-lg">{prop.title}</h3>
                     <p className="text-sm text-gray-400 leading-relaxed">{prop.description}</p>
@@ -627,7 +626,7 @@ export default function LandingPage() {
                 icon: MessageSquare,
                 number: "02", 
                 title: "Connect & Collaborate",
-                description: "Share your ideas and work together to bring your project to life",
+                description: "Share your ideas and work together to bring your project to life with talented artists",
                 color: "from-blue-400 to-purple-500",
                 bgGlow: "bg-blue-400/10"
               },
@@ -717,13 +716,7 @@ export default function LandingPage() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
-            <Input
-              type="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 rounded-lg px-6"
-            />
+            
             <Link to="/register">
               <Button className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-lg px-8 whitespace-nowrap transform hover:scale-105 transition-all duration-500 ease-out">
                 Get Started

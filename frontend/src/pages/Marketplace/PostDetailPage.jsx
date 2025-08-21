@@ -7,7 +7,7 @@ import AuthNavbar from "../../components/layout/AuthNavbar"
 import SimplePostCard from "../../components/marketplace/SimplePostCard"
 import Loader from "../../components/ui/Loader"
 import { useAppDispatch, useAppSelector } from "../../hook/useRedux"
-import { clearCurrentPost, fetchPostById, fetchPosts } from "../../store/slices/marketplaceSlice"
+import { clearCurrentPost, fetchPostById, fetchPostBySlug, fetchPosts } from "../../store/slices/marketplaceSlice"
 
 const PostDetailPage = () => {
   const { slug } = useParams()
@@ -20,9 +20,17 @@ const PostDetailPage = () => {
 
   useEffect(() => {
     if (slug) {
-      // Extract postId from slug (format: title-slug-postId)
-      const postId = slug.split('-').pop()
-      dispatch(fetchPostById(postId))
+      // Check if slug contains jobId (format: title-slug-jobId) or is just a slug
+      const parts = slug.split('-')
+      const lastPart = parts[parts.length - 1]
+      
+      if (lastPart && !isNaN(lastPart)) {
+        // Extract jobId from slug format: title-slug-jobId
+        dispatch(fetchPostById(parseInt(lastPart)))
+      } else {
+        // Use slug directly for slug-based lookup
+        dispatch(fetchPostBySlug(slug))
+      }
     }
 
     return () => {
@@ -107,7 +115,7 @@ const PostDetailPage = () => {
   // Filter posts by the same artist (excluding current post)
   const sameArtistPosts = posts.filter(post => 
     post.artist?.artistId === currentPost?.artist?.artistId && 
-    post.postId !== currentPost?.postId
+    post.jobId !== currentPost?.jobId
   )
 
   const nextImage = () => {
@@ -374,7 +382,7 @@ const PostDetailPage = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {sameArtistPosts.slice(0, 3).map((post) => (
-                <SimplePostCard key={post.postId} post={post} />
+                <SimplePostCard key={post.jobId} post={post} />
               ))}
             </div>
           </div>

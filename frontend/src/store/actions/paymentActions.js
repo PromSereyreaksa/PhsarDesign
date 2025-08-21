@@ -1,5 +1,5 @@
-import { paymentsAPI } from '../../services/api';
-import { addItem, fetchStart, fetchSuccess, fetchFailure, deleteItem } from '../slices/apiSlice';
+import { paymentsAPI } from '../../lib/api';
+import { addItem, deleteItem, fetchFailure, fetchStart, fetchSuccess } from '../slices/apiSlice';
 
 // Payment actions
 export const createPaymentIntent = (paymentData) => async (dispatch) => {

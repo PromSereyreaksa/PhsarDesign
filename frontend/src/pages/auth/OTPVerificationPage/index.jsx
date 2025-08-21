@@ -1,5 +1,4 @@
 "use client"
-
 import { ArrowLeft, RefreshCw } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
@@ -17,22 +16,24 @@ export default function OTPVerification() {
   const [timeLeft, setTimeLeft] = useState(60)
   const [resendDisabled, setResendDisabled] = useState(true)
   const [verificationSuccess, setVerificationSuccess] = useState(false)
-  const [localLoading, setLocalLoading] = useState(false) // Local loading state as backup
+  const [localLoading, setLocalLoading] = useState(false)
   const inputRefs = useRef([])
-  
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const location = useLocation()
+  
   const { loading } = useSelector((state) => state.auth)
-
   const { email, type = "registration", fromRegister = false } = location.state || {}
+
+  // Combined loading state for cleaner logic
+  const isLoading = loading || localLoading
 
   useEffect(() => {
     if (!email) {
       navigate("/login")
       return
     }
-
+    
     // Start countdown timer
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
@@ -43,19 +44,20 @@ export default function OTPVerification() {
         return prev - 1
       })
     }, 1000)
-
+    
     return () => clearInterval(timer)
   }, [email, navigate])
 
-
-  // Force reset loading states when component mounts or when there's an error
+  // Reset loading states when there's an error
   useEffect(() => {
     if (error) {
       setLocalLoading(false)
-      // Don't dispatch here to avoid conflicts
+      // Also reset Redux loading state if needed
+      if (loading) {
+        dispatch(loginFailure(""))
+      }
     }
-  }, [error])
-
+  }, [error, loading, dispatch])
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60)
@@ -69,7 +71,7 @@ export default function OTPVerification() {
     const newOtp = [...otp]
     newOtp[index] = value
     setOtp(newOtp)
-
+    
     // Auto-focus next input
     if (value && index < 5) {
       inputRefs.current[index + 1]?.focus()
@@ -83,53 +85,58 @@ export default function OTPVerification() {
   }
 
   const handleResendOtp = async () => {
+    // Prevent multiple clicks during loading
+    if (isLoading) return
+    
+    setLocalLoading(true) // Set loading state immediately
+    setError("")
+    
     try {
       if (type === "password-reset") {
         await authAPI.requestForgotPasswordOtp({ email })
       } else {
         await authAPI.requestOtp({ email, type })
       }
-      
       setTimeLeft(300)
       setResendDisabled(true)
-      setError("")
     } catch (error) {
       setError(error.response?.data?.message || "Failed to resend OTP")
+    } finally {
+      setLocalLoading(false) // Always reset loading state
     }
   }
 
   const handleVerifyOtp = async (e) => {
     e.preventDefault()
-    const otpCode = otp.join("")
     
+    // Prevent multiple submissions
+    if (isLoading) return
+    
+    const otpCode = otp.join("")
     if (otpCode.length !== 6) {
       setError("Please enter all 6 digits")
       return
     }
 
     setError("")
-    setLocalLoading(true) // Set local loading state
-    dispatch(loginStart()) // Set global loading state
+    setLocalLoading(true)
+    dispatch(loginStart())
 
     try {
-      // For the API format: email and otp are required
       const verifyData = {
         email: email,
         otp: otpCode
       };
-      
+
       let response;
       if (type === "password-reset") {
-        // Use specific forgot password OTP verification endpoint: email and otp
         response = await authAPI.verifyForgotPasswordOtp(verifyData)
       } else {
-        // Use regular OTP verification for registration: email and otp
         response = await authAPI.verifyOtp(verifyData)
       }
 
       if (type === "registration") {
         const { user, token } = response.data
-        
         dispatch(loginSuccess({ user, token }))
         setVerificationSuccess(true)
         
@@ -137,18 +144,14 @@ export default function OTPVerification() {
         setTimeout(() => {
           navigate("/")
         }, 3000)
-        
       } else if (type === "password-reset") {
-        // After successful OTP verification for password reset, 
-        // redirect to change password page with verification data
-        navigate("/change-password", { 
-          state: { 
+        navigate("/change-password", {
+          state: {
             email,
             verified: true,
-            // Pass any verification token or data from backend
             ...(response.data.verificationToken && { verificationToken: response.data.verificationToken }),
             ...(response.data.resetToken && { resetToken: response.data.resetToken })
-          } 
+          }
         })
       }
     } catch (error) {
@@ -156,7 +159,7 @@ export default function OTPVerification() {
       setError(errorMessage)
       dispatch(loginFailure(errorMessage))
     } finally {
-      // ALWAYS reset local loading state regardless of success or error
+      // Always reset local loading state
       setLocalLoading(false)
     }
   }
@@ -166,7 +169,7 @@ export default function OTPVerification() {
   }
 
   const getDescription = () => {
-    return type === "registration" 
+    return type === "registration"
       ? "We've sent a verification code to your email address. Please enter it below to complete your registration."
       : "We've sent a verification code to your email address. Please enter it below to reset your password."
   }
@@ -183,6 +186,7 @@ export default function OTPVerification() {
         <button
           onClick={() => navigate(getBackLink())}
           className="inline-flex items-center text-gray-300 hover:text-[#A95BAB] mb-8 transition-colors"
+          disabled={isLoading}
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back
@@ -205,12 +209,12 @@ export default function OTPVerification() {
                 <div className="p-6 bg-green-500/10 border border-green-500/20 rounded-xl">
                   {type === "registration" ? (
                     <>
-                      <div className="text-green-400 text-lg font-semibold mb-2">🎉 Registration Complete!</div>
+                      <div className="text-green-400 text-lg font-semibold mb-2">Registration Complete!</div>
                       <p className="text-green-300 text-sm mb-3">Your account has been successfully verified and created. You can now access the app when it's available.</p>
                     </>
                   ) : (
                     <>
-                      <div className="text-green-400 text-lg font-semibold mb-2">🔒 Password Reset Complete!</div>
+                      <div className="text-green-400 text-lg font-semibold mb-2">Password Reset Complete!</div>
                       <p className="text-green-300 text-sm mb-3">Your password has been successfully reset. You can now access your account.</p>
                     </>
                   )}
@@ -231,32 +235,34 @@ export default function OTPVerification() {
                   </div>
                 )}
 
-              <div className="space-y-2">
-                <Label className="text-white">Enter 6-digit verification code</Label>
-                <div className="flex justify-between gap-2">
-                  {otp.map((digit, index) => (
-                    <Input
-                      key={index}
-                      ref={(el) => (inputRefs.current[index] = el)}
-                      type="text"
-                      maxLength="1"
-                      value={digit}
-                      onChange={(e) => handleOtpChange(index, e.target.value)}
-                      onKeyDown={(e) => handleKeyDown(index, e)}
-                      className="w-12 h-12 text-center text-xl font-bold bg-white/10 border-white/20 text-white rounded-xl focus:ring-2 focus:ring-[#A95BAB]/50"
-                    />
-                  ))}
+                <div className="space-y-2">
+                  <Label className="text-white">Enter 6-digit verification code</Label>
+                  <div className="flex justify-between gap-2">
+                    {otp.map((digit, index) => (
+                      <Input
+                        key={index}
+                        ref={(el) => (inputRefs.current[index] = el)}
+                        type="text"
+                        maxLength="1"
+                        value={digit}
+                        onChange={(e) => handleOtpChange(index, e.target.value)}
+                        onKeyDown={(e) => handleKeyDown(index, e)}
+                        className="w-12 h-12 text-center text-xl font-bold bg-white/10 border-white/20 text-white rounded-xl focus:ring-2 focus:ring-[#A95BAB]/50"
+                        disabled={isLoading}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
 
                 <Button
                   type="submit"
                   className="w-full bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-xl py-3 font-semibold"
-                  disabled={loading || localLoading}
+                  disabled={isLoading}
                 >
-                  {(loading || localLoading) ? (
+                  {isLoading ? (
                     <div className="flex items-center justify-center">
-                      <span className="ml-2">Verify</span>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      <span>Verifying...</span>
                     </div>
                   ) : (
                     "Verify Code"
@@ -275,10 +281,10 @@ export default function OTPVerification() {
                   <Button
                     variant="ghost"
                     onClick={handleResendOtp}
-                    disabled={resendDisabled}
+                    disabled={resendDisabled || isLoading}
                     className="text-[#A95BAB] hover:text-[#A95BAB]/80 hover:bg-[#A95BAB]/10"
                   >
-                    <RefreshCw className="h-4 w-4 mr-2" />
+                    <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
                     Resend Code
                   </Button>
                 )}

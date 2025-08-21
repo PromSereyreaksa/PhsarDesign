@@ -1,5 +1,5 @@
-import { applicationsAPI } from '../../services/api';
-import { addItem, fetchStart, fetchSuccess, fetchFailure, updateItem, deleteItem } from '../slices/apiSlice';
+import { applicationsAPI } from '../../lib/api';
+import { addItem, deleteItem, fetchFailure, fetchStart, fetchSuccess, updateItem } from '../slices/apiSlice';
 
 // Application actions
 export const fetchAllApplications = () => async (dispatch) => {

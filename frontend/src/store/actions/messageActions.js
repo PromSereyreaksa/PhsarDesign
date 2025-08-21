@@ -1,5 +1,5 @@
-import { messagesAPI } from '../../services/api';
-import { addItem, fetchStart, fetchSuccess, fetchFailure, updateItem, deleteItem } from '../slices/apiSlice';
+import { messagesAPI } from '../../lib/api';
+import { addItem, deleteItem, fetchFailure, fetchStart, fetchSuccess, updateItem } from '../slices/apiSlice';
 
 // Message actions
 export const fetchAllMessages = () => async (dispatch) => {

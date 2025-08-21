@@ -17,20 +17,8 @@ export default function SharedPublicFooter({ className = "" }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid md:grid-cols-2 gap-8 md:gap-16">
           {/* Left Section */}
-          <div className="space-y-6">
+          <div className="space-y-3">
             <h3 className="text-2xl font-bold text-white">PhsarDesign</h3>
-
-            <div className="space-y-2">
-              <a href="#" className="block text-sm text-gray-300 hover:text-[#A95BAB] transition-colors duration-500 ease-out">
-                Terms and Conditions
-              </a>
-              <a href="#" className="block text-sm text-gray-300 hover:text-[#A95BAB] transition-colors duration-500 ease-out">
-                Privacy Policy
-              </a>
-              <a href="#" className="block text-sm text-gray-300 hover:text-[#A95BAB] transition-colors duration-500 ease-out">
-                Cookie Settings
-              </a>
-            </div>
 
             {/* Social Icons */}
             <div className="flex space-x-4">
@@ -57,26 +45,7 @@ export default function SharedPublicFooter({ className = "" }) {
             </div>
           </div>
 
-          {/* Right Section - Newsletter */}
-          <div className="space-y-4">
-            <h4 className="text-xl font-bold text-white">Our Newsletter</h4>
-            <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-3">
-              <input
-                type="email"
-                placeholder="Enter your email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="flex-1 bg-[#2A2A2A] border border-white/20 rounded-lg px-4 py-3 text-white placeholder:text-gray-400 focus:outline-none focus:border-[#A95BAB] transition-colors duration-500 ease-out"
-                required
-              />
-              <button 
-                type="submit"
-                className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-500 ease-out transform hover:scale-105"
-              >
-                Subscribe
-              </button>
-            </form>
-          </div>
+        
         </div>
 
         {/* Bottom Section */}

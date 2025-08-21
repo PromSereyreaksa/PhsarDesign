@@ -1,5 +1,5 @@
-import { projectsAPI } from '../../services/api';
-import { addItem, fetchStart, fetchSuccess, fetchFailure, updateItem, deleteItem } from '../slices/apiSlice';
+import { projectsAPI } from '../../lib/api';
+import { addItem, deleteItem, fetchFailure, fetchStart, fetchSuccess, updateItem } from '../slices/apiSlice';
 
 // Project actions
 export const fetchAllProjects = () => async (dispatch) => {

@@ -1,4 +1,4 @@
-import axios from "axios"
+import axios from "axios";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/"
 
@@ -121,7 +121,8 @@ export const getAllAvailabilityPosts = (filters = {}) => {
   return api.get(`/api/availability-posts?${params.toString()}`)
 }
 
-export const searchAvailabilityPosts = (filters = {}) => {
+// Job Posts API endpoints
+export const getAllJobPosts = (filters = {}) => {
   const params = new URLSearchParams()
   
   // Parse price range into minBudget and maxBudget
@@ -144,7 +145,6 @@ export const searchAvailabilityPosts = (filters = {}) => {
   // Map frontend filter names to backend expected parameters
   const paramMapping = {
     category: filters.category,
-    availabilityType: filters.availabilityType,
     location: filters.location,
     search: filters.search || filters.q, // Support both search and q
     minBudget: filters.minBudget || minBudget,
@@ -156,7 +156,7 @@ export const searchAvailabilityPosts = (filters = {}) => {
     sortBy: filters.sortBy === 'newest' ? 'createdAt' : (filters.sortBy === 'oldest' ? 'createdAt' : (filters.sortBy || 'createdAt')),
     sortOrder: filters.sortBy === 'newest' ? 'DESC' : (filters.sortBy === 'oldest' ? 'ASC' : (filters.sortOrder || 'DESC'))
   }
-
+  
   Object.entries(paramMapping).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== "") {
       if (Array.isArray(value)) {
@@ -167,25 +167,25 @@ export const searchAvailabilityPosts = (filters = {}) => {
     }
   })
   
-  return api.get(`/api/availability-posts/search?${params.toString()}`)
+  return api.get(`/api/job-posts?${params.toString()}`)
 }
 
-export const getAvailabilityPostsByArtist = (artistId) => {
-  return api.get(`/api/availability-posts/artist/${artistId}`)
+export const getJobPostByClient = (clientId) => {
+  return api.get(`/api/job-posts/client/${clientId}`)
 }
 
-export const getAvailabilityPostById = (postId) => {
-  return api.get(`/api/availability-posts/id/${postId}`)
+export const getJobPostById = (jobId) => {
+  return api.get(`/api/job-posts/id/${jobId}`)
 }
 
-export const getAvailabilityPostBySlug = (slug) => {
-  return api.get(`/api/availability-posts/${slug}`)
+export const getJobPostBySlug = (slug) => {
+  return api.get(`/api/job-posts/${slug}`)
 }
 
-export const createAvailabilityPost = (postData) => {
+export const createJobPost = (postData) => {
   const isFormData = typeof FormData !== 'undefined' && postData instanceof FormData;
   return api.post(
-    "/api/availability-posts",
+    "/api/job-posts",
     postData,
     isFormData
       ? { headers: { "Content-Type": undefined } }
@@ -193,16 +193,23 @@ export const createAvailabilityPost = (postData) => {
   )
 }
 
-export const updateAvailabilityPost = (postId, postData) => {
-  return api.put(`/api/availability-posts/id/${postId}`, postData)
+export const updateJobPost = (jobId, postData) => {
+  const isFormData = typeof FormData !== 'undefined' && postData instanceof FormData;
+  return api.put(
+    `/api/job-posts/id/${jobId}`, 
+    postData,
+    isFormData
+      ? { headers: { "Content-Type": undefined } }
+      : undefined
+  )
 }
 
-export const deleteAvailabilityPost = (postId) => {
-  return api.delete(`/api/availability-posts/id/${postId}`)
+export const deleteJobPost = (jobId) => {
+  return api.delete(`/api/job-posts/${jobId}`)
 }
 
-export const getMyAvailabilityPosts = () => {
-  return api.get("/api/availability-posts/my-posts")
+export const getMyJobPosts = () => {
+  return api.get("/api/job-posts/my")
 }
 
 export const uploadImages = (files) => {
@@ -216,6 +223,6 @@ export const uploadImages = (files) => {
   })
 }
 
-export const contactArtistFromPost = (postId, message) => {
-  return api.post(`/api/availability-posts/id/${postId}/contact`, { message })
+export const contactArtistFromPost = (jobId, message) => {
+  return api.post(`/api/job-posts/id/${jobId}/contact`, { message })
 }

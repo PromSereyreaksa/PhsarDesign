@@ -108,7 +108,7 @@ const MyPostsDashboard = ({ posts, loading, error, onEdit, onDelete, onView, del
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {posts.map((post) => (
-              <div key={post.postId} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
+              <div key={post.jobId} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1 min-w-0">
@@ -129,31 +129,31 @@ const MyPostsDashboard = ({ posts, loading, error, onEdit, onDelete, onView, del
 
                     <div className="flex items-center space-x-1 ml-3">
                       <button 
-                        onClick={() => onView(post.postId)} 
+                        onClick={() => onView(post.jobId)} 
                         className="p-2 text-gray-500 hover:text-[#A95BAB] hover:bg-gray-50 rounded-lg transition-colors" 
                         title="View"
                       >
                         👁
                       </button>
                       <button 
-                        onClick={() => onEdit(post.postId)} 
+                        onClick={() => onEdit(post.jobId)} 
                         className="p-2 text-gray-500 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors" 
                         title="Edit"
                       >
                         ✏️
                       </button>
                       <button
-                        onClick={() => onDelete(post.postId)}
+                        onClick={() => onDelete(post.jobId)}
                         className={`p-2 rounded-lg transition-colors ${
-                          deleteConfirm === post.postId 
+                          deleteConfirm === post.jobId 
                             ? "text-red-600 bg-red-50" 
                             : "text-gray-500 hover:text-red-600 hover:bg-gray-50"
                         }`}
-                        title={deleteConfirm === post.postId ? "Click again to confirm" : "Delete"}
+                        title={deleteConfirm === post.jobId ? "Click again to confirm" : "Delete"}
                       >
-                        {deleteConfirm === post.postId ? "✓" : "🗑"}
+                        {deleteConfirm === post.jobId ? "✓" : "🗑"}
                       </button>
-                      {deleteConfirm === post.postId && (
+                      {deleteConfirm === post.jobId && (
                         <button 
                           onClick={onCancelDelete} 
                           className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-lg transition-colors" 

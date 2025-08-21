@@ -200,7 +200,7 @@ const MarketplacePage = () => {
             )}
           </div>
 
-          {posts.length === 0 ? (
+          {!Array.isArray(posts) || posts.length === 0 ? (
             <div className="text-center py-16">
               <div className="text-6xl mb-4">🎨</div>
               <h3 className="text-2xl font-bold mb-2 text-white">No posts found</h3>
@@ -209,7 +209,7 @@ const MarketplacePage = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {(location.search.includes('showAll=true') ? posts : posts.slice(0, 9)).map((post) => (
-                <PostCard key={post.postId} post={post} />
+                <PostCard key={post.jobId} post={post} />
               ))}
             </div>
           )}

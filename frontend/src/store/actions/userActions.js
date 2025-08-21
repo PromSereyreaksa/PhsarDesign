@@ -1,5 +1,5 @@
-import { usersAPI } from '../../services/api';
-import { addItem, fetchStart, fetchSuccess, fetchFailure, updateItem, deleteItem } from '../slices/apiSlice';
+import { usersAPI } from '../../lib/api';
+import { addItem, deleteItem, fetchFailure, fetchStart, fetchSuccess, updateItem } from '../slices/apiSlice';
 
 // User actions
 export const fetchAllUsers = () => async (dispatch) => {
