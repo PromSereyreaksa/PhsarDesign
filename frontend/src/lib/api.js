@@ -1,6 +1,6 @@
 import axios from 'axios';
+import { loginSuccess, logout } from '../store/slices/authSlice';
 import store from '../store/store';
-import { logout, loginSuccess } from '../store/slices/authSlice';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.phsardesign.com';
 

@@ -1,14 +1,14 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
-import { useSelector, useDispatch } from "react-redux"
-import { useNavigate } from "react-router-dom"
-import { updateProfile } from "../../store/slices/authSlice"
-import { usersAPI, uploadAPI, artistsAPI } from "../../services/api"
 import { Plus, X } from "lucide-react"
-import AuthNavbar from "../../components/layout/navigation/AuthNavbar"
-import AuthFooter from "../../components/layout/footer/AuthFooter"
+import { useEffect, useRef, useState } from "react"
+import { useDispatch, useSelector } from "react-redux"
+import { useNavigate } from "react-router-dom"
+import AuthFooter from "../../components/layout/AuthFooter"
+import AuthNavbar from "../../components/layout/AuthNavbar"
 import Loader from "../../components/ui/Loader"
+import { artistsAPI, uploadAPI, usersAPI } from "../../lib/api"
+import { updateProfile } from "../../store/slices/authSlice"
 
 const EditProfile = () => {
   const { user, token } = useSelector((state) => state.auth)

@@ -1,17 +1,16 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useParams, useNavigate } from "react-router-dom"
-import { useSelector, useDispatch } from "react-redux"
-import { Star, MapPin, Calendar, Edit, MessageSquare, AlertCircle, RefreshCw, Eye, EyeOff } from "lucide-react"
+import { AlertCircle, Calendar, Edit, Eye, EyeOff, MapPin, MessageSquare, RefreshCw, Star } from "lucide-react"
+import { useEffect, useState } from "react"
+import { useDispatch, useSelector } from "react-redux"
+import { useNavigate, useParams } from "react-router-dom"
+import AuthFooter from "../../components/layout/AuthFooter"
+import AuthNavbar from "../../components/layout/AuthNavbar"
+import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar"
 import { Button } from "../../components/ui/button"
 import { Card, CardContent } from "../../components/ui/card"
-import { Avatar, AvatarImage, AvatarFallback } from "../../components/ui/avatar"
-import AuthNavbar from "../../components/layout/navigation/AuthNavbar"
-import AuthFooter from "../../components/layout/footer/AuthFooter"
-import { clientsAPI, usersAPI } from "../../services/api"
+import { clientsAPI, usersAPI } from "../../lib/api"
 import { updateProfile } from "../../store/slices/authSlice"
-import Loader from "../../components/ui/Loader"
 
 export default function ClientProfile() {
   const { userId } = useParams()

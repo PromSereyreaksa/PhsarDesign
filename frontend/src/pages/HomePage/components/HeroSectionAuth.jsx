@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useSelector } from "react-redux";
-import SearchBox from "../../../../components/common/SearchBox";
-import SuggestionChip from "../../../../components/common/SuggestionChip";
+import SearchBox from "../../../components/common/SearchBox";
+import SuggestionChip from "../../../components/common/SuggestionChip";
 
 export default function HeroSectionAuth({ backgroundImageUrl }) {
   const [searchController, setSearchController] = useState("");
