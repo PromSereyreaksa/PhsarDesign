@@ -17,7 +17,7 @@ const PostDetail = ({ post }) => {
 
     setIsSubmitting(true)
     try {
-      await contactArtistFromPost(post.postId, contactMessage)
+      await contactArtistFromPost(post.jobId, contactMessage)
       alert("Message sent successfully!")
       setShowContactForm(false)
       setContactMessage("")

@@ -1,5 +1,5 @@
-import { reviewsAPI } from '../../services/api';
-import { addItem, fetchStart, fetchSuccess, fetchFailure, updateItem, deleteItem } from '../slices/apiSlice';
+import { reviewsAPI } from '../../lib/api';
+import { addItem, deleteItem, fetchFailure, fetchStart, fetchSuccess, updateItem } from '../slices/apiSlice';
 
 // Review actions
 export const fetchAllReviews = () => async (dispatch) => {

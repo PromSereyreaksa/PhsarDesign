@@ -267,7 +267,7 @@ export default function SharedPublicNavbar({
                 </Link>
                 <Link to="/register">
                   <Button className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-lg px-6 transform hover:scale-105 transition-all duration-500 ease-out">
-                    Get Started
+                    Join Us
                   </Button>
                 </Link>
               </>
@@ -327,7 +327,7 @@ export default function SharedPublicNavbar({
                 </Link>
                 <Link to="/register" onClick={() => setIsMenuOpen(false)}>
                   <Button className="w-full bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-lg">
-                    Get Started
+                    Join Us
                   </Button>
                 </Link>
               </div>

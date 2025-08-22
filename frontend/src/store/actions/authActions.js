@@ -1,6 +1,6 @@
-import { authAPI, clientsAPI, freelancersAPI } from '../../services/api';
-import { loginStart, loginSuccess, loginFailure, logout } from '../slices/authSlice';
-import { addItem, fetchStart, fetchSuccess, updateItem, deleteItem } from '../slices/apiSlice';
+import { authAPI, clientsAPI, freelancersAPI } from '../../lib/api';
+import { addItem, deleteItem, fetchStart, fetchSuccess, updateItem } from '../slices/apiSlice';
+import { loginFailure, loginStart, loginSuccess, logout } from '../slices/authSlice';
 import store from '../store';
 
 // Auth actions

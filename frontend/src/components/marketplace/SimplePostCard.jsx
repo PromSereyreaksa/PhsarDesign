@@ -8,7 +8,7 @@ const SimplePostCard = ({ post }) => {
   const handleViewDetails = () => {
     // Create slug from title
     const slug = post.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-    navigate(`/marketplace/${slug}-${post.postId}`)
+    navigate(`/marketplace/${slug}-${post.jobId}`)
   }
 
   const formatPrice = (budget) => {

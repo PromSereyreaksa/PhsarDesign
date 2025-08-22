@@ -9,30 +9,30 @@ import MarketplaceNav from "../../components/marketplace/MarketplaceNav"
 import Loader from "../../components/ui/Loader"
 
 const EditPostPage = () => {
-  const { postId } = useParams()
+  const { jobId } = useParams()
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const { currentPost, loading, error } = useAppSelector((state) => state.marketplace)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
-    if (postId) {
-      dispatch(fetchPostById(postId))
+    if (jobId) {
+      dispatch(fetchPostById(jobId))
     }
 
     return () => {
       dispatch(clearCurrentPost())
     }
-  }, [dispatch, postId])
+  }, [dispatch, jobId])
 
   const handleSubmit = async (postData) => {
     setIsSubmitting(true)
     try {
-      await dispatch(updatePost({ postId, postData })).unwrap()
+      await dispatch(updatePost({ jobId, postData })).unwrap()
       alert("Post updated successfully!")
       navigate("/dashboard/my-posts")
     } catch (error) {
-      alert("Failed to update post. Please try again.")
+      alert(`Failed to update post: ${error}`)
       console.error("Update post error:", error)
     } finally {
       setIsSubmitting(false)
@@ -77,7 +77,7 @@ const EditPostPage = () => {
           ← Back to My Posts
         </button>
         <h1>Edit Post</h1>
-        <p>Update your availability post information</p>
+        <p>Update your job post information</p>
       </div>
 
       <EditPostForm

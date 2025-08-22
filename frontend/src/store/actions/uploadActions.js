@@ -1,5 +1,5 @@
-import { uploadAPI } from '../../services/api';
-import { addItem, fetchStart, fetchSuccess, fetchFailure, updateItem, deleteItem } from '../slices/apiSlice';
+import { uploadAPI } from '../../lib/api';
+import { addItem, deleteItem, fetchFailure, fetchStart, fetchSuccess, updateItem } from '../slices/apiSlice';
 
 // Upload actions
 export const uploadSingleImage = (file, folder = 'artlink/general', tags = '') => async (dispatch) => {
