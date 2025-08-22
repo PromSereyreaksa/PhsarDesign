@@ -529,26 +529,7 @@ export default function AboutPage() {
             </Link>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/browse-jobs">
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-white/30 text-white hover:text-[#A95BAB] bg-transparent hover:bg-white/10 hover:border-[#A95BAB]/50 rounded-lg px-8 py-4 text-lg font-semibold group transform hover:scale-105 transition-all duration-500 ease-out"
-              >
-                Browse Talent
-              </Button>
-            </Link>
-            <Link to="/post-job-client">
-              <Button
-                size="lg"
-                className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-lg px-8 py-4 text-lg font-semibold group transform hover:scale-105 transition-all duration-500 ease-out"
-              >
-                Post a Project
-                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-500 ease-out" />
-              </Button>
-            </Link>
-          </div>
+          
         </div>
       </section>
 

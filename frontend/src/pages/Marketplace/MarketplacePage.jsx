@@ -8,6 +8,7 @@ import PostCard from "../../components/marketplace/PostCard"
 import Loader from "../../components/ui/Loader"
 import { useAppDispatch, useAppSelector } from "../../hook/useRedux"
 import { fetchPosts, setFilters } from "../../store/slices/marketplaceSlice"
+import FeaturedArtists from "./FeaturedArtist"
 
 const MarketplacePage = () => {
   const dispatch = useAppDispatch()
@@ -216,50 +217,7 @@ const MarketplacePage = () => {
         </div>
 
         {/* Featured Artists Section */}
-        <div className="mt-16 px-6">
-          <div className="max-w-6xl mx-auto">
-            <div className="flex items-center justify-between mb-8">
-              <div className="text-center flex-1">
-                <h2 className="text-2xl md:text-3xl font-bold">
-                  <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                    Featured Artists
-                  </span>
-                </h2>
-                <p className="text-gray-400 mt-2">Discover exceptional creative talent</p>
-              </div>
-              <button 
-                onClick={() => {
-                  // Navigate to artists section
-                  navigate('/home#artists')
-                }}
-                className="text-[#A95BAB] hover:text-[#A95BAB]/80 font-medium text-sm transition-colors"
-              >
-                See All →
-              </button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[1, 2, 3].map((item) => (
-                <div
-                  key={item}
-                  className="relative group overflow-hidden rounded-xl bg-gray-800/20 backdrop-blur border border-gray-700/50 hover:border-gray-600/60 transition-all duration-300"
-                >
-                  <div className="aspect-video">
-                    <img
-                      src={`/artist-portfolio.png?height=200&width=300&query=artist portfolio ${item}`}
-                      alt={`Featured work ${item}`}
-                      className="w-full h-full object-cover transition-transform group-hover:scale-110"
-                    />
-                  </div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="absolute bottom-4 left-4">
-                      <span className="px-3 py-1 bg-[#A95BAB]/80 text-white text-sm rounded-full font-medium">Featured</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <FeaturedArtists/>
       </div>
   )
 }
