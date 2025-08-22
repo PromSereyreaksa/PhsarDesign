@@ -1,157 +1,151 @@
 "use client"
 
 import { AlertCircle, Calendar, Edit, Eye, EyeOff, MapPin, MessageSquare, RefreshCw, Star } from "lucide-react"
-import { useEffect, useState } from "react"
-import { useDispatch, useSelector } from "react-redux"
+import { useEffect, useState, useRef } from "react"
+import { useSelector } from "react-redux"
 import { useNavigate, useParams } from "react-router-dom"
 import AuthFooter from "../../components/layout/AuthFooter"
 import AuthNavbar from "../../components/layout/AuthNavbar"
 import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar"
 import { Button } from "../../components/ui/button"
 import { Card, CardContent } from "../../components/ui/card"
-import { clientsAPI, usersAPI } from "../../lib/api"
-import { updateProfile } from "../../store/slices/authSlice"
+import { clientsAPI } from "../../lib/api"
 
 export default function ClientProfile() {
   const { userId } = useParams()
   const navigate = useNavigate()
-  const dispatch = useDispatch()
   const { user } = useSelector((state) => state.auth)
   const [isOwner, setIsOwner] = useState(false)
-  const [clientData, setClientData] = useState(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [clientData, setClientData] = useState(null) // Changed to null for clarity
+  const [isLoading, setIsLoading] = useState(true)
   const [networkError, setNetworkError] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
   const [isPhonePublic, setIsPhonePublic] = useState(true)
-
-  const createDefaultClientData = (userData = {}) => ({
-    id: userData.userId || "",
-    firstName: userData.firstName || "",
-    lastName: userData.lastName || "",
-    username:
-      userData.firstName && userData.lastName
-        ? `@${userData.firstName.toLowerCase()}${userData.lastName.toLowerCase()}`
-        : "@user",
-    avatar: userData.avatarURL || userData.avatar || "/placeholder.svg",
-    bio: userData.bio || userData.about || "",
-    industry: userData.industry || "",
-    location: userData.location || "Location not specified",
-    companySize: userData.companySize || "",
-    website: userData.website || "",
-    phoneNumber: userData.phoneNumber || "",
-    joinDate: userData.joinDate || "Recently",
-    rating: userData.rating || 0,
-    totalReviews: userData.totalReviews || 0,
-    totalProjects: userData.totalProjects || 0,
-    projectsPosted: userData.projectsPosted || [],
-    reviews: userData.reviews || [],
-    coverImage: userData.coverImage || "/placeholder.svg",
-  })
+  const hasFetchedRef = useRef(null)
 
   useEffect(() => {
-    const fetchAndUpdateClientData = async () => {
-      if (isLoading || networkError) return
-      setIsLoading(true)
-      setNetworkError(false)
-      setErrorMessage("")
+    // Prevent double execution for the same userId
+    if (hasFetchedRef.current === userId) {
+      console.log('🚫 Skipping fetch - already fetched for userId:', userId)
+      return
+    }
 
-      let freshUserData = user
-      let clientProjects = []
-      let additionalClientData = {}
-
+    const fetchClientData = async () => {
       if (user && (userId === user.userId || !userId)) {
+        hasFetchedRef.current = userId
+        setIsOwner(true)
+        setIsLoading(true)
+
         try {
-          console.log("[v0] Fetching comprehensive client data...")
+          console.log("[v0] Fetching fresh client data from API for userId:", user.userId)
+          const clientResponse = await clientsAPI.getByUserId(user.userId)
+          const freshClientData = clientResponse.data
+          console.log("[v0] Fresh client data received:", freshClientData)
 
-          const [clientResponse, userResponse, projectsResponse] = await Promise.allSettled([
-            clientsAPI.getByUserId(user.userId),
-            usersAPI.getById(user.userId),
-            clientsAPI.getClientProjects ? clientsAPI.getClientProjects(user.userId) : Promise.resolve({ data: [] }),
-          ])
+          // Process avatar
+          const avatarFromBackend =
+            freshClientData.user?.avatarURL ||
+            freshClientData.user?.avatar ||
+            freshClientData.user?.avatarUrl ||
+            freshClientData.user?.profileImage ||
+            null
 
-          // Process client-specific data
-          if (clientResponse.status === "fulfilled") {
-            additionalClientData = clientResponse.value.data
-            console.log("[v0] Client-specific data received:", additionalClientData)
-          }
-
-          // Process user data
-          if (userResponse.status === "fulfilled") {
-            freshUserData = userResponse.value.data
-            console.log("[v0] User data received:", freshUserData)
-          }
-
-          // Process projects data
-          if (projectsResponse.status === "fulfilled") {
-            clientProjects = projectsResponse.value.data || []
-            console.log("[v0] Client projects received:", clientProjects)
-          }
-
-          const combinedData = {
-            ...freshUserData,
-            ...additionalClientData,
-            projectsPosted: clientProjects,
-            totalProjects: clientProjects.length,
-          }
+          console.log("[v0] Avatar field from backend:", avatarFromBackend)
 
           let processedAvatarUrl = null
-          const possibleAvatarFields = ["avatarURL", "avatar", "avatarUrl", "profileImage"]
-
-          for (const field of possibleAvatarFields) {
-            if (combinedData[field]) {
-              processedAvatarUrl = combinedData[field]
-              console.log(`[v0] Found avatar in field '${field}':`, processedAvatarUrl)
-              break
-            }
+          if (avatarFromBackend && typeof avatarFromBackend === "string" && avatarFromBackend.trim() !== "") {
+            const avatarUrl = avatarFromBackend.trim()
+            processedAvatarUrl = avatarUrl.includes("?")
+              ? `${avatarUrl}&t=${Date.now()}`
+              : `${avatarUrl}?t=${Date.now()}`
+            console.log("[v0] Processed avatar URL:", processedAvatarUrl)
+          } else {
+            console.log("[v0] No valid avatar URL found, will use fallback")
           }
 
-          if (processedAvatarUrl) {
-            const separator = processedAvatarUrl.includes("?") ? "&" : "?"
-            processedAvatarUrl = `${processedAvatarUrl}${separator}t=${Date.now()}`
-            console.log("[v0] Processed avatar URL with cache-busting:", processedAvatarUrl)
+          const clientDataToSet = {
+            id: freshClientData.userId || "",
+            firstName: freshClientData.user?.firstName || "",
+            lastName: freshClientData.user?.lastName || "",
+            username: freshClientData.user?.firstName && freshClientData.user?.lastName
+              ? `@${freshClientData.user.firstName.toLowerCase()}${freshClientData.user.lastName.toLowerCase()}`
+              : "@user",
+            avatar: processedAvatarUrl,
+            bio: freshClientData.user?.bio || "",
+            industry: freshClientData.industry || "",
+            location: freshClientData.user?.location || "Location not specified",
+            companySize: freshClientData.companySize || "",
+            website: freshClientData.user?.website || "",
+            phoneNumber: freshClientData.user?.phoneNumber || "",
+            joinDate: freshClientData.user?.createdAt || "Recently",
+            organizationName: freshClientData.organizationName || "",
+            rating: freshClientData.rating || 0,
+            totalReviews: freshClientData.reviews?.length || 0,
+            totalProjects: freshClientData.jobPosts?.length || 0,
+            projectsPosted: freshClientData.jobPosts || [],
+            reviews: freshClientData.reviews || [],
+            coverImage: freshClientData.user?.coverUrl || "/placeholder.svg",
           }
 
-          const updatedUserData = {
-            ...combinedData,
-            avatar: processedAvatarUrl || combinedData.avatarURL || combinedData.avatar,
-          }
-
-          dispatch(updateProfile(updatedUserData))
-          freshUserData = updatedUserData
+          console.log("[v0] Final client data:", clientDataToSet)
+          setClientData(clientDataToSet)
         } catch (error) {
-          console.error("[v0] Error fetching comprehensive client data:", error)
-
+          console.error("[v0] Error fetching fresh client data:", error)
           if (error.code === "ERR_NETWORK" || error.message === "Network Error") {
             setNetworkError(true)
             setErrorMessage(
-              "Unable to connect to server. Please check if the backend is running and CORS is configured properly.",
+              "Unable to connect to server. Please check if the backend is running and CORS is configured properly."
             )
-            freshUserData = user
           } else {
             setErrorMessage("Failed to fetch client data. Using cached information.")
           }
+
+          // Fallback to existing user data
+          let fallbackAvatarUrl = null
+          if (user.avatar && typeof user.avatar === "string" && user.avatar.trim() !== "") {
+            const avatarUrl = user.avatar.trim()
+            fallbackAvatarUrl = avatarUrl.includes("?")
+              ? `${avatarUrl}&t=${Date.now()}`
+              : `${avatarUrl}?t=${Date.now()}`
+            console.log("[v0] Using fallback avatar from Redux:", fallbackAvatarUrl)
+          }
+
+          const fallbackClientData = {
+            id: user.userId || "",
+            firstName: user.firstName || "",
+            lastName: user.lastName || "",
+            username: user.firstName && user.lastName
+              ? `@${user.firstName.toLowerCase()}${user.lastName.toLowerCase()}`
+              : "@user",
+            avatar: fallbackAvatarUrl,
+            bio: user.about || user.bio || "",
+            industry: user.industry || "",
+            location: user.location || "Location not specified",
+            companySize: user.companySize || "",
+            website: user.website || "",
+            phoneNumber: user.phoneNumber || "",
+            joinDate: user.createdAt || "Recently",
+            rating: user.rating || 0,
+            totalReviews: user.reviews?.length || 0,
+            totalProjects: user.jobPosts?.length || 0,
+            projectsPosted: user.jobPosts || [],
+            reviews: user.reviews || [],
+            coverImage: user.coverUrl || "/placeholder.svg",
+          }
+
+          setClientData(fallbackClientData)
+        } finally {
+          setIsLoading(false)
         }
-      }
-
-      if (freshUserData && (userId === freshUserData.userId || !userId)) {
-        setIsOwner(true)
-        setClientData(
-          createDefaultClientData({
-            ...freshUserData,
-            projectsPosted: clientProjects,
-            totalProjects: clientProjects.length,
-          }),
-        )
       } else {
-        setClientData(createDefaultClientData())
+        setClientData(null)
         setIsOwner(false)
+        setIsLoading(false)
       }
-
-      setIsLoading(false)
     }
 
-    fetchAndUpdateClientData()
-  }, [userId])
+    fetchClientData()
+  }, [userId, user]) // Added user to dependency array
 
   const handleEditProfile = () => {
     console.log("[v0] Edit Profile button clicked - navigating to /profile/edit")
@@ -162,32 +156,44 @@ export default function ClientProfile() {
     navigate(`/marketplace/edit/${postId}`)
   }
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "Active":
-        return "text-green-400 bg-green-400/20"
-      case "In Progress":
-        return "text-blue-400 bg-blue-400/20"
-      case "Completed":
-        return "text-gray-400 bg-gray-400/20"
-      default:
-        return "text-gray-400 bg-gray-400/20"
-    }
+  const getStatusColor = (isActive) => {
+    return (isActive) ? "text-green-400 bg-green-400/20" : "text-gray-400 bg-gray-400/20"
   }
 
-  if (!clientData || isLoading) {
   const handleRetry = () => {
     setNetworkError(false)
     setErrorMessage("")
-    setIsLoading(false)
+    setIsLoading(true)
+    hasFetchedRef.current = null // Reset to allow refetch
   }
 
   const handlePhonePrivacyToggle = () => {
     setIsPhonePublic(!isPhonePublic)
-    // Here you would typically save this preference to the backend
+    // TODO: Save this preference to the backend
   }
 
-  
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000] flex items-center justify-center">
+        <p className="text-white text-lg">Loading...</p>
+      </div>
+    )
+  }
+
+  // Show message if no client data and not owner
+  if (!clientData && !isOwner) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000]">
+        <AuthNavbar />
+        <div className="max-w-7xl mx-auto px-6 py-10 text-white text-center">
+          <p>No client data available.</p>
+        </div>
+        <AuthFooter />
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000] relative">
       <AuthNavbar />
@@ -214,7 +220,11 @@ export default function ClientProfile() {
       <div className="pt-20">
         <div className="relative">
           <div className="h-64 md:h-80 relative overflow-hidden">
-            <img src={clientData.coverImage || "/placeholder.svg"} alt="Cover" className="w-full h-full object-cover" />
+            <img
+              src={clientData?.coverImage || "/placeholder.svg"}
+              alt="Cover"
+              className="w-full h-full object-cover"
+            />
             <div className="absolute inset-0 bg-black/40" />
           </div>
 
@@ -224,17 +234,17 @@ export default function ClientProfile() {
                 <div className="relative">
                   <Avatar className="w-32 h-32 border-4 border-white/20 bg-white/10 backdrop-blur-sm">
                     <AvatarImage
-                      src={clientData.avatar || "/placeholder.svg"}
-                      alt={`${clientData.firstName} ${clientData.lastName}`}
-                      onLoad={() => console.log("[v0] Client avatar loaded successfully:", clientData.avatar)}
+                      src={clientData?.avatar || "/placeholder.svg"}
+                      alt={`${clientData?.firstName || "User"} ${clientData?.lastName || ""}`}
+                      onLoad={() => console.log("[v0] Client avatar loaded successfully:", clientData?.avatar)}
                       onError={(e) => {
-                        console.log("[v0] Client avatar failed to load:", clientData.avatar)
+                        console.log("[v0] Client avatar failed to load:", clientData?.avatar)
                         console.log("[v0] Error details:", e)
                       }}
                     />
                     <AvatarFallback className="text-2xl font-bold text-white bg-[#A95BAB]">
-                      {clientData.firstName?.[0]}
-                      {clientData.lastName?.[0]}
+                      {clientData?.firstName?.[0] || "U"}
+                      {clientData?.lastName?.[0] || ""}
                     </AvatarFallback>
                   </Avatar>
                   {isOwner && (
@@ -253,26 +263,28 @@ export default function ClientProfile() {
                     <div>
                       <div className="flex items-center gap-4 mb-3">
                         <h1 className="text-3xl font-bold">
-                          {clientData.firstName} {clientData.lastName}
+                          {clientData?.firstName || "User"} {clientData?.lastName || ""}
                         </h1>
                         <div className="flex items-center gap-3">
                           <div className="flex items-center gap-1">
                             <Star className="w-5 h-5 text-yellow-400 fill-current" />
-                            <span className="text-xl font-semibold text-yellow-400">{clientData.rating}</span>
+                            <span className="text-xl font-semibold text-yellow-400">{clientData?.rating || 0}</span>
                           </div>
                           <div className="text-gray-300">•</div>
-                          <div className="text-lg font-medium text-[#A95BAB]">{clientData.totalProjects} projects</div>
+                          <div className="text-lg font-medium text-[#A95BAB]">
+                            {clientData?.totalProjects || 0} projects
+                          </div>
                         </div>
                       </div>
-                      <p className="text-gray-300 mb-3">{clientData.username}</p>
+                      <p className="text-gray-300 mb-3">{clientData?.username || "@user"}</p>
                       <div className="flex items-center gap-4 text-sm text-gray-300">
                         <div className="flex items-center gap-1">
                           <MapPin className="w-4 h-4" />
-                          {clientData.location}
+                          {clientData?.location || "Location not specified"}
                         </div>
                         <div className="flex items-center gap-1">
                           <Calendar className="w-4 h-4" />
-                          Joined {clientData.joinDate}
+                          Joined {clientData?.joinDate || "Recently"}
                         </div>
                       </div>
                     </div>
@@ -314,16 +326,20 @@ export default function ClientProfile() {
               <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
                 <CardContent className="p-8">
                   <h3 className="text-xl font-bold text-white mb-6">About</h3>
-                  {clientData.bio && <p className="text-gray-300 leading-relaxed mb-8 text-base">{clientData.bio}</p>}
+                  {clientData?.bio ? (
+                    <p className="text-gray-300 leading-relaxed mb-8 text-base">{clientData.bio}</p>
+                  ) : (
+                    <p className="text-gray-400">No bio available.</p>
+                  )}
 
                   <div className="space-y-4 mb-8">
-                    {clientData.industry && (
+                    {clientData?.industry && (
                       <div className="flex justify-between py-3 border-b border-white/10">
                         <span className="text-gray-400 font-medium">Industry</span>
                         <span className="text-white font-semibold">{clientData.industry}</span>
                       </div>
                     )}
-                    {clientData.companySize && (
+                    {clientData?.companySize && (
                       <div className="flex justify-between py-3 border-b border-white/10">
                         <span className="text-gray-400 font-medium">Company Size</span>
                         <span className="text-white font-semibold">{clientData.companySize}</span>
@@ -332,7 +348,7 @@ export default function ClientProfile() {
                   </div>
 
                   <div className="space-y-4 text-sm">
-                    {clientData.phoneNumber && (
+                    {clientData?.phoneNumber && (
                       <div className="flex justify-between items-center py-3">
                         <span className="text-gray-400 font-medium">Phone</span>
                         <div className="flex items-center gap-3">
@@ -357,7 +373,7 @@ export default function ClientProfile() {
                         </div>
                       </div>
                     )}
-                    {clientData.website && (
+                    {clientData?.website && (
                       <div className="flex justify-between py-3">
                         <span className="text-gray-400 font-medium">Website</span>
                         <a
@@ -375,28 +391,21 @@ export default function ClientProfile() {
               </Card>
 
               <div>
-                <h2 className="text-2xl font-bold text-white mb-8">Reviews from Artists ({clientData.totalReviews})</h2>
+                <h2 className="text-2xl font-bold text-white mb-8">
+                  Reviews from Artists ({clientData?.totalReviews || 0})
+                </h2>
 
-                {clientData.reviews.length > 0 ? (
+                {clientData?.totalReviews > 0 ? (
                   <div className="space-y-6 max-h-96 overflow-y-auto pr-2">
                     {clientData.reviews.map((review) => (
                       <Card key={review.id} className="bg-white/5 border-white/10 backdrop-blur-sm">
                         <CardContent className="p-6">
                           <div className="flex items-start gap-4">
-                            <Avatar className="w-10 h-10">
-                              <AvatarImage src={review.artistAvatar || "/placeholder.svg"} alt={review.artistName} />
-                              <AvatarFallback className="bg-[#A95BAB] text-white">
-                                {review.artistName
-                                  .split(" ")
-                                  .map((n) => n[0])
-                                  .join("")}
-                              </AvatarFallback>
-                            </Avatar>
                             <div className="flex-1">
                               <div className="flex items-center justify-between mb-2">
                                 <div>
-                                  <h4 className="font-semibold text-white">{review.artistName}</h4>
-                                  <p className="text-sm text-gray-400">{review.project}</p>
+                                  <h4 className="font-semibold text-white">{review.artistName || "Anonymous"}</h4>
+                                  <p className="text-sm text-gray-400">{review.project || "No project specified"}</p>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <div className="flex">
@@ -404,15 +413,15 @@ export default function ClientProfile() {
                                       <Star
                                         key={i}
                                         className={`w-4 h-4 ${
-                                          i < review.rating ? "text-yellow-400 fill-current" : "text-gray-600"
+                                          i < (review.rating || 0) ? "text-yellow-400 fill-current" : "text-gray-600"
                                         }`}
                                       />
                                     ))}
                                   </div>
-                                  <span className="text-sm text-gray-400">{review.date}</span>
+                                  <span className="text-sm text-gray-400">{review.date || "N/A"}</span>
                                 </div>
                               </div>
-                              <p className="text-gray-300">{review.comment}</p>
+                              <p className="text-gray-300">{review.comment || "No comment provided."}</p>
                             </div>
                           </div>
                         </CardContent>
@@ -443,40 +452,53 @@ export default function ClientProfile() {
                   )}
                 </div>
 
-                {clientData.projectsPosted.length > 0 ? (
+                {clientData?.totalProjects > 0 ? (
                   <div className="space-y-6">
-                    {clientData.projectsPosted.map((project) => (
+                    {clientData.projectsPosted.map((jobPost) => (
                       <Card
-                        key={project.id}
+                        key={jobPost.jobId}
                         className="bg-white/5 border-white/10 hover:bg-white/10 backdrop-blur-sm transition-all duration-300"
                       >
                         <CardContent className="p-8">
                           <div className="flex items-start justify-between mb-6">
                             <div className="flex-1">
                               <div className="flex items-center gap-3 mb-3">
-                                <h3 className="text-xl font-semibold text-white">{project.title}</h3>
-                                <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(project.status)}`}>
-                                  {project.status}
+                                <h3 className="text-xl font-semibold text-white">{jobPost.title || "Untitled"}</h3>
+                                <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(jobPost.isActive)}`}>
+                                  {jobPost.isActive ? "Active": ""}
                                 </span>
                               </div>
-                              <p className="text-gray-300 mb-6 leading-relaxed">{project.description}</p>
+                              <p
+                                style={{
+                                  color: "#d1d5db", // text-gray-300
+                                  marginBottom: "1.5rem", // mb-6
+                                  lineHeight: "1.625", // leading-relaxed
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  display: "-webkit-box",
+                                  WebkitLineClamp: 2,
+                                  WebkitBoxOrient: "vertical",
+                                }}
+                              >
+                                {jobPost.description || "No description provided."}
+                              </p>
 
                               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-sm">
                                 <div>
                                   <span className="text-gray-400 block mb-1">Budget</span>
-                                  <div className="text-white font-medium">{project.budget}</div>
+                                  <div className="text-white font-medium">{jobPost.budget || "N/A"}</div>
                                 </div>
                                 <div>
                                   <span className="text-gray-400 block mb-1">Deadline</span>
-                                  <div className="text-white font-medium">{project.deadline}</div>
+                                  <div className="text-white font-medium">{new Date(jobPost.deadline).toLocaleDateString() || "N/A"}</div>
                                 </div>
                                 <div>
                                   <span className="text-gray-400 block mb-1">Applicants</span>
-                                  <div className="text-white font-medium">{project.applicants}</div>
+                                  <div className="text-white font-medium">{jobPost.applicationCount || 0}</div>
                                 </div>
                                 <div>
                                   <span className="text-gray-400 block mb-1">Category</span>
-                                  <div className="text-[#A95BAB] font-medium">{project.category}</div>
+                                  <div className="text-[#A95BAB] font-medium">{jobPost.category.name || "N/A"}</div>
                                 </div>
                               </div>
                             </div>
@@ -484,7 +506,7 @@ export default function ClientProfile() {
                             {isOwner && (
                               <Button
                                 size="sm"
-                                onClick={() => handleEditPost(project.id)}
+                                onClick={() => handleEditPost(jobPost.jobId)}
                                 className="bg-white/10 hover:bg-white/20 border border-white/20 text-white ml-6"
                               >
                                 <Edit className="w-4 h-4" />
@@ -519,4 +541,4 @@ export default function ClientProfile() {
       </div>
     </div>
   )
-}}
+}
