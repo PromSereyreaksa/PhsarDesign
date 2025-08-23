@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/"
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/";
 
 // Create axios instance with default config
 const api = axios.create({
@@ -8,10 +8,35 @@ const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-})
+});
+
+// 1. Request interceptor → attach token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("authToken") 
+               || localStorage.getItem("token") 
+               || sessionStorage.getItem("authToken") 
+               || sessionStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// 2. Response interceptor → refresh on 401 (optional, can be removed if not needed)
+// api.interceptors.response.use(
+//   (response) => response,
+//   async (error) => {
+//     // ...refresh logic...
+//     return Promise.reject(error);
+//   }
+// );
+
+
 
 // Add auth token to requests
-
 
 // 1. Request interceptor → attach token
 api.interceptors.request.use(
@@ -70,6 +95,69 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// ========== STRUCTURED API OBJECTS ==========
+
+// Availability Posts API (Artist Posts)
+export const availabilityPostsAPI = {
+  getAll: (params) => api.get('/api/availability-posts', { params }),
+  getById: (id) => api.get(`/api/availability-posts/id/${id}`),
+  getBySlug: (slug) => api.get(`/api/availability-posts/${slug}`),
+  getByArtist: (artistId, params) => api.get(`/api/availability-posts/artist/${artistId}`, { params }),
+  getMyPosts: (params) => api.get('/api/availability-posts/my-posts', { params }),
+  search: (params) => api.get('/api/availability-posts/search', { params }),
+  create: (postData) => {
+    const isFormData = typeof FormData !== 'undefined' && postData instanceof FormData;
+    return api.post('/api/availability-posts', postData, 
+      isFormData ? { headers: { "Content-Type": undefined } } : undefined
+    );
+  },
+  update: (id, postData) => {
+    const isFormData = typeof FormData !== 'undefined' && postData instanceof FormData;
+    return api.patch(`/api/availability-posts/id/${id}`, postData,
+      isFormData ? { headers: { "Content-Type": undefined } } : undefined
+    );
+  },
+  updateBySlug: (slug, postData) => {
+    const isFormData = typeof FormData !== 'undefined' && postData instanceof FormData;
+    return api.patch(`/api/availability-posts/${slug}`, postData,
+      isFormData ? { headers: { "Content-Type": undefined } } : undefined
+    );
+  },
+  delete: (id) => api.delete(`/api/availability-posts/id/${id}`),
+  deleteBySlug: (slug) => api.delete(`/api/availability-posts/${slug}`),
+};
+
+// Job Posts API (Client Jobs)
+export const jobPostsAPI = {
+  getAll: (params) => api.get('/api/job-posts', { params }),
+  getById: (id) => api.get(`/api/job-posts/id/${id}`),
+  getBySlug: (slug) => api.get(`/api/job-posts/${slug}`),
+  getByClient: (clientId) => api.get(`/api/job-posts/client/${clientId}`),
+  getMyPosts: (params) => api.get('/api/job-posts/my', { params }),
+  search: (params) => api.get('/api/job-posts/search', { params }),
+  create: (postData) => {
+    const isFormData = typeof FormData !== 'undefined' && postData instanceof FormData;
+    return api.post('/api/job-posts', postData,
+      isFormData ? { headers: { "Content-Type": undefined } } : undefined
+    );
+  },
+  update: (id, postData) => {
+    const isFormData = typeof FormData !== 'undefined' && postData instanceof FormData;
+    return api.patch(`/api/job-posts/id/${id}`, postData,
+      isFormData ? { headers: { "Content-Type": undefined } } : undefined
+    );
+  },
+  updateBySlug: (slug, postData) => {
+    const isFormData = typeof FormData !== 'undefined' && postData instanceof FormData;
+    return api.put(`/api/job-posts/${slug}`, postData,
+      isFormData ? { headers: { "Content-Type": undefined } } : undefined
+    );
+  },
+  delete: (id) => api.delete(`/api/job-posts/id/${id}`),
+  deleteBySlug: (slug) => api.delete(`/api/job-posts/${slug}`),
+  apply: (jobId, applicationData) => api.post(`/api/job-posts/id/${jobId}/apply`, applicationData),
+};
 
 // Availability Posts API endpoints
 export const getAllAvailabilityPosts = (filters = {}) => {

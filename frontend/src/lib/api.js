@@ -323,6 +323,7 @@ export const availabilityPostsAPI = {
 export const jobPostsAPI = {
   getAll: (params) => api.get('/api/job-posts', { params }),
   getById: (id) => api.get(`/api/job-posts/${id}`),
+  getBySlug: (slug) => api.get(`/api/job-posts/slug/${slug}`),
   search: (params) => api.get('/api/job-posts/search', { params }),
   create: (clientId, postData) => api.post(`/api/job-posts/client/${clientId}`, postData),
   update: (id, postData) => api.put(`/api/job-posts/${id}`, postData),

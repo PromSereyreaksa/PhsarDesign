@@ -10,8 +10,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar"
 import { Button } from "../../components/ui/button"
 import { Card, CardContent } from "../../components/ui/card"
 import Loader from "../../components/ui/Loader"
-import { artistsAPI, availabilityPostsAPI, usersAPI } from "../../lib/api"
+import { artistsAPI, usersAPI } from "../../lib/api"
 import { updateProfile } from "../../store/slices/authSlice"
+import { fetchMyAvailabilityPosts } from "../../store/slices/postsSlice"
 
 export default function ArtistProfile() {
   const { userId } = useParams()
@@ -21,8 +22,9 @@ export default function ArtistProfile() {
   const [isOwner, setIsOwner] = useState(false)
   const [artistData, setArtistData] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [posts, setPosts] = useState([])
-  const [postsLoading, setPostsLoading] = useState(false)
+  // Use Redux selectors for user's own posts
+  const myAvailabilityPosts = useSelector((state) => state.posts.myAvailabilityPosts)
+  const postsLoading = useSelector((state) => state.posts.myAvailabilityPostsLoading)
 
   const mockArtistData = {
     id: userId || "1",
@@ -63,36 +65,8 @@ export default function ArtistProfile() {
     ],
   }
 
-  const fetchArtistPosts = async (artistUserId) => {
-    setPostsLoading(true)
-    try {
-      console.log("[v0] Fetching posts for artist userId:", artistUserId)
-      const response = await availabilityPostsAPI.getByArtist(artistUserId)
-      console.log("[v0] Posts API response:", response.data)
-
-      // Transform API data to match the expected post structure
-      const transformedPosts = response.data.map((post) => ({
-        id: post.postId,
-        title: post.title,
-        image: post.attachments && post.attachments.length > 0 ? post.attachments[0] : null,
-        likes: post.likes || 0,
-        views: post.views || 0,
-        category: post.category?.name || "Service",
-        description: post.description,
-        budget: post.budget,
-        createdAt: post.createdAt,
-      }))
-
-      setPosts(transformedPosts)
-      console.log("[v0] Transformed posts:", transformedPosts)
-    } catch (error) {
-      console.error("[v0] Error fetching artist posts:", error)
-      // Fallback to empty array on error
-      setPosts([])
-    } finally {
-      setPostsLoading(false)
-    }
-  }
+  // Use only the current user's posts
+  const posts = myAvailabilityPosts;
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -173,7 +147,7 @@ export default function ArtistProfile() {
             coverImage: mockArtistData.coverImage,
           })
 
-          await fetchArtistPosts(freshUserData.userId)
+          // No need to fetch posts here, already handled by Redux slice
         } catch (error) {
           console.error("[v0] Error fetching fresh user data:", error)
 
@@ -230,20 +204,22 @@ export default function ArtistProfile() {
             coverImage: mockArtistData.coverImage,
           })
 
-          await fetchArtistPosts(user.userId)
+          // No need to fetch posts here, already handled by Redux slice
         } finally {
           setIsLoading(false)
         }
       } else {
         setArtistData(mockArtistData)
         setIsOwner(false)
-        if (userId) {
-          await fetchArtistPosts(userId)
-        }
+        // No need to fetch posts here, already handled by Redux slice
       }
     }
 
-    fetchUserData()
+    fetchUserData();
+    // Fetch only the current user's posts
+    if (user && user.userId) {
+      dispatch(fetchMyAvailabilityPosts());
+    }
   }, [userId]) // Removed user?.avatar from dependencies to prevent unnecessary re-fetches
 
   const handleEditProfile = () => {
@@ -265,6 +241,9 @@ export default function ArtistProfile() {
       </div>
     )
   }
+
+  console.log("userId param:", userId);
+console.log("My post:", myAvailabilityPosts);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000] relative">
@@ -521,7 +500,7 @@ export default function ArtistProfile() {
                             .toLowerCase()
                             .replace(/[^a-z0-9]+/g, "-")
                             .replace(/(^-|-$)/g, "")
-                          navigate(`/marketplace/${slug}-${post.id}`)
+                          navigate(`/marketplace/${slug}`)
                         }}
                       >
                         <div className="relative">
