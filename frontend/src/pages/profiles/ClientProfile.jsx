@@ -284,7 +284,7 @@ export default function ClientProfile() {
                         </div>
                         <div className="flex items-center gap-1">
                           <Calendar className="w-4 h-4" />
-                          Joined {clientData?.joinDate || "Recently"}
+                          Joined {new Date(clientData?.joinDate).toDateString() || "Recently"}
                         </div>
                       </div>
                     </div>
@@ -398,7 +398,7 @@ export default function ClientProfile() {
                 {clientData?.totalReviews > 0 ? (
                   <div className="space-y-6 max-h-96 overflow-y-auto pr-2">
                     {clientData.reviews.map((review) => (
-                      <Card key={review.id} className="bg-white/5 border-white/10 backdrop-blur-sm">
+                      <Card key={review.reviewId} className="bg-white/5 border-white/10 backdrop-blur-sm">
                         <CardContent className="p-6">
                           <div className="flex items-start gap-4">
                             <div className="flex-1">
