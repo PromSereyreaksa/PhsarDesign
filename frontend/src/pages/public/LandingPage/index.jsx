@@ -589,7 +589,7 @@ export default function LandingPage() {
                   }}
                 >
                   <CardContent className="p-8 text-center relative z-10">
-                    <div className="mt-5 w-16 h-16 bg-[#A95BAB]/20 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-[#A95BAB]/30 transition-colors duration-500 ease-out">
+                    <div className=" w-16 h-16 bg-[#A95BAB]/20 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-[#A95BAB]/30 transition-colors duration-500 ease-out">
                       <IconComponent className="h-6 w-6 text-[#A95BAB]" />
                     </div>
                     <h3 className="font-semibold text-white mb-3 text-lg">{prop.title}</h3>
