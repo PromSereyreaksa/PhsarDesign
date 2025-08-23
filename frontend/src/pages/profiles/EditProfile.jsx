@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom"
 import AuthFooter from "../../components/layout/AuthFooter"
 import AuthNavbar from "../../components/layout/AuthNavbar"
 import Loader from "../../components/ui/Loader"
-import { artistsAPI, uploadAPI, usersAPI } from "../../lib/api"
+import { artistsAPI, clientsAPI, uploadAPI, usersAPI } from "../../lib/api"
 import { updateProfile } from "../../store/slices/authSlice"
 
 const EditProfile = () => {
@@ -197,7 +197,7 @@ const EditProfile = () => {
       // Update form data with the new image URL
       setFormData((prev) => ({
         ...prev,
-        avatar: imageUrl,
+        avatarURL: imageUrl,
       }))
 
       console.log("[v0] Image uploaded successfully:", imageUrl)
@@ -238,7 +238,7 @@ const EditProfile = () => {
       setError(error.response?.data?.message || error.message || "Failed to upload image. Please try again.")
 
       // Reset preview if upload failed
-      setPreviewImage(formData.avatar)
+      setPreviewImage(formData.avatarURL)
     } finally {
       setIsUploadingImage(false)
     }
@@ -477,8 +477,8 @@ const EditProfile = () => {
         apiData.companySize = formData.companySize || ""
       }
 
-      if (formData.avatar && formData.avatar !== initialFormData?.avatar) {
-        apiData.avatar = formData.avatar
+      if (formData.avatarURL && formData.avatarURL !== initialFormData?.avatarURL) {
+        apiData.avatarURL = formData.avatarURL
       }
 
       console.log("[v0] Final API data being sent:", JSON.stringify(apiData, null, 2))
@@ -503,15 +503,16 @@ const EditProfile = () => {
         endpoint: `/api/users/${user.userId}`,
         method: "PATCH",
         dataSize: JSON.stringify(apiData).length,
+        apiData: apiData
       })
 
       // Make API call to update profile using usersAPI service
       const { data: updatedUser } = await usersAPI.update(user.userId, apiData)
+      console.log("[v0] Profile updated successfully:", updatedUser)
 
       // Update Redux store with new user data
-      dispatch(updateProfile(updatedUser))
+      dispatch(updateProfile(apiData))
 
-      console.log("[v0] Profile updated successfully:", updatedUser)
 
       setInitialFormData(formData)
       setHasChanges(false)
@@ -555,13 +556,15 @@ const EditProfile = () => {
     const data = {
       // Common fields for all users
       about: userData?.about || userData?.bio || "",
-      avatar: userData?.avatar || "",
+      avatarURL: userData?.avatarURL || "",
       bio: userData?.bio || userData?.about || "",
       website: userData?.website || "",
       location: parseLocation(userData?.location),
       phoneNumber: userData?.phoneNumber || "",
       firstName: userData?.firstName || "",
       lastName: userData?.lastName || "",
+      industry: userData?.industry || "", 
+      companySize: userData?.companySize || 0,
 
       // Artist-specific fields (empty if not artist)
       skills: isArtist
@@ -599,7 +602,7 @@ const EditProfile = () => {
         usersAPI.getById(user.userId),
         user.role === "freelancer" || user.role === "artist"
           ? artistsAPI.getByUserId(user.userId).catch(() => null)
-          : Promise.resolve(null),
+          : clientsAPI.getByUserId(user.userId).catch(() => null),
       ])
 
       const combinedData = {
@@ -712,9 +715,11 @@ const EditProfile = () => {
                       className="w-24 h-24 rounded-full object-cover border-2 border-white/20"
                     />
                   ) : (
-                    <div className="w-24 h-24 rounded-full bg-[#A95BAB] border-2 border-white/20 flex items-center justify-center">
-                      <span className="text-white text-2xl font-bold">{getInitials()}</span>
-                    </div>
+                    <img
+                      src={user.avatarURL || "/placeholder.svg"}
+                      alt="Profile Preview"
+                      className="w-24 h-24 rounded-full object-cover border-2 border-white/20"
+                    />
                   )}
                 </div>
                 <div className="flex flex-col space-y-3">

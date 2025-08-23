@@ -242,9 +242,9 @@ const DropdownItem = ({ text, items = [], isMobile = false }) => {
                     <div className="flex items-center space-x-3">
                       {/* Profile Picture */}
                       <div className="w-10 h-10 bg-[#A95BAB] rounded-full flex items-center justify-center">
-                        {user?.avatar ? (
+                        {user?.avatarURL ? (
                           <img
-                            src={user.avatar}
+                            src={user.avatarURL}
                             alt={user.firstName}
                             className="w-10 h-10 rounded-full object-cover"
                           />
