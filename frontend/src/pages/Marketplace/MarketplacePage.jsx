@@ -8,7 +8,14 @@ import PostCard from "../../components/marketplace/PostCard.jsx";
 import SearchBar from "../../components/marketplace/SearchBar";
 import Loader from "../../components/ui/Loader";
 import { useAppDispatch, useAppSelector } from "../../hook/useRedux";
-import { setFilters } from "../../store/slices/marketplaceSlice";
+
+// Import from marketplace slice (now includes categories)
+import {
+  fetchCategories,
+  setFilters
+} from "../../store/slices/marketplaceSlice";
+
+// Import from posts slice
 import {
   fetchAvailabilityPosts,
   fetchJobPosts,
@@ -17,6 +24,7 @@ import {
   selectJobPosts,
   setActiveTab
 } from '../../store/slices/postsSlice';
+
 import FeaturedArtists from "./FeaturedArtist";
 
 const MarketplacePage = () => {
@@ -24,8 +32,13 @@ const MarketplacePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Get data from both slices
-  const { filters } = useAppSelector((state) => state.marketplace);
+  // Get data from marketplace slice (including categories)
+  const { 
+    filters, 
+    categories, 
+    categoriesLoading, 
+    categoriesError 
+  } = useAppSelector((state) => state.marketplace);
   
   // Get posts data from posts slice
   const availabilityPosts = useAppSelector(selectAvailabilityPosts);
@@ -41,99 +54,107 @@ const MarketplacePage = () => {
   } = useAppSelector((state) => state.posts);
 
   const postsToDisplay = activeTab === "availability"
-  ? useAppSelector(selectAvailabilityPosts)
-  : useAppSelector(selectJobPosts);
-
-postsToDisplay.map(post => (
-  <PostCard
-    key={post.id}
-    post={post} // <-- now PostCard is reusing the slice
-  />
-));
-
-
+    ? useAppSelector(selectAvailabilityPosts)
+    : useAppSelector(selectJobPosts);
 
   // Determine current posts and loading state based on active tab
   const currentPosts = activeTab === 'availability' ? availabilityPosts : jobPosts;
   const currentLoading = activeTab === 'availability' ? availabilityPostsLoading : jobPostsLoading;
   const currentError = activeTab === 'availability' ? availabilityPostsError : jobPostsError;
 
+  // Fetch categories on component mount
+  useEffect(() => {
+    if (categories.length === 0 && !categoriesLoading && !categoriesError) {
+      console.log("📂 Fetching categories...");
+      dispatch(fetchCategories());
+    }
+  }, [dispatch, categories.length, categoriesLoading, categoriesError]);
+
   // Check URL params for category filtering and post type
-  // On URL param change
-useEffect(() => {
-  
-  const params = new URLSearchParams(location.search);
-  const category = params.get("category");
-  const section = params.get("section");
-  const postType = params.get("type"); // 'availability' or 'jobs'
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const category = params.get("category");
+    const section = params.get("section");
+    const postType = params.get("type"); // 'availability' or 'jobs'
 
-  const newFilters = { ...filters };
-  if (category) newFilters.category = category;
-  if (section) newFilters.section = section;
+    const newFilters = { ...filters };
+    if (category) newFilters.category = category;
+    if (section) newFilters.section = section;
 
-  // **Set default section based on type if section is missing**
-  if (!section) {
-    if (postType === 'jobs') newFilters.section = 'jobs';
-    if (postType === 'availability') newFilters.section = 'services';
-  }
+    // **Set default section based on type if section is missing**
+    if (!section) {
+      if (postType === 'jobs') newFilters.section = 'jobs';
+      if (postType === 'availability') newFilters.section = 'services';
+    }
 
-  dispatch(setFilters(newFilters));
+    dispatch(setFilters(newFilters));
 
-  if (postType && (postType === 'availability' || postType === 'jobs')) {
-    dispatch(setActiveTab(postType));
-  } else {
-    // default to availability
-    dispatch(setActiveTab('availability'));
-  }
-}, [location.search]);
+    if (postType && (postType === 'availability' || postType === 'jobs')) {
+      dispatch(setActiveTab(postType));
+    } else {
+      // default to availability
+      dispatch(setActiveTab('availability'));
+    }
+  }, [location.search, dispatch]);
 
+  // Fetch posts when activeTab or filters change
+  useEffect(() => {
+    if (activeTab === 'availability') {
+      console.log("Fetching availability posts with filters:", filters)
+      dispatch(fetchAvailabilityPosts(filters));
+    } else if (activeTab === 'jobs') {
+      console.log("Fetching job posts with filters:", filters)
+      dispatch(fetchJobPosts(filters));
+    }
+  }, [activeTab, filters, dispatch]);
 
-// Fetch posts when activeTab or filters change
-useEffect(() => {
-  if (activeTab === 'availability') {
-    console.log("Fetching availability posts with filters:", filters)
-    dispatch(fetchAvailabilityPosts(filters));
-  } else if (activeTab === 'jobs') {
-    console.log("Fetching job posts with filters:", filters)
-    dispatch(fetchJobPosts(filters));
-  }
-}, [activeTab, filters]);
+  // Handle tab switch
+  const handleTabChange = (tabType) => {
+    if (tabType === activeTab) return;
 
-// Handle tab switch
-const handleTabChange = (tabType) => {
-  if (tabType === activeTab) return;
+    console.log(`Switching to ${tabType} tab`);
 
-  console.log(`Switching to ${tabType} tab`);
+    dispatch(setActiveTab(tabType));
 
-  dispatch(setActiveTab(tabType));
-  
+    // Update filters
+    const newFilters = { ...filters };
+    if (tabType === "availability") newFilters.section = "services";
+    if (tabType === "jobs") newFilters.section = "jobs";
+    dispatch(setFilters(newFilters));
+    
+    // Update URL
+    const params = new URLSearchParams(location.search);
+    params.set("type", tabType);
+    navigate(`${location.pathname}?${params.toString()}`, { replace: true });
 
-  // Update filters
-  const newFilters = { ...filters };
-  if (tabType === "availability") newFilters.section = "services";
-  if (tabType === "jobs") newFilters.section = "jobs";
-  dispatch(setFilters(newFilters));
-  
-  // Update URL
-  const params = new URLSearchParams(location.search);
-  params.set("type", tabType);
-  navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+    // Fetch posts
+    if (tabType === "availability") dispatch(fetchAvailabilityPosts(newFilters));
+    if (tabType === "jobs") dispatch(fetchJobPosts(newFilters));
+  };
 
-  // Fetch posts
-  if (tabType === "availability") dispatch(fetchAvailabilityPosts(newFilters));
-  if (tabType === "jobs") dispatch(fetchJobPosts(newFilters));
-};
+  // Handle filter change
+  const handleFilterChange = (newFilters) => {
+    const updatedFilters = { ...filters, ...newFilters };
+    dispatch(setFilters(updatedFilters));
 
+    if (activeTab === "availability") dispatch(fetchAvailabilityPosts(updatedFilters));
+    if (activeTab === "jobs") dispatch(fetchJobPosts(updatedFilters));
+  };
 
-// Handle filter change
-const handleFilterChange = (newFilters) => {
-  const updatedFilters = { ...filters, ...newFilters };
-  dispatch(setFilters(updatedFilters));
-
-  if (activeTab === "availability") dispatch(fetchAvailabilityPosts(updatedFilters));
-  if (activeTab === "jobs") dispatch(fetchJobPosts(updatedFilters));
-};
-
+  // Handle category change specifically
+  const handleCategoryChange = (categoryValue) => {
+    console.log("📂 Category changed to:", categoryValue);
+    handleFilterChange({ category: categoryValue });
+    
+    // Update URL with category
+    const params = new URLSearchParams(location.search);
+    if (categoryValue) {
+      params.set("category", categoryValue);
+    } else {
+      params.delete("category");
+    }
+    navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+  };
 
   if (currentLoading) {
     return (
@@ -165,8 +186,6 @@ const handleFilterChange = (newFilters) => {
       </div>
     );
   }
-
-  
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000]">
@@ -202,57 +221,59 @@ const handleFilterChange = (newFilters) => {
           <div className="flex-1">
             <div className="relative">
               <SearchBar
-        type="availability" // or "job"
-        filters={filters}
-        onFilterChange={handleFilterChange}
-      />
+                type="availability" // or "job"
+                filters={filters}
+                onFilterChange={handleFilterChange}
+              />
             </div>
           </div>
 
           {/* Tab Switch */}
-<div className="flex bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-xl p-1">
-  <button
-    onClick={() => handleTabChange("availability")}
-    className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${
-      activeTab === "availability"
-        ? "bg-[#A95BAB]/20 text-[#A95BAB] border border-[#A95BAB]/30"
-        : "text-gray-400 hover:text-white"
-    }`}
-  >
-    Services
-  </button>
-  <button
-    onClick={() => handleTabChange("jobs")}
-    className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${
-      activeTab === "jobs"
-        ? "bg-[#A95BAB]/20 text-[#A95BAB] border border-[#A95BAB]/30"
-        : "text-gray-400 hover:text-white"
-    }`}
-  >
-    Jobs
-  </button>
-</div>
+          <div className="flex bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-xl p-1">
+            <button
+              onClick={() => handleTabChange("availability")}
+              className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${
+                activeTab === "availability"
+                  ? "bg-[#A95BAB]/20 text-[#A95BAB] border border-[#A95BAB]/30"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              Services
+            </button>
+            <button
+              onClick={() => handleTabChange("jobs")}
+              className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${
+                activeTab === "jobs"
+                  ? "bg-[#A95BAB]/20 text-[#A95BAB] border border-[#A95BAB]/30"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              Jobs
+            </button>
+          </div>
 
-
-
-          {/* Quick Filters */}
+           {/* Quick Filters */}
           <div className="flex items-center space-x-3">
+            {/* Updated Category Select with API data */}
             <select
               value={filters.category || ""}
-              onChange={(e) => handleFilterChange({ category: e.target.value })}
-              className="px-4 py-3 bg-gray-900/50 backdrop-blur-sm border border-gray-700/50 rounded-xl text-white text-sm focus:border-[#A95BAB]/50 focus:ring-1 focus:ring-[#A95BAB]/50 transition-all appearance-none bg-no-repeat bg-right pr-10"
+              onChange={(e) => handleCategoryChange(e.target.value)}
+              disabled={categoriesLoading}
+              className="px-4 py-3 bg-gray-900/50 backdrop-blur-sm border border-gray-700/50 rounded-xl text-white text-sm focus:border-[#A95BAB]/50 focus:ring-1 focus:ring-[#A95BAB]/50 transition-all appearance-none bg-no-repeat bg-right pr-10 disabled:opacity-50 disabled:cursor-not-allowed"
               style={{
                 backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
                 backgroundPosition: "right 0.75rem center",
                 backgroundSize: "1rem",
               }}
             >
-              <option value="">All Categories</option>
-              <option value="Graphic Design">Graphic Design</option>
-              <option value="Web Design">Web Design</option>
-              <option value="Logo Design">Logo Design</option>
-              <option value="Photography">Photography</option>
-              <option value="Animation">Animation</option>
+              <option value="">
+                {categoriesLoading ? "Loading categories..." : "All Categories"}
+              </option>
+              {categories.map((category) => (
+                <option key={category.id || category._id} value={category.name || category.title}>
+                  {category.name || category.title}
+                </option>
+              ))}
             </select>
 
             <select
@@ -274,52 +295,83 @@ const handleFilterChange = (newFilters) => {
         </div>
       </div>
 
+      {/* Show categories error if any */}
+      {categoriesError && (
+        <div className="max-w-5xl mx-auto px-6 mb-4">
+          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+            <p className="text-red-400 text-sm">
+              Categories Error: {categoriesError}
+              <button 
+                onClick={() => {
+                  dispatch(clearCategoriesError());
+                  dispatch(fetchCategories());
+                }}
+                className="ml-2 text-red-300 hover:text-red-200 underline"
+              >
+                Retry
+              </button>
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Posts Grid */}
-<div className="max-w-6xl mx-auto px-6">
-  <div className="flex items-center justify-between mb-6">
-          {console.log('postsToDisplay:', postsToDisplay, 'activeTab:', activeTab)}
+      <div className="max-w-6xl mx-auto px-6">
+        <div className="flex items-center justify-between mb-6">
+          {console.log(
+            "postsToDisplay:",
+            postsToDisplay,
+            "activeTab:",
+            activeTab
+          )}
 
-    <div>
-      <h2 className="text-2xl font-bold text-white">
-        {(filters.section || "services") === "services"
-          ? "Popular Services"
-          : "Freelancing Opportunities"}
-      </h2>
-    </div>
-    {currentPosts.length > 9 && (
-      <button
-        onClick={() => {
-          // Remove the 9-item limit by showing all posts
-          const params = new URLSearchParams();
-          if (filters.category) params.set("category", filters.category);
-          if (filters.section) params.set("section", filters.section);
-          if (filters.search) params.set("search", filters.search);
-          params.set("showAll", "true");
-          navigate(`/marketplace?${params.toString()}`);
-        }}
-        className="text-[#A95BAB] hover:text-[#A95BAB]/80 font-medium text-sm transition-colors"
-      >
-        See All →
-      </button>
-    )}
-  </div>
+          <div>
+            <h2 className="text-2xl font-bold text-white">
+              {(filters.section || "services") === "services"
+                ? "Popular Services"
+                : "Freelancing Opportunities"}
+            </h2>
+          </div>
+          {currentPosts.length > 9 && (
+            <button
+              onClick={() => {
+                // Remove the 9-item limit by showing all posts
+                const params = new URLSearchParams();
+                if (filters.category) params.set("category", filters.category);
+                if (filters.section) params.set("section", filters.section);
+                if (filters.search) params.set("search", filters.search);
+                params.set("showAll", "true");
+                navigate(`/marketplace?${params.toString()}`);
+              }}
+              className="text-[#A95BAB] hover:text-[#A95BAB]/80 font-medium text-sm transition-colors"
+            >
+              See All →
+            </button>
+          )}
+        </div>
 
-  {!Array.isArray(postsToDisplay) || postsToDisplay.length === 0 ? (
-  <div className="text-center py-16">
-    <div className="text-6xl mb-4">🎨</div>
-    <h3 className="text-2xl font-bold mb-2 text-white">
-      No posts found
-    </h3>
-    <p className="text-gray-400">Try adjusting your filters or check back later for new opportunities.</p>
-  </div>
-) : (
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    {(location.search.includes('showAll=true') ? postsToDisplay : postsToDisplay.slice(0, 9)).map((post) => (
-      <PostCard key={post.jobId || post.id} post={post} />
-    ))}
-  </div>
-)}
-</div>
+        {!Array.isArray(postsToDisplay) || postsToDisplay.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="text-6xl mb-4">🎨</div>
+            <h3 className="text-2xl font-bold mb-2 text-white">
+              No posts found
+            </h3>
+            <p className="text-gray-400">
+              Try adjusting your filters or check back later for new
+              opportunities.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {(location.search.includes("showAll=true")
+              ? postsToDisplay
+              : postsToDisplay.slice(0, 9)
+            ).map((post) => (
+              <PostCard key={post.jobId || post.id} post={post} />
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Featured Artists Section */}
       <FeaturedArtists />
