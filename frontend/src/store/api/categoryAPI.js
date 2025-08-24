@@ -1,8 +1,9 @@
 import axios from 'axios';
 
 // Create axios instance with base configuration
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/";
 const API = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -24,7 +25,8 @@ API.interceptors.request.use(
 const categoryAPI = {
   // Get all categories
   getAllCategories: async () => {
-    const response = await API.get('/categories');
+    const response = await API.get('api/categories');
+    console.log("Categories fetched:", response.data);
     return response.data;
   },
 

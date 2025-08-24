@@ -1,7 +1,8 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit"
-import * as marketplaceAPI from "../api/marketplaceAPI"
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import categoryAPI from "../api/categoryAPI"; // Add this import
+import * as marketplaceAPI from "../api/marketplaceAPI";
 
-// Async thunks for API calls
+// Existing async thunks...
 export const fetchPosts = createAsyncThunk("marketplace/fetchPosts", async (filters = {}) => {
   console.log("🔍 Fetching posts with filters:", filters)
   
@@ -58,7 +59,6 @@ export const createPost = createAsyncThunk(
   }
 );
 
-
 export const updatePost = createAsyncThunk("marketplace/updatePost", async ({ jobId, postData }, { rejectWithValue }) => {
   try {
     const response = await marketplaceAPI.updateJobPost(jobId, postData)
@@ -108,7 +108,47 @@ export const fetchUserPosts = createAsyncThunk("marketplace/fetchUserPosts", asy
   }
 })
 
+// NEW: Category async thunks
+export const fetchCategories = createAsyncThunk(
+  "marketplace/fetchCategories",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await categoryAPI.getAllCategories();
+      console.log("📂 Fetched categories:", response);
+      return response;
+    } catch (error) {
+      console.error("❌ Failed to fetch categories:", error);
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch categories');
+    }
+  }
+);
+
+export const fetchCategoryById = createAsyncThunk(
+  "marketplace/fetchCategoryById",
+  async (categoryId, { rejectWithValue }) => {
+    try {
+      const response = await categoryAPI.getCategoryById(categoryId);
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch category');
+    }
+  }
+);
+
+export const filterCategories = createAsyncThunk(
+  "marketplace/filterCategories",
+  async (filters, { rejectWithValue }) => {
+    try {
+      const response = await categoryAPI.filterCategories(filters);
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to filter categories');
+    }
+  }
+);
+
 const initialState = {
+  // Existing state
   posts: [],
   currentPost: null,
   userPosts: [],
@@ -116,6 +156,8 @@ const initialState = {
   error: null,
   filters: {
     category: "",
+    section: "", // Add section to filters
+    search: "", // Add search to filters
     priceRange: "",
     location: "",
     skills: [],
@@ -126,6 +168,13 @@ const initialState = {
     totalPages: 1,
     totalPosts: 0,
   },
+  
+  // NEW: Categories state
+  categories: [],
+  filteredCategories: [],
+  currentCategory: null,
+  categoriesLoading: false,
+  categoriesError: null,
 }
 
 const marketplaceSlice = createSlice({
@@ -147,9 +196,21 @@ const marketplaceSlice = createSlice({
     clearError: (state) => {
       state.error = null
     },
+    
+    // NEW: Category reducers
+    clearCategoriesError: (state) => {
+      state.categoriesError = null
+    },
+    clearCurrentCategory: (state) => {
+      state.currentCategory = null
+    },
+    setFilteredCategories: (state, action) => {
+      state.filteredCategories = action.payload
+    },
   },
   extraReducers: (builder) => {
     builder
+      // Existing cases...
       // Fetch posts
       .addCase(fetchPosts.pending, (state) => {
         state.loading = true
@@ -182,6 +243,7 @@ const marketplaceSlice = createSlice({
         state.loading = false
         state.error = action.error.message
       })
+      
       // Fetch post by ID
       .addCase(fetchPostById.pending, (state) => {
         state.loading = true
@@ -195,6 +257,7 @@ const marketplaceSlice = createSlice({
         state.loading = false
         state.error = action.error.message
       })
+      
       // Create post
       .addCase(createPost.pending, (state) => {
         state.loading = true
@@ -209,6 +272,7 @@ const marketplaceSlice = createSlice({
         state.loading = false
         state.error = action.payload || action.error.message
       })
+      
       // Fetch post by slug
       .addCase(fetchPostBySlug.pending, (state) => {
         state.loading = true
@@ -222,6 +286,7 @@ const marketplaceSlice = createSlice({
         state.loading = false
         state.error = action.payload || action.error.message
       })
+      
       // Fetch posts by client
       .addCase(fetchPostsByClient.pending, (state) => {
         state.loading = true
@@ -235,6 +300,7 @@ const marketplaceSlice = createSlice({
         state.loading = false
         state.error = action.payload || action.error.message
       })
+      
       // Update post
       .addCase(updatePost.pending, (state) => {
         state.loading = true
@@ -258,6 +324,7 @@ const marketplaceSlice = createSlice({
         state.loading = false
         state.error = action.payload || action.error.message
       })
+      
       // Delete post
       .addCase(deletePost.pending, (state) => {
         state.loading = true
@@ -272,6 +339,7 @@ const marketplaceSlice = createSlice({
         state.loading = false
         state.error = action.payload || action.error.message
       })
+      
       // Fetch user posts
       .addCase(fetchUserPosts.pending, (state) => {
         state.loading = true
@@ -285,8 +353,65 @@ const marketplaceSlice = createSlice({
         state.loading = false
         state.error = action.payload || action.error.message
       })
+      
+      // NEW: Categories cases
+      // Fetch all categories
+      .addCase(fetchCategories.pending, (state) => {
+        state.categoriesLoading = true
+        state.categoriesError = null
+      })
+      .addCase(fetchCategories.fulfilled, (state, action) => {
+        state.categoriesLoading = false
+        state.categories = action.payload
+        state.categoriesError = null
+      })
+      .addCase(fetchCategories.rejected, (state, action) => {
+        state.categoriesLoading = false
+        state.categoriesError = action.payload
+      })
+      
+      // Fetch category by ID
+      .addCase(fetchCategoryById.pending, (state) => {
+        state.categoriesLoading = true
+        state.categoriesError = null
+      })
+      .addCase(fetchCategoryById.fulfilled, (state, action) => {
+        state.categoriesLoading = false
+        state.currentCategory = action.payload
+        state.categoriesError = null
+      })
+      .addCase(fetchCategoryById.rejected, (state, action) => {
+        state.categoriesLoading = false
+        state.categoriesError = action.payload
+      })
+      
+      // Filter categories
+      .addCase(filterCategories.pending, (state) => {
+        state.categoriesLoading = true
+        state.categoriesError = null
+      })
+      .addCase(filterCategories.fulfilled, (state, action) => {
+        state.categoriesLoading = false
+        state.filteredCategories = action.payload
+        state.categoriesError = null
+      })
+      .addCase(filterCategories.rejected, (state, action) => {
+        state.categoriesLoading = false
+        state.categoriesError = action.payload
+      })
   },
 })
 
-export const { setFilters, clearFilters, setCurrentPost, clearCurrentPost, clearError } = marketplaceSlice.actions
+export const { 
+  setFilters, 
+  clearFilters, 
+  setCurrentPost, 
+  clearCurrentPost, 
+  clearError,
+  // NEW: Export category actions
+  clearCategoriesError,
+  clearCurrentCategory,
+  setFilteredCategories
+} = marketplaceSlice.actions
+
 export default marketplaceSlice.reducer

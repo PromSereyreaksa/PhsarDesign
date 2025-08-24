@@ -1,5 +1,6 @@
 import { Route, Routes } from "react-router-dom"
 import ProtectedRoute from "../guards/ProtectedRoute.jsx"
+import ArtistDashboard from "../pages/Dashboard/ArtistDashboard.jsx"
 import MyPostsPage from "../pages/Dashboard/MyPostsPage"
 import HomePage from "../pages/HomePage/index.jsx"
 import CreatePostPage from "../pages/Marketplace/CreatePost"
@@ -13,7 +14,6 @@ import OTPVerificationPage from "../pages/auth/OTPVerificationPage"
 import RegisterPage from "../pages/auth/RegisterPage"
 import ArtistProfile from "../pages/profiles/ArtistProfile.jsx"
 import ClientProfile from "../pages/profiles/ClientProfile.jsx"
-import ArtistDashboard from "../pages/Dashboard/ArtistDashboard.jsx"
 import EditProfile from "../pages/profiles/EditProfile.jsx"
 import ProfileRouter from "../pages/profiles/ProfileRouter.jsx"
 import AboutPage from "../pages/public/AboutPage/index.jsx"
@@ -31,8 +31,23 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/about" element={<AboutPage />} />
 
-        <Route path="/marketplace" element={<MarketplacePage />} />
-        <Route path="/marketplace/:slug" element={<PostDetailPage />} />
+       
+        <Route
+          path="/marketplace"
+          element={
+            <ProtectedRoute>
+              <MarketplacePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/marketplace/:slug"
+          element={
+            <ProtectedRoute>
+              <PostDetailPage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Protected authenticated routes */}
         <Route
