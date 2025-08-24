@@ -4,11 +4,11 @@ import * as marketplaceAPI from "../api/marketplaceAPI"
 // Async thunks for API calls
 export const fetchPosts = createAsyncThunk("marketplace/fetchPosts", async (filters = {}) => {
   console.log("🔍 Fetching posts with filters:", filters)
-  
+
   // Determine which API to call based on section filter
   const section = filters.section || "services"
   let response
-  
+
   if (section === "jobs") {
     // Call job posts API for jobs section
     response = await marketplaceAPI.getAllJobPosts(filters)
@@ -16,7 +16,7 @@ export const fetchPosts = createAsyncThunk("marketplace/fetchPosts", async (filt
     // Call availability posts API for services section
     response = await marketplaceAPI.getAllAvailabilityPosts(filters)
   }
-  
+
   console.log("📡 API Response:", response)
   console.log("📦 Response data:", response.data)
   return { ...response.data, section }
@@ -38,43 +38,70 @@ export const fetchPostsByClient = createAsyncThunk("marketplace/fetchPostsByClie
 })
 
 export const createPost = createAsyncThunk(
-  "marketplace/createPost", 
+  "marketplace/createPost",
   async (postData, { rejectWithValue, getState }) => {
     try {
-      const response = await marketplaceAPI.createJobPost(postData);
-      return response.data;
+      let response
+      
+      // Handle FormData vs regular object
+      let postType
+      if (postData instanceof FormData) {
+        postType = postData.get("postType")
+      } else {
+        postType = postData.postType
+      }
+      
+      console.log("=== REDUX CREATE POST DEBUG ===")
+      console.log("postType extracted:", postType)
+      console.log("postData instanceof FormData:", postData instanceof FormData)
+      
+      if (postType === "job") {
+        console.log("Creating job post via jobPostsAPI.create")
+        response = await marketplaceAPI.jobPostsAPI.create(postData)
+      } else {
+        console.log("Creating availability post via availabilityPostsAPI.create")
+        response = await marketplaceAPI.availabilityPostsAPI.create(postData)
+      }
+      
+      return response.data
     } catch (error) {
+      console.error("=== REDUX CREATE POST ERROR ===")
+      console.error("Error:", error)
+      console.error("Error response:", error.response)
+      
       // Handle different types of errors
       if (error.response?.status === 401) {
-        return rejectWithValue("Authentication required. Please log in.");
+        return rejectWithValue("Authentication required. Please log in.")
       } else if (error.response?.status === 403) {
-        return rejectWithValue("You don't have permission to create job posts.");
+        return rejectWithValue("You don't have permission to create posts.")
       } else if (error.response?.data?.error) {
-        return rejectWithValue(error.response.data.error);
+        return rejectWithValue(error.response.data.error)
       } else {
-        return rejectWithValue("Failed to create post. Please try again.");
+        return rejectWithValue("Failed to create post. Please try again.")
       }
     }
-  }
-);
+  },
+)
 
-
-export const updatePost = createAsyncThunk("marketplace/updatePost", async ({ jobId, postData }, { rejectWithValue }) => {
-  try {
-    const response = await marketplaceAPI.updateJobPost(jobId, postData)
-    return response.data
-  } catch (error) {
-    if (error.response?.status === 401) {
-      return rejectWithValue("Authentication required. Please log in.");
-    } else if (error.response?.status === 403) {
-      return rejectWithValue("You don't have permission to update this post.");
-    } else if (error.response?.data?.error) {
-      return rejectWithValue(error.response.data.error);
-    } else {
-      return rejectWithValue("Failed to update post. Please try again.");
+export const updatePost = createAsyncThunk(
+  "marketplace/updatePost",
+  async ({ postId, postData }, { rejectWithValue }) => {
+    try {
+      const response = await marketplaceAPI.updateJobPost(postId, postData)
+      return response.data
+    } catch (error) {
+      if (error.response?.status === 401) {
+        return rejectWithValue("Authentication required. Please log in.")
+      } else if (error.response?.status === 403) {
+        return rejectWithValue("You don't have permission to update this post.")
+      } else if (error.response?.data?.error) {
+        return rejectWithValue(error.response.data.error)
+      } else {
+        return rejectWithValue("Failed to update post. Please try again.")
+      }
     }
-  }
-})
+  },
+)
 
 export const deletePost = createAsyncThunk("marketplace/deletePost", async (jobId, { rejectWithValue }) => {
   try {
@@ -82,13 +109,13 @@ export const deletePost = createAsyncThunk("marketplace/deletePost", async (jobI
     return jobId
   } catch (error) {
     if (error.response?.status === 401) {
-      return rejectWithValue("Authentication required. Please log in.");
+      return rejectWithValue("Authentication required. Please log in.")
     } else if (error.response?.status === 403) {
-      return rejectWithValue("You don't have permission to delete this post.");
+      return rejectWithValue("You don't have permission to delete this post.")
     } else if (error.response?.data?.error) {
-      return rejectWithValue(error.response.data.error);
+      return rejectWithValue(error.response.data.error)
     } else {
-      return rejectWithValue("Failed to delete post. Please try again.");
+      return rejectWithValue("Failed to delete post. Please try again.")
     }
   }
 })
@@ -99,11 +126,11 @@ export const fetchUserPosts = createAsyncThunk("marketplace/fetchUserPosts", asy
     return response.data
   } catch (error) {
     if (error.response?.status === 401) {
-      return rejectWithValue("Authentication required. Please log in.");
+      return rejectWithValue("Authentication required. Please log in.")
     } else if (error.response?.data?.error) {
-      return rejectWithValue(error.response.data.error);
+      return rejectWithValue(error.response.data.error)
     } else {
-      return rejectWithValue("Failed to fetch your posts. Please try again.");
+      return rejectWithValue("Failed to fetch your posts. Please try again.")
     }
   }
 })
@@ -193,7 +220,7 @@ const marketplaceSlice = createSlice({
       })
       .addCase(fetchPostById.rejected, (state, action) => {
         state.loading = false
-        state.error = action.error.message
+        state.error = action.payload || action.error.message
       })
       // Create post
       .addCase(createPost.pending, (state) => {

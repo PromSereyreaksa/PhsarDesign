@@ -314,3 +314,14 @@ export const uploadImages = (files) => {
 export const contactArtistFromPost = (jobId, message) => {
   return api.post(`/api/job-posts/id/${jobId}/contact`, { message })
 }
+
+export const createAvailabilityPost = (postData) => {
+  const isFormData = typeof FormData !== 'undefined' && postData instanceof FormData;
+  return api.post(
+    "/api/availability-posts",
+    postData,
+    isFormData
+      ? { headers: { "Content-Type": undefined } }
+      : undefined
+  )
+}

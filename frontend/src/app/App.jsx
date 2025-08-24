@@ -52,6 +52,14 @@ function App() {
             </ProtectedRoute>
           }
         />
+         <Route
+          path="/marketplace/create-job"
+          element={
+            <ProtectedRoute>
+              <CreatePostPage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/marketplace/edit/:postId"
           element={

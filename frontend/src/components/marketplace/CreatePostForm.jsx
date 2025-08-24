@@ -185,7 +185,7 @@ const handleFormSubmit = async (e) => {
       .forEach((file) => submitData.append("attachments", file));
 
     // Post directly to create endpoint using API wrapper (axios will set boundary)
-    const response = await marketplaceAPI.createAvailabilityPost(submitData);
+    const response = await marketplaceAPI.availabilityPostsAPI.create(submitData);
 
     console.log("Form submitted successfully:", response.data);
     alert("Availability post created successfully!");
