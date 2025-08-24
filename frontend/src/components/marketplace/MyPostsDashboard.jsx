@@ -107,8 +107,32 @@ const MyPostsDashboard = ({ posts, loading, error, onEdit, onDelete, onView, del
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {posts.map((post) => (
-              <div key={post.jobId} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
+            {posts.map((post, index) => {
+              // Try multiple possible ID field names - prioritize postId since that's what the backend returns
+              const postId = post.postId || post.id || post.jobId || post._id || `temp-${index}`
+              const postType = post.postType || 'availability' // Default to availability since that's what we're seeing
+              
+              // Debug log to understand post structure
+              console.log('Post data:', { 
+                post, 
+                postId, 
+                postType, 
+                availableFields: Object.keys(post) 
+              })
+              
+              // Skip posts without valid ID (but not temp IDs)
+              if (!postId || postId.startsWith('temp-')) {
+                console.warn('Post without valid ID found:', post)
+                return (
+                  <div key={`invalid-${index}`} className="bg-red-50 border border-red-200 rounded-xl p-4">
+                    <p className="text-red-600 text-sm">Post with invalid ID - cannot edit</p>
+                    <pre className="text-xs mt-2 text-red-500">{JSON.stringify(post, null, 2)}</pre>
+                  </div>
+                )
+              }
+              
+              return (
+              <div key={postId} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1 min-w-0">
@@ -129,31 +153,48 @@ const MyPostsDashboard = ({ posts, loading, error, onEdit, onDelete, onView, del
 
                     <div className="flex items-center space-x-1 ml-3">
                       <button 
-                        onClick={() => onView(post.jobId)} 
+                        onClick={() => onView(postId)} 
                         className="p-2 text-gray-500 hover:text-[#A95BAB] hover:bg-gray-50 rounded-lg transition-colors" 
                         title="View"
                       >
                         👁
                       </button>
                       <button 
-                        onClick={() => onEdit(post.jobId)} 
+                        onClick={() => {
+                          console.log('=== EDIT BUTTON DEBUG ===')
+                          console.log('Raw post object:', post)
+                          console.log('post.postId:', post.postId)
+                          console.log('post.id:', post.id) 
+                          console.log('post.jobId:', post.jobId)
+                          console.log('post._id:', post._id)
+                          console.log('Extracted postId:', postId)
+                          console.log('typeof postId:', typeof postId)
+                          console.log('=== END DEBUG ===')
+                          
+                          if (!postId || postId === 'undefined') {
+                            alert(`Error: Cannot edit post - no valid ID found. Post data: ${JSON.stringify(post, null, 2)}`)
+                            return
+                          }
+                          
+                          onEdit(postId)
+                        }} 
                         className="p-2 text-gray-500 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors" 
                         title="Edit"
                       >
                         ✏️
                       </button>
                       <button
-                        onClick={() => onDelete(post.jobId)}
+                        onClick={() => onDelete(postId, postType)}
                         className={`p-2 rounded-lg transition-colors ${
-                          deleteConfirm === post.jobId 
+                          deleteConfirm === postId 
                             ? "text-red-600 bg-red-50" 
                             : "text-gray-500 hover:text-red-600 hover:bg-gray-50"
                         }`}
-                        title={deleteConfirm === post.jobId ? "Click again to confirm" : "Delete"}
+                        title={deleteConfirm === postId ? "Click again to confirm" : "Delete"}
                       >
-                        {deleteConfirm === post.jobId ? "✓" : "🗑"}
+                        {deleteConfirm === postId ? "✓" : "🗑"}
                       </button>
-                      {deleteConfirm === post.jobId && (
+                      {deleteConfirm === postId && (
                         <button 
                           onClick={onCancelDelete} 
                           className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-lg transition-colors" 
@@ -206,7 +247,8 @@ const MyPostsDashboard = ({ posts, loading, error, onEdit, onDelete, onView, del
                   </div>
                 </div>
               </div>
-            ))}
+            )
+            }).filter(Boolean)}
           </div>
         )}
       </div>

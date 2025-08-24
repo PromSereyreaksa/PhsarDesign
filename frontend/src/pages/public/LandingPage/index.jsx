@@ -9,8 +9,9 @@ import SharedPublicNavbar from "../../../components/layout/SharedPublicNavbar"
 import { Button } from "../../../components/ui/button"
 import { Card, CardContent } from "../../../components/ui/card"
 import { fetchArtists } from "../../../store/slices/artistsSlice"
+import { fetchCategories } from "../../../store/slices/categoriesSlice"
 import { fetchPosts } from "../../../store/slices/marketplaceSlice"
-import { fetchCategories, fetchPosts as fetchPostsForServices } from "../../../store/slices/postsSlice"
+import { fetchAvailabilityPosts } from "../../../store/slices/postsSlice"
 
 export default function LandingPage() {
   const [email, setEmail] = useState("")
@@ -23,18 +24,20 @@ export default function LandingPage() {
   // Get data from Redux store
   const { posts: marketplacePosts, loading: marketplaceLoading } = useSelector((state) => state.marketplace)
   const { artists, loading: artistsLoading } = useSelector((state) => state.artists)
-  const { posts: servicePosts, categories: apiCategories, loading: servicesLoading } = useSelector((state) => state.posts)
+  const { availabilityPosts: servicePosts, loading: servicesLoading } = useSelector((state) => state.posts)
+  const { categories: apiCategories, loading: categoriesLoading } = useSelector((state) => state.categories)
 
   // Fetch data on component mount
   useEffect(() => {
     dispatch(fetchPosts({ limit: 6, isActive: true })) // Fetch marketplace posts
     dispatch(fetchArtists()) // Fetch artists
-    dispatch(fetchPostsForServices()) // Fetch posts for services
-    dispatch(fetchCategories()) // Fetch categories
+    dispatch(fetchAvailabilityPosts()) // Fetch availability posts for services
+    dispatch(fetchCategories()) // Fetch categories from categoryAPI
   }, [dispatch])
 
   // Debug logging to understand data structures
   useEffect(() => {
+    console.log('Loading states:', { categoriesLoading, servicesLoading, artistsLoading, marketplaceLoading })
     if (apiCategories) {
       console.log('API Categories:', apiCategories)
       console.log('First category structure:', apiCategories[0])
@@ -50,7 +53,7 @@ export default function LandingPage() {
       console.log('Marketplace Posts:', marketplacePosts)
       console.log('First marketplace post structure:', marketplacePosts[0])
     }
-  }, [apiCategories, servicePosts, artists, marketplacePosts])
+  }, [apiCategories, servicePosts, artists, marketplacePosts, categoriesLoading, servicesLoading, artistsLoading, marketplaceLoading])
 
   // Handle navigation - always go to the requested path
   const handleNavigation = (path) => {
@@ -120,14 +123,16 @@ export default function LandingPage() {
 
   const artworks = getArtworkData()
 
-  // Categories data - enhanced with real data from API
+  // Categories data - enhanced with real data from categoryAPI
   const getCategoriesData = () => {
     if (apiCategories && apiCategories.length > 0) {
       return apiCategories.slice(0, 6).map((category, index) => ({
-        name: typeof category === 'string' ? category : category.name || 'Category',
+        id: category.id || category._id,
+        name: category.name || category.title || 'Category',
+        description: category.description || '',
         icon: [Palette, Sparkles, Palette, Sparkles, Star, Shield][index] || Palette,
-        count: `${Math.floor(Math.random() * 3000) + 500}+`, // Random count since API might not provide this
-        bgImage: ["/DigitalArt.jpg", "/LogoDesign.jpg", "/CharacterDesign.jpg", "/GraphicDesign.jpg", "/LogoDesign.jpg", "/3DDesign.jpg"][index] || "/DigitalArt.jpg",
+        count: category.postCount ? `${category.postCount}+` : `${Math.floor(Math.random() * 3000) + 500}+`,
+        bgImage: category.image || category.imageUrl || ["/DigitalArt.jpg", "/LogoDesign.jpg", "/CharacterDesign.jpg", "/GraphicDesign.jpg", "/LogoDesign.jpg", "/3DDesign.jpg"][index] || "/DigitalArt.jpg",
       }))
     }
     // Fallback to mock data
@@ -485,36 +490,52 @@ export default function LandingPage() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-            {categories.map((category, index) => {
-              const IconComponent = category.icon
-              return (
+            {categoriesLoading ? (
+              // Loading skeleton
+              Array.from({ length: 6 }).map((_, index) => (
                 <Card
-                  key={`category-${index}-${category.name}`}
-                  className="bg-white/5 border-white/10 hover:bg-[#A95BAB]/10 hover:border-[#A95BAB]/30 rounded-2xl cursor-pointer group overflow-hidden relative transform hover:scale-105 transition-all duration-500 ease-out"
-                  style={{
-                    animationDelay: `${index * 0.1}s`,
-                  }}
-                  onClick={() => handleNavigation(`/marketplace?category=${encodeURIComponent(category.name)}`)}
+                  key={`skeleton-${index}`}
+                  className="bg-white/5 border-white/10 rounded-2xl animate-pulse"
                 >
-                  {/* Background Image on Hover */}
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-500 ease-out">
-                    <img
-                      src={category.bgImage || "/placeholder.svg"}
-                      alt={category.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-
-                  <CardContent className="p-6 text-center relative z-10">
-                    <div className="w-12 h-12 bg-[#A95BAB]/20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-[#A95BAB]/30 transition-colors duration-500 ease-out">
-                      <IconComponent className="h-6 w-6 text-[#A95BAB]" />
-                    </div>
-                    <h3 className="font-semibold text-white mb-2 text-lg">{category.name}</h3>
-                    <p className="text-sm text-gray-400">{category.count} freelancers</p>
+                  <CardContent className="p-6 text-center">
+                    <div className="w-12 h-12 bg-gray-600/50 rounded-full mx-auto mb-4"></div>
+                    <div className="h-4 bg-gray-600/50 rounded mb-2"></div>
+                    <div className="h-3 bg-gray-600/50 rounded w-2/3 mx-auto"></div>
                   </CardContent>
                 </Card>
-              )
-            })}
+              ))
+            ) : (
+              categories.map((category, index) => {
+                const IconComponent = category.icon
+                return (
+                  <Card
+                    key={`category-${index}-${category.name}`}
+                    className="bg-white/5 border-white/10 hover:bg-[#A95BAB]/10 hover:border-[#A95BAB]/30 rounded-2xl cursor-pointer group overflow-hidden relative transform hover:scale-105 transition-all duration-500 ease-out"
+                    style={{
+                      animationDelay: `${index * 0.1}s`,
+                    }}
+                    onClick={() => handleNavigation(`/marketplace?category=${encodeURIComponent(category.name)}`)}
+                  >
+                    {/* Background Image on Hover */}
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-500 ease-out">
+                      <img
+                        src={category.bgImage || "/placeholder.svg"}
+                        alt={category.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+
+                    <CardContent className="p-6 text-center relative z-10">
+                      <div className="w-12 h-12 bg-[#A95BAB]/20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-[#A95BAB]/30 transition-colors duration-500 ease-out">
+                        <IconComponent className="h-6 w-6 text-[#A95BAB]" />
+                      </div>
+                      <h3 className="font-semibold text-white mb-2 text-lg">{category.name}</h3>
+                      <p className="text-sm text-gray-400">{category.count} freelancers</p>
+                    </CardContent>
+                  </Card>
+                )
+              })
+            )}
           </div>
         </div>
       </section>

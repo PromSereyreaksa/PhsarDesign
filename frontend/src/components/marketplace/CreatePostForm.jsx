@@ -1,37 +1,38 @@
 "use client"
 
-import { useState } from "react"
-import { Plus, X, Upload, Trash2, DollarSign, Clock, MapPin, Tag } from "lucide-react"
+import { Clock, DollarSign, MapPin, Plus, Tag, Trash2, Upload, X } from "lucide-react"
+import { useState, useEffect } from "react"
+import { useDispatch, useSelector } from "react-redux"
+import { fetchCategories } from "../../store/slices/categoriesSlice"
 import * as marketplaceAPI from "../../store/api/marketplaceAPI"
 import Loader from "../ui/Loader"
 const CreatePostForm = ({ onSubmit, onCancel, isSubmitting = false }) => {
+  const dispatch = useDispatch()
+  const { categories, loading: categoriesLoading } = useSelector((state) => state.categories)
+  const { user } = useSelector((state) => state.auth)
+  
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     budget: "",
     duration: "",
     expireAt: "",
-    availabilityType: "",
+    availabilityType: "freelance",
     location: "",
     skills: [],
     category: "",
     categoryId: "",
     attachments: [],
+    isActive: true,
   })
 
   const [newSkill, setNewSkill] = useState("")
   const [uploadingImages, setUploadingImages] = useState(false)
 
-  const categories = [
-    "Graphic Design",
-    "Web Design",
-    "Logo Design",
-    "Illustration",
-    "Photography",
-    "Video Editing",
-    "Animation",
-    "UI/UX Design",
-  ]
+  // Fetch categories on component mount
+  useEffect(() => {
+    dispatch(fetchCategories())
+  }, [dispatch])
 
   const popularSkills = [
     "Photoshop",
@@ -49,11 +50,21 @@ const CreatePostForm = ({ onSubmit, onCancel, isSubmitting = false }) => {
   ]
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target
+    const { name, value, type, checked } = e.target
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: type === 'checkbox' ? checked : value,
     }))
+    
+    // If categoryId is selected, also set category name for display
+    if (name === "categoryId") {
+      const selectedCategory = categories.find(cat => cat.categoryId === parseInt(value))
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+        category: selectedCategory ? selectedCategory.name : "",
+      }))
+    }
   }
 
   const handleSkillToggle = (skill) => {
@@ -83,66 +94,70 @@ const CreatePostForm = ({ onSubmit, onCancel, isSubmitting = false }) => {
   }
 
   const handleImageUpload = async (e) => {
-  const files = Array.from(e.target.files);
-  if (files.length === 0) return;
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
 
-  // Validate file types and sizes
-  const validFiles = files.filter(file => {
-    const isValidType = file.type.startsWith('image/');
-    const isValidSize = file.size <= 10 * 1024 * 1024; // 10MB
+    // Validate file types
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    const invalidFiles = files.filter(file => !validTypes.includes(file.type));
     
-    if (!isValidType) {
-      alert(`${file.name} is not a valid image file`);
-      return false;
+    if (invalidFiles.length > 0) {
+      alert('Please select only image files (JPEG, PNG, GIF, WebP)');
+      return;
     }
-    if (!isValidSize) {
-      alert(`${file.name} is too large (max 10MB)`);
-      return false;
+
+    // Validate file sizes (max 5MB each)
+    const oversizedFiles = files.filter(file => file.size > 5 * 1024 * 1024);
+    if (oversizedFiles.length > 0) {
+      alert('Each file must be less than 5MB');
+      return;
     }
-    return true;
-  });
 
-  if (validFiles.length === 0) return;
+    // Limit to 5 files maximum
+    if (formData.attachments.length + files.length > 5) {
+      alert('You can upload maximum 5 images');
+      return;
+    }
 
-  setUploadingImages(true);
+    setUploadingImages(true);
 
-  try {
-    // Create local URLs for preview while keeping the File objects for upload
-    const newAttachments = await Promise.all(
-      validFiles.map(async (file) => {
-        return new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            resolve({
-              url: e.target.result, // base64 data URL for preview
-              file: file, // Keep the actual File object for upload
-              name: file.name,
-              uploaded: false, // Will be set to true after successful backend upload
-              size: file.size
-            });
-          };
-          reader.readAsDataURL(file);
-        });
-      })
-    );
+    try {
+      // Create local URLs for preview while keeping the File objects for upload
+      const newAttachments = await Promise.all(
+        files.map(async (file) => {
+          return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              resolve({
+                url: e.target.result, // base64 data URL for preview
+                file: file, // Keep the actual File object for upload
+                name: file.name,
+                uploaded: false, // Will be set to true after successful backend upload
+                size: file.size
+              });
+            };
+            reader.readAsDataURL(file);
+          });
+        })
+      );
 
-    setFormData(prev => ({
-      ...prev,
-      attachments: [...prev.attachments, ...newAttachments],
-    }));
+      setFormData(prev => ({
+        ...prev,
+        attachments: [...prev.attachments, ...newAttachments],
+      }));
 
-    console.log('Files prepared for upload:', newAttachments.length);
-    alert(`${newAttachments.length} image(s) added successfully! Images will be uploaded when you submit the form.`);
+      console.log('Files prepared for upload:', newAttachments.length);
+      alert(`${newAttachments.length} image(s) added successfully! Images will be uploaded when you submit the form.`);
 
-  } catch (error) {
-    console.error("Image processing failed:", error);
-    alert(`Failed to process images: ${error.message}`);
-  } finally {
-    setUploadingImages(false);
-    // Reset file input
-    e.target.value = '';
-  }
-};
+    } catch (error) {
+      console.error("Image processing failed:", error);
+      alert(`Failed to process images: ${error.message}`);
+    } finally {
+      setUploadingImages(false);
+      // Reset file input
+      e.target.value = '';
+    }
+  };
 
 // Remove attachment function
 const removeAttachment = (index) => {
@@ -152,102 +167,208 @@ const removeAttachment = (index) => {
   }));
 };
 
-// Updated form submission function - integrate HandleUpload approach (multipart w/ 'attachments')
+// Updated form submission function - use marketplaceAPI
 const handleFormSubmit = async (e) => {
   e.preventDefault();
 
   try {
     setUploadingImages(true);
     
-    // Construct multipart payload expected by backend route upload.array('attachments', 5)
+    // Validate required fields with backend-matching validation
+    if (!formData.title || formData.title.trim().length < 5 || formData.title.trim().length > 255) {
+      alert('Title must be between 5 and 255 characters');
+      setUploadingImages(false);
+      return;
+    }
+
+    if (!formData.description || formData.description.trim().length < 20 || formData.description.trim().length > 5000) {
+      alert('Description must be between 20 and 5000 characters');
+      setUploadingImages(false);
+      return;
+    }
+
+    if (!formData.categoryId) {
+      alert('Please select a category');
+      setUploadingImages(false);
+      return;
+    }
+
+    if (!formData.budget || parseFloat(formData.budget) < 0) {
+      alert("Budget must be a positive number");
+      setUploadingImages(false);
+      return;
+    }
+
+    // Validate optional field lengths to match backend validation
+    if (formData.availabilityType && formData.availabilityType.trim().length > 50) {
+      alert("Availability type must not exceed 50 characters");
+      setUploadingImages(false);
+      return;
+    }
+
+    if (formData.duration && formData.duration.trim().length > 100) {
+      alert("Duration must not exceed 100 characters");
+      setUploadingImages(false);
+      return;
+    }
+
+    if (formData.location && formData.location.trim().length > 100) {
+      alert("Location must not exceed 100 characters");
+      setUploadingImages(false);
+      return;
+    }
+
+    // Validate skills length (will be joined as string)
+    const skillsString = Array.isArray(formData.skills) ? formData.skills.join(", ") : formData.skills;
+    if (skillsString && skillsString.length > 1000) {
+      alert("Skills must not exceed 1000 characters. Please remove some skills.");
+      setUploadingImages(false);
+      return;
+    }
+
+    if (!formData.expireAt) {
+      alert("Please select an expiry date");
+      setUploadingImages(false);
+      return;
+    }
+
+    // Check if expiry date is in the future
+    const expiryDate = new Date(formData.expireAt);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (expiryDate <= today) {
+      alert("Expiry date must be in the future");
+      setUploadingImages(false);
+      return;
+    }
+
+    if (formData.skills.length === 0) {
+      alert("Please add at least one skill");
+      setUploadingImages(false);
+      return;
+    }
+
+    // Check if user is authenticated and has artistId
+    console.log("=== USER AUTHENTICATION DEBUG ===");
+    console.log("User object:", user);
+    console.log("User keys:", user ? Object.keys(user) : "No user");
+    console.log("User.artistId:", user?.artistId);
+    console.log("User.id:", user?.id);
+    console.log("User._id:", user?._id);
+    console.log("User.userId:", user?.userId);
+    console.log("User.role:", user?.role);
+    console.log("User.firstName:", user?.firstName);
+    console.log("User.lastName:", user?.lastName);
+    
+    if (!user) {
+      alert("You must be logged in to create posts");
+      setUploadingImages(false);
+      return;
+    }
+
+    // Check if user is an artist/freelancer
+    if (user.role !== 'artist' && user.role !== 'freelancer') {
+      alert("Only artists can create availability posts. Your current role is: " + (user.role || "unknown"));
+      setUploadingImages(false);
+      return;
+    }
+
+    // Try different possible field names for artistId
+    const artistId = user.userId || user.artistId || user.id || user._id;
+    console.log("=== ARTIST ID DETECTION ===");
+    console.log("Detected artistId:", artistId);
+    console.log("Using user.userId as artistId since it's the standard field in this app");
+    
+    if (!artistId) {
+      console.error("=== ARTIST ID ERROR ===");
+      console.error("Could not find any valid user ID field");
+      console.error("Available user fields:", Object.keys(user || {}));
+      alert("Unable to identify your user ID. Please try logging out and logging in again.");
+      setUploadingImages(false);
+      return;
+    }
+    
+    // Create FormData for multipart/form-data
     const submitData = new FormData();
-    const appendIfPresent = (key, value) => {
-      if (value !== undefined && value !== null && `${value}` !== "") {
-        submitData.append(key, value);
+    
+    // Append form fields - match backend model exactly
+    submitData.append("artistId", artistId); // Use the detected artistId
+    submitData.append("title", formData.title?.trim());
+    submitData.append("description", formData.description?.trim());
+    submitData.append("categoryId", parseInt(formData.categoryId)); // Ensure it's an integer
+    submitData.append("budget", parseFloat(formData.budget).toString()); // Ensure it's a number string, not formatted
+    submitData.append("isActive", formData.isActive.toString()); // Convert boolean to string
+    
+    // Optional fields
+    if (formData.duration) {
+      submitData.append("duration", formData.duration);
+    }
+    if (formData.availabilityType) {
+      submitData.append("availabilityType", formData.availabilityType);
+    }
+    if (formData.skills.length > 0) {
+      submitData.append("skills", Array.isArray(formData.skills) ? formData.skills.join(", ") : formData.skills);
+    }
+    if (formData.location) {
+      submitData.append("location", formData.location);
+    }
+    if (formData.expireAt) {
+      submitData.append("expireAt", new Date(formData.expireAt).toISOString());
+    }
+
+    // Append files for backend to process into attachments JSON
+    formData.attachments.forEach(attachment => {
+      if (attachment.file) {
+        submitData.append('attachments', attachment.file);
       }
-    };
+    });
 
-    appendIfPresent("title", formData.title?.trim());
-    appendIfPresent("description", formData.description?.trim());
-    appendIfPresent("categoryId", formData.categoryId);
-    appendIfPresent("availabilityType", formData.availabilityType);
-    appendIfPresent("budget", formData.budget);
-    appendIfPresent("skills", Array.isArray(formData.skills) ? formData.skills.join(", ") : formData.skills);
-    appendIfPresent("location", formData.location);
-    // Convert date to ISO if possible
-    appendIfPresent("expireAt", formData.expireAt ? new Date(formData.expireAt).toISOString() : undefined);
-    appendIfPresent("isActive", true);
+    console.log("=== FORM SUBMISSION DEBUG ===");
+    console.log("Submitting form data:");
+    for (let [key, value] of submitData.entries()) {
+      console.log(key, value);
+    }
 
-    // Append files
-    (formData.attachments || [])
-      .map((a) => a?.file)
-      .filter(Boolean)
-      .forEach((file) => submitData.append("attachments", file));
-
-    // Post directly to create endpoint using API wrapper (axios will set boundary)
+    console.log("=== API CALL STARTING ===");
+    // Use the marketplaceAPI createAvailabilityPost function
     const response = await marketplaceAPI.createAvailabilityPost(submitData);
 
+    console.log("=== API CALL SUCCESS ===");
     console.log("Form submitted successfully:", response.data);
-    alert("Availability post created successfully!");
-
+    alert('Availability post created successfully!');
+    
+    // Reset form
     setFormData({
       title: "",
       description: "",
       budget: "",
       duration: "",
       expireAt: "",
-      availabilityType: "",
+      availabilityType: "freelance",
       location: "",
       skills: [],
       category: "",
       categoryId: "",
       attachments: [],
+      isActive: true,
     });
+    
+    // Call parent onSubmit with the response data
+    onSubmit(response.data);
   } catch (error) {
-    console.error("Form submission error:", error);
-    alert(
-      `Failed to submit form: ${
-        error.response?.data?.error || error.message
-      }`
-    );
+    console.error("=== FORM SUBMISSION ERROR ===");
+    console.error("Error object:", error);
+    console.error("Error response:", error.response);
+    console.error("Error response data:", error.response?.data);
+    console.error("Error message:", error.message);
+    console.error("Full error details:", JSON.stringify(error.response?.data, null, 2));
+    
+    const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message;
+    alert(`Failed to submit form: ${errorMessage}`);
   } finally {
     setUploadingImages(false);
   }
-};
-
-
-// Optional: Preview component for selected images
-const AttachmentPreview = ({ attachments, onRemove }) => {
-  if (attachments.length === 0) return null;
-
-  return (
-    <div className="mt-4">
-      <h4 className="text-sm font-medium text-gray-700 mb-2">
-        Selected Images ({attachments.length}/5)
-      </h4>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-        {attachments.map((attachment, index) => (
-          <div key={index} className="relative group">
-            <img
-              src={attachment.url}
-              alt={attachment.name}
-              className="w-full h-20 object-cover rounded border"
-            />
-            <button
-              type="button"
-              onClick={() => onRemove(index)}
-              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              ×
-            </button>
-            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 truncate rounded-b">
-              {attachment.name}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
 };
 
   const handleRemoveImage = (index) => {
@@ -262,59 +383,6 @@ const AttachmentPreview = ({ attachments, onRemove }) => {
       ...prev,
       attachments: prev.attachments.filter((_, i) => i !== index),
     }))
-  }
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
-
-    // Validation
-    if (!formData.title.trim()) {
-      alert("Please enter a project title");
-      return;
-    }
-
-    if (!formData.description.trim()) {
-      alert("Please enter a project description");
-      return;
-    }
-
-    if (!formData.category) {
-      alert("Please select a category");
-      return;
-    }
-
-    if (!formData.expireAt) {
-      alert("Please select an expiry date");
-      return;
-    }
-
-    // Check if expiry date is in the future
-    const expiryDate = new Date(formData.expireAt);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    if (expiryDate <= today) {
-      alert("Expiry date must be in the future");
-      return;
-    }
-
-    if (formData.skills.length === 0) {
-      alert("Please add at least one skill");
-      return;
-    }
-
-    // Prepare data for submission
-    const postData = {
-      ...formData,
-      budget: formData.budget ? parseFloat(formData.budget) : 0,
-      attachments: formData.attachments.map(att => ({
-        url: att.url,
-        name: att.name,
-        uploaded: att.uploaded || false
-      }))
-    };
-
-    onSubmit(postData);
   }
 
   return (
@@ -338,27 +406,32 @@ const AttachmentPreview = ({ attachments, onRemove }) => {
               value={formData.title}
               onChange={handleInputChange}
               placeholder="e.g., Professional Logo Design Available"
+              maxLength={255}
               className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-[#A95BAB] focus:border-[#A95BAB] transition-all"
               required
             />
+            <div className="text-xs text-gray-400 text-right">
+              {formData.title.length}/255 characters
+            </div>
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="category" className="block text-sm font-medium text-gray-300">
+            <label htmlFor="categoryId" className="block text-sm font-medium text-gray-300">
               Category *
             </label>
             <select 
-              id="category" 
-              name="category" 
-              value={formData.category} 
+              id="categoryId" 
+              name="categoryId" 
+              value={formData.categoryId} 
               onChange={handleInputChange} 
               className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-lg text-white focus:ring-2 focus:ring-[#A95BAB] focus:border-[#A95BAB] transition-all"
               required
+              disabled={categoriesLoading}
             >
-              <option value="">Select a category</option>
-              {categories.map((category) => (
-                <option key={category} value={category}>
-                  {category}
+              <option value="">{categoriesLoading ? "Loading categories..." : "Select a category"}</option>
+              {categories && categories.map((category) => (
+                <option key={category.categoryId} value={category.categoryId}>
+                  {category.name}
                 </option>
               ))}
             </select>
@@ -375,9 +448,13 @@ const AttachmentPreview = ({ attachments, onRemove }) => {
               onChange={handleInputChange}
               placeholder="Describe your services, experience, and what makes you unique..."
               rows={6}
+              maxLength={5000}
               className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-[#A95BAB] focus:border-[#A95BAB] transition-all resize-none"
               required
             />
+            <div className="text-xs text-gray-400 text-right">
+              {formData.description.length}/5000 characters (minimum 20)
+            </div>
           </div>
         </div>
 
@@ -459,6 +536,9 @@ const AttachmentPreview = ({ attachments, onRemove }) => {
                   </span>
                 ))}
               </div>
+              <div className="text-xs text-gray-400 text-right">
+                Skills text: {formData.skills.join(", ").length}/1000 characters
+              </div>
             </div>
           )}
         </div>
@@ -474,7 +554,7 @@ const AttachmentPreview = ({ attachments, onRemove }) => {
             <div className="space-y-2">
               <label htmlFor="budget" className="block text-sm font-medium text-gray-300">
                 <DollarSign className="inline w-4 h-4 mr-1" />
-                Budget
+                Budget *
               </label>
               <input
                 type="number"
@@ -483,9 +563,10 @@ const AttachmentPreview = ({ attachments, onRemove }) => {
                 value={formData.budget}
                 onChange={handleInputChange}
                 placeholder="0"
-                min="0"
+                min="0.01"
                 step="0.01"
                 className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-[#A95BAB] focus:border-[#A95BAB] transition-all"
+                required
               />
             </div>
 
@@ -493,15 +574,18 @@ const AttachmentPreview = ({ attachments, onRemove }) => {
               <label htmlFor="availabilityType" className="block text-sm font-medium text-gray-300">
                 Availability Type
               </label>
-              <input
-                type="text"
+              <select
                 id="availabilityType"
                 name="availabilityType"
                 value={formData.availabilityType}
                 onChange={handleInputChange}
-                placeholder="e.g., immediate, flexible, freelance"
                 className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-[#A95BAB] focus:border-[#A95BAB] transition-all"
-              />
+              >
+                <option value="freelance">Freelance</option>
+                <option value="full-time">Full Time</option>
+                <option value="part-time">Part Time</option>
+                <option value="contract">Contract</option>
+              </select>
             </div>
           </div>
 
@@ -517,8 +601,14 @@ const AttachmentPreview = ({ attachments, onRemove }) => {
               value={formData.duration}
               onChange={handleInputChange}
               placeholder="e.g., 1 week, 2-3 days, 1 month"
+              maxLength={100}
               className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-[#A95BAB] focus:border-[#A95BAB] transition-all"
             />
+            {formData.duration && (
+              <div className="text-xs text-gray-400 text-right">
+                {formData.duration.length}/100 characters
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -533,8 +623,14 @@ const AttachmentPreview = ({ attachments, onRemove }) => {
               value={formData.location}
               onChange={handleInputChange}
               placeholder="e.g., Remote, New York, Worldwide"
+              maxLength={100}
               className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-[#A95BAB] focus:border-[#A95BAB] transition-all"
             />
+            {formData.location && (
+              <div className="text-xs text-gray-400 text-right">
+                {formData.location.length}/100 characters
+              </div>
+            )}
           </div>
         </div>
 

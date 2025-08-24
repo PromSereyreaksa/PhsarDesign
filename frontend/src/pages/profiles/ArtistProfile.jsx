@@ -228,6 +228,9 @@ export default function ArtistProfile() {
   }
 
   const handleEditPost = (postId) => {
+    console.log('ArtistProfile handleEditPost called with postId:', postId)
+    console.log('ArtistProfile handleEditPost - typeof postId:', typeof postId)
+    console.log('ArtistProfile handleEditPost - navigating to:', `/marketplace/edit/${postId}`)
     navigate(`/marketplace/edit/${postId}`)
   }
 
@@ -236,7 +239,7 @@ export default function ArtistProfile() {
       <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000] flex items-center justify-center">
         <div className="flex flex-col items-center">
           <Loader />
-          <p className="text-white mt-4">{isLoading ? "Loading fresh data..." : "Loading..."}</p>
+          <p className="text-white mt-4">{isLoading ? "Loading data..." : "Loading..."}</p>
         </div>
       </div>
     )
@@ -493,7 +496,7 @@ console.log("My post:", myAvailabilityPosts);
                   <div className="grid md:grid-cols-2 gap-6">
                     {posts.map((post) => (
                       <Card
-                        key={post.id}
+                        key={post.postId || post.id || post._id}
                         className="bg-white/5 border-white/10 hover:bg-white/10 rounded-2xl overflow-hidden group cursor-pointer transform hover:scale-105 transition-all duration-500 ease-out"
                         onClick={() => {
                           const slug = post.title
@@ -514,7 +517,12 @@ console.log("My post:", myAvailabilityPosts);
                               size="sm"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                handleEditPost(post.id)
+                                console.log('ArtistProfile edit button clicked - post:', post)
+                                console.log('ArtistProfile edit button clicked - post.postId:', post.postId)
+                                console.log('ArtistProfile edit button clicked - post.id:', post.id)
+                                const postId = post.postId || post.id
+                                console.log('ArtistProfile edit button clicked - using postId:', postId)
+                                handleEditPost(postId)
                               }}
                               className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 backdrop-blur-sm"
                             >
