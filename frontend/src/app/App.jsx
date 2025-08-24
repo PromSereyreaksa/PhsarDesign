@@ -13,6 +13,7 @@ import OTPVerificationPage from "../pages/auth/OTPVerificationPage"
 import RegisterPage from "../pages/auth/RegisterPage"
 import ArtistProfile from "../pages/profiles/ArtistProfile.jsx"
 import ClientProfile from "../pages/profiles/ClientProfile.jsx"
+import ArtistDashboard from "../pages/Dashboard/ArtistDashboard.jsx"
 import EditProfile from "../pages/profiles/EditProfile.jsx"
 import ProfileRouter from "../pages/profiles/ProfileRouter.jsx"
 import AboutPage from "../pages/public/AboutPage/index.jsx"
@@ -59,6 +60,16 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+         <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <ArtistDashboard />
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/dashboard/my-posts"
           element={
