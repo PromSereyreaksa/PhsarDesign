@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import AuthNavbar from "../../components/layout/AuthNavbar";
@@ -318,12 +318,7 @@ const MarketplacePage = () => {
       {/* Posts Grid */}
       <div className="max-w-6xl mx-auto px-6">
         <div className="flex items-center justify-between mb-6">
-          {console.log(
-            "postsToDisplay:",
-            postsToDisplay,
-            "activeTab:",
-            activeTab
-          )}
+          {console.log("postsToDisplay:", postsToDisplay, "activeTab:", activeTab)}
 
           <div>
             <h2 className="text-2xl font-bold text-white">
@@ -332,22 +327,43 @@ const MarketplacePage = () => {
                 : "Freelancing Opportunities"}
             </h2>
           </div>
-          {currentPosts.length > 9 && (
-            <button
-              onClick={() => {
-                // Remove the 9-item limit by showing all posts
-                const params = new URLSearchParams();
-                if (filters.category) params.set("category", filters.category);
-                if (filters.section) params.set("section", filters.section);
-                if (filters.search) params.set("search", filters.search);
-                params.set("showAll", "true");
-                navigate(`/marketplace?${params.toString()}`);
-              }}
-              className="text-[#A95BAB] hover:text-[#A95BAB]/80 font-medium text-sm transition-colors"
-            >
-              See All →
-            </button>
-          )}
+
+          <div className="flex items-center gap-3">
+            {currentPosts.length > 9 && (
+              <button
+                onClick={() => {
+                  // Remove the 9-item limit by showing all posts
+                  const params = new URLSearchParams();
+                  if (filters.category) params.set("category", filters.category);
+                  if (filters.section) params.set("section", filters.section);
+                  if (filters.search) params.set("search", filters.search);
+                  params.set("showAll", "true");
+                  navigate(`/marketplace?${params.toString()}`);
+                }}
+                className="text-[#A95BAB] hover:text-[#A95BAB]/80 font-medium text-sm transition-colors"
+              >
+                See All →
+              </button>
+            )}
+
+            {activeTab === "availability" ? (
+              <button
+                onClick={() => navigate("/marketplace/create")}
+                className="inline-flex items-center px-4 py-2 bg-[#A95BAB] hover:bg-[#A95BAB]/80 text-white rounded-lg font-medium text-sm transition-all duration-300 transform hover:scale-105"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Create Service
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate("/marketplace/create-job")}
+                className="inline-flex items-center px-4 py-2 bg-[#A95BAB] hover:bg-[#A95BAB]/80 text-white rounded-lg font-medium text-sm transition-all duration-300 transform hover:scale-105"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Post a Job
+              </button>
+            )}
+          </div>
         </div>
 
         {!Array.isArray(postsToDisplay) || postsToDisplay.length === 0 ? (

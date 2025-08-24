@@ -25,7 +25,7 @@ API.interceptors.request.use(
 const categoryAPI = {
   // Get all categories
   getAllCategories: async () => {
-    const response = await API.get('api/categories');
+    const response = await API.get('/api/categories');
     console.log("Categories fetched:", response.data);
     return response.data;
   },

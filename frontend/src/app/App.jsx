@@ -31,23 +31,8 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/about" element={<AboutPage />} />
 
-       
-        <Route
-          path="/marketplace"
-          element={
-            <ProtectedRoute>
-              <MarketplacePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/marketplace/:slug"
-          element={
-            <ProtectedRoute>
-              <PostDetailPage />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/marketplace" element={<MarketplacePage />} />
+        <Route path="/marketplace/:slug" element={<PostDetailPage />} />
 
         {/* Protected authenticated routes */}
         <Route
@@ -61,6 +46,14 @@ function App() {
 
         <Route
           path="/marketplace/create"
+          element={
+            <ProtectedRoute>
+              <CreatePostPage />
+            </ProtectedRoute>
+          }
+        />
+         <Route
+          path="/marketplace/create-job"
           element={
             <ProtectedRoute>
               <CreatePostPage />

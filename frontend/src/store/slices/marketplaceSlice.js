@@ -1,8 +1,8 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import categoryAPI from "../api/categoryAPI"; // Add this import
+import categoryAPI from "../api/categoryAPI";
 import * as marketplaceAPI from "../api/marketplaceAPI";
 
-// Existing async thunks...
+// Fetch posts with support for both job posts and availability posts
 export const fetchPosts = createAsyncThunk("marketplace/fetchPosts", async (filters = {}) => {
   console.log("🔍 Fetching posts with filters:", filters)
   
@@ -23,9 +23,46 @@ export const fetchPosts = createAsyncThunk("marketplace/fetchPosts", async (filt
   return { ...response.data, section }
 })
 
-export const fetchPostById = createAsyncThunk("marketplace/fetchPostById", async (jobId) => {
-  const response = await marketplaceAPI.getJobPostById(jobId)
-  return response.data
+// Fetch post by ID with auto-detection of post type
+export const fetchPostById = createAsyncThunk("marketplace/fetchPostById", async ({ postId, postType = "auto" }) => {
+  // Validate postId
+  console.log('fetchPostById called with raw input:', { postId, postType })
+  
+  if (!postId || postId === 'undefined' || postId === 'null') {
+    console.error('Invalid post ID provided to fetchPostById:', postId)
+    throw new Error('Invalid post ID provided')
+  }
+  
+  console.log('fetchPostById proceeding with valid postId:', postId)
+  
+  // If postType is not specified, try availability post first, then job post
+  if (postType === "auto") {
+    try {
+      console.log('Trying availability post API with ID:', postId)
+      const response = await marketplaceAPI.getAvailabilityPostById(postId)
+      console.log('Availability post API success:', response.data)
+      return { ...response.data, postType: "availability" }
+    } catch (availabilityError) {
+      console.log('Availability post API failed:', availabilityError.message)
+      try {
+        console.log('Trying job post API with ID:', postId)
+        const response = await marketplaceAPI.getJobPostById(postId)
+        console.log('Job post API success:', response.data)
+        return { ...response.data, postType: "job" }
+      } catch (jobError) {
+        console.log('Job post API also failed:', jobError.message)
+        throw availabilityError // Return the first error
+      }
+    }
+  } else if (postType === "availability") {
+    console.log('Direct availability post API call with ID:', postId)
+    const response = await marketplaceAPI.getAvailabilityPostById(postId)
+    return { ...response.data, postType: "availability" }
+  } else {
+    console.log('Direct job post API call with ID:', postId)
+    const response = await marketplaceAPI.getJobPostById(postId)
+    return { ...response.data, postType: "job" }
+  }
 })
 
 export const fetchPostBySlug = createAsyncThunk("marketplace/fetchPostBySlug", async (slug) => {
@@ -38,30 +75,62 @@ export const fetchPostsByClient = createAsyncThunk("marketplace/fetchPostsByClie
   return response.data
 })
 
+// Create post with support for both job posts and availability posts
 export const createPost = createAsyncThunk(
   "marketplace/createPost", 
   async (postData, { rejectWithValue, getState }) => {
     try {
-      const response = await marketplaceAPI.createJobPost(postData);
-      return response.data;
+      let response
+      
+      // Handle FormData vs regular object
+      let postType
+      if (postData instanceof FormData) {
+        postType = postData.get("postType")
+      } else {
+        postType = postData.postType
+      }
+      
+      console.log("=== REDUX CREATE POST DEBUG ===")
+      console.log("postType extracted:", postType)
+      console.log("postData instanceof FormData:", postData instanceof FormData)
+      
+      if (postType === "job") {
+        console.log("Creating job post via jobPostsAPI.create")
+        response = await marketplaceAPI.jobPostsAPI.create(postData)
+      } else {
+        console.log("Creating availability post via availabilityPostsAPI.create")
+        response = await marketplaceAPI.availabilityPostsAPI.create(postData)
+      }
+      
+      return response.data
     } catch (error) {
+      console.error("=== REDUX CREATE POST ERROR ===")
+      console.error("Error:", error)
+      console.error("Error response:", error.response)
+      
       // Handle different types of errors
       if (error.response?.status === 401) {
-        return rejectWithValue("Authentication required. Please log in.");
+        return rejectWithValue("Authentication required. Please log in.")
       } else if (error.response?.status === 403) {
-        return rejectWithValue("You don't have permission to create job posts.");
+        return rejectWithValue("You don't have permission to create posts.")
       } else if (error.response?.data?.error) {
-        return rejectWithValue(error.response.data.error);
+        return rejectWithValue(error.response.data.error)
       } else {
-        return rejectWithValue("Failed to create post. Please try again.");
+        return rejectWithValue("Failed to create post. Please try again.")
       }
     }
   }
-);
+)
 
-export const updatePost = createAsyncThunk("marketplace/updatePost", async ({ jobId, postData }, { rejectWithValue }) => {
+// Update post with support for both post types
+export const updatePost = createAsyncThunk("marketplace/updatePost", async ({ postId, postData, postType }, { rejectWithValue }) => {
   try {
-    const response = await marketplaceAPI.updateJobPost(jobId, postData)
+    let response
+    if (postType === "availability") {
+      response = await marketplaceAPI.updateAvailabilityPost(postId, postData)
+    } else {
+      response = await marketplaceAPI.updateJobPost(postId, postData)
+    }
     return response.data
   } catch (error) {
     if (error.response?.status === 401) {
@@ -76,10 +145,15 @@ export const updatePost = createAsyncThunk("marketplace/updatePost", async ({ jo
   }
 })
 
-export const deletePost = createAsyncThunk("marketplace/deletePost", async (jobId, { rejectWithValue }) => {
+// Delete post with support for both post types
+export const deletePost = createAsyncThunk("marketplace/deletePost", async ({ postId, postType }, { rejectWithValue }) => {
   try {
-    await marketplaceAPI.deleteJobPost(jobId)
-    return jobId
+    if (postType === "availability") {
+      await marketplaceAPI.deleteAvailabilityPost(postId)
+    } else {
+      await marketplaceAPI.deleteJobPost(postId)
+    }
+    return { postId, postType }
   } catch (error) {
     if (error.response?.status === 401) {
       return rejectWithValue("Authentication required. Please log in.");
@@ -93,10 +167,54 @@ export const deletePost = createAsyncThunk("marketplace/deletePost", async (jobI
   }
 })
 
+// Fetch user posts for both job posts and availability posts
 export const fetchUserPosts = createAsyncThunk("marketplace/fetchUserPosts", async (_, { rejectWithValue }) => {
   try {
-    const response = await marketplaceAPI.getMyJobPosts()
-    return response.data
+    // Fetch both availability posts and job posts
+    const [availabilityResponse, jobResponse] = await Promise.allSettled([
+      marketplaceAPI.getMyAvailabilityPosts(),
+      marketplaceAPI.getMyJobPosts()
+    ])
+    
+    console.log('API Responses:', { availabilityResponse, jobResponse })
+    
+    const availabilityPosts = availabilityResponse.status === 'fulfilled' 
+      ? (availabilityResponse.value.data || []).map(post => {
+          console.log('Availability post structure:', post)
+          console.log('Availability post ID fields:', {
+            postId: post.postId,
+            id: post.id,
+            jobId: post.jobId,
+            _id: post._id
+          })
+          return { ...post, postType: 'availability' }
+        })
+      : []
+    
+    const jobPosts = jobResponse.status === 'fulfilled' 
+      ? (jobResponse.value.data || []).map(post => {
+          console.log('Job post structure:', post)
+          console.log('Job post ID fields:', {
+            postId: post.postId,
+            id: post.id,
+            jobId: post.jobId,
+            _id: post._id
+          })
+          return { ...post, postType: 'job' }
+        })
+      : []
+    
+    const allPosts = [...availabilityPosts, ...jobPosts]
+    console.log('Combined posts:', allPosts)
+    console.log('Combined posts ID summary:', allPosts.map(post => ({
+      postId: post.postId,
+      id: post.id,
+      jobId: post.jobId,
+      title: post.title,
+      postType: post.postType
+    })))
+    
+    return allPosts
   } catch (error) {
     if (error.response?.status === 401) {
       return rejectWithValue("Authentication required. Please log in.");
@@ -108,7 +226,7 @@ export const fetchUserPosts = createAsyncThunk("marketplace/fetchUserPosts", asy
   }
 })
 
-// NEW: Category async thunks
+// Category async thunks
 export const fetchCategories = createAsyncThunk(
   "marketplace/fetchCategories",
   async (_, { rejectWithValue }) => {
@@ -148,7 +266,7 @@ export const filterCategories = createAsyncThunk(
 );
 
 const initialState = {
-  // Existing state
+  // Posts state
   posts: [],
   currentPost: null,
   userPosts: [],
@@ -156,8 +274,8 @@ const initialState = {
   error: null,
   filters: {
     category: "",
-    section: "", // Add section to filters
-    search: "", // Add search to filters
+    section: "",
+    search: "",
     priceRange: "",
     location: "",
     skills: [],
@@ -169,7 +287,7 @@ const initialState = {
     totalPosts: 0,
   },
   
-  // NEW: Categories state
+  // Categories state
   categories: [],
   filteredCategories: [],
   currentCategory: null,
@@ -197,7 +315,7 @@ const marketplaceSlice = createSlice({
       state.error = null
     },
     
-    // NEW: Category reducers
+    // Category reducers
     clearCategoriesError: (state) => {
       state.categoriesError = null
     },
@@ -210,7 +328,6 @@ const marketplaceSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Existing cases...
       // Fetch posts
       .addCase(fetchPosts.pending, (state) => {
         state.loading = true
@@ -308,16 +425,31 @@ const marketplaceSlice = createSlice({
       })
       .addCase(updatePost.fulfilled, (state, action) => {
         state.loading = false
-        const index = state.posts.findIndex((post) => post.jobId === action.payload.jobId)
+        const updatedPost = action.payload
+        const postId = updatedPost.postId || updatedPost.jobId || updatedPost.id
+        
+        // Update in posts array
+        const index = state.posts.findIndex((post) => {
+          const id = post.postId || post.jobId || post.id
+          return id === postId
+        })
         if (index !== -1) {
-          state.posts[index] = action.payload
+          state.posts[index] = updatedPost
         }
-        const userIndex = state.userPosts.findIndex((post) => post.jobId === action.payload.jobId)
+        
+        // Update in userPosts array
+        const userIndex = state.userPosts.findIndex((post) => {
+          const id = post.postId || post.jobId || post.id
+          return id === postId
+        })
         if (userIndex !== -1) {
-          state.userPosts[userIndex] = action.payload
+          state.userPosts[userIndex] = updatedPost
         }
-        if (state.currentPost?.jobId === action.payload.jobId) {
-          state.currentPost = action.payload
+        
+        // Update currentPost if it matches
+        const currentPostId = state.currentPost?.postId || state.currentPost?.jobId || state.currentPost?.id
+        if (currentPostId === postId) {
+          state.currentPost = updatedPost
         }
       })
       .addCase(updatePost.rejected, (state, action) => {
@@ -332,8 +464,16 @@ const marketplaceSlice = createSlice({
       })
       .addCase(deletePost.fulfilled, (state, action) => {
         state.loading = false
-        state.posts = state.posts.filter((post) => post.jobId !== action.payload)
-        state.userPosts = state.userPosts.filter((post) => post.jobId !== action.payload)
+        const { postId } = action.payload
+        // Remove from both posts and userPosts arrays
+        state.posts = state.posts.filter((post) => {
+          const id = post.postId || post.jobId || post.id
+          return id !== postId
+        })
+        state.userPosts = state.userPosts.filter((post) => {
+          const id = post.postId || post.jobId || post.id
+          return id !== postId
+        })
       })
       .addCase(deletePost.rejected, (state, action) => {
         state.loading = false
@@ -354,7 +494,7 @@ const marketplaceSlice = createSlice({
         state.error = action.payload || action.error.message
       })
       
-      // NEW: Categories cases
+      // Categories cases
       // Fetch all categories
       .addCase(fetchCategories.pending, (state) => {
         state.categoriesLoading = true
@@ -408,7 +548,7 @@ export const {
   setCurrentPost, 
   clearCurrentPost, 
   clearError,
-  // NEW: Export category actions
+  // Category actions
   clearCategoriesError,
   clearCurrentCategory,
   setFilteredCategories

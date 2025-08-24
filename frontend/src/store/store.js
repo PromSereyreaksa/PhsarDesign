@@ -1,9 +1,10 @@
 import { configureStore } from '@reduxjs/toolkit';
-import authReducer from './slices/authSlice';
 import apiReducer from './slices/apiSlice';
-import postsReducer from './slices/postsSlice';
-import marketplaceReducer from './slices/marketplaceSlice';
 import artistsReducer from './slices/artistsSlice';
+import authReducer from './slices/authSlice';
+import categoriesReducer from './slices/categoriesSlice';
+import marketplaceReducer from './slices/marketplaceSlice';
+import postsReducer from './slices/postsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
     posts: postsReducer,
     marketplace: marketplaceReducer,
     artists: artistsReducer,
+    categories: categoriesReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

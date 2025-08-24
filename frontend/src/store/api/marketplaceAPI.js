@@ -150,7 +150,7 @@ export const jobPostsAPI = {
   },
   updateBySlug: (slug, postData) => {
     const isFormData = typeof FormData !== 'undefined' && postData instanceof FormData;
-    return api.put(`/api/job-posts/${slug}`, postData,
+    return api.patch(`/api/job-posts/${slug}`, postData,
       isFormData ? { headers: { "Content-Type": undefined } } : undefined
     );
   },
@@ -314,3 +314,15 @@ export const uploadImages = (files) => {
 export const contactArtistFromPost = (jobId, message) => {
   return api.post(`/api/job-posts/id/${jobId}/contact`, { message })
 }
+
+// ========== CONVENIENCE EXPORTS FOR AVAILABILITY POSTS ==========
+export const createAvailabilityPost = (postData) => availabilityPostsAPI.create(postData)
+export const updateAvailabilityPost = (id, postData) => availabilityPostsAPI.update(id, postData)
+export const deleteAvailabilityPost = (id) => availabilityPostsAPI.delete(id)
+export const getAvailabilityPostById = (id) => {
+  console.log('getAvailabilityPostById called with id:', id)
+  console.log('Making API call to:', `/api/availability-posts/id/${id}`)
+  return availabilityPostsAPI.getById(id)
+}
+export const getAvailabilityPostBySlug = (slug) => availabilityPostsAPI.getBySlug(slug)
+export const getMyAvailabilityPosts = (params) => availabilityPostsAPI.getMyPosts(params)
