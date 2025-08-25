@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit"
-import { getArtists } from "../api/artistsAPI"
+import { getArtistBySlug, getArtists } from "../api/artistsAPI"
 
 // Async thunks for API calls
 export const fetchArtists = createAsyncThunk("artists/fetchArtists", async () => {
@@ -7,8 +7,14 @@ export const fetchArtists = createAsyncThunk("artists/fetchArtists", async () =>
   return response
 })
 
+export const fetchArtistBySlug = createAsyncThunk("artists/fetchArtistBySlug", async (slug) => {
+  const response = await getArtistBySlug(slug)
+  return response
+})
+
 const initialState = {
   artists: [],
+  currentArtist: null,
   loading: false,
   error: null,
 }
@@ -37,6 +43,20 @@ const artistsSlice = createSlice({
         state.error = null
       })
       .addCase(fetchArtists.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.error.message
+      })
+      // Fetch Artist by Slug
+      .addCase(fetchArtistBySlug.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchArtistBySlug.fulfilled, (state, action) => {
+        state.loading = false
+        state.currentArtist = action.payload
+        state.error = null
+      })
+      .addCase(fetchArtistBySlug.rejected, (state, action) => {
         state.loading = false
         state.error = action.error.message
       })

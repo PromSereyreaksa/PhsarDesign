@@ -6,7 +6,8 @@ import { useNavigate } from "react-router-dom"
 import HoverOverlay from "../../../components/common/HoverOverlay"
 import SectionHeader from "../../../components/common/SectionHeader"
 import Loader from '../../../components/ui/Loader'
-import { clearError, fetchCategories, fetchPosts } from "../../../store/slices/postsSlice"
+import { fetchCategories } from "../../../store/slices/categoriesSlice"
+import { fetchAvailabilityPosts } from "../../../store/slices/postsSlice"
 
 export default function PopularServicesSection({ customImages }) {
   const dispatch = useDispatch()
@@ -14,106 +15,105 @@ export default function PopularServicesSection({ customImages }) {
   
   // Get data from Redux store
   const { 
-    posts, 
-    categories, 
-    loading, 
-    error,
-    categoriesLoading 
+    availabilityPosts, 
+    availabilityPostsLoading, 
+    availabilityPostsError 
   } = useSelector((state) => state.posts)
-
-  // Create dynamic category mapping from categories array
-  const getCategoryName = (categoryId) => {
-    // Try to use dynamic categories first
-    if (categories && Array.isArray(categories) && categories.length > 0) {
-      const category = categories.find(cat => cat.id === categoryId || cat.categoryId === categoryId);
-      if (category) {
-        return category.name || category.categoryName;
-      }
-    }
-    
-    // Fallback category mapping only as last resort
-    const fallbackCategories = {
-      1: 'Graphic Design',
-      2: 'Web Design', 
-      3: 'Mobile Apps',
-      4: 'UI/UX Design',
-      5: 'Logo Design',
-      6: '3D Modeling',
-      7: 'Digital Art',
-      8: 'Photography',
-      9: 'Illustration',
-      10: 'Animation',
-      11: 'Branding',
-      12: 'Print Design'
-    };
-    
-    if (fallbackCategories[categoryId]) {
-      return fallbackCategories[categoryId];
-    }
-    
-    return 'Other';
-  }
+  
+  const { 
+    categories, 
+    loading: categoriesLoading 
+  } = useSelector((state) => state.categories)
 
   useEffect(() => {
-    // Fetch both posts and categories when component mounts
-    dispatch(fetchPosts())
+    // Fetch both availability posts and categories when component mounts
+    // Fetch more posts to ensure we have posts from different categories
+    dispatch(fetchAvailabilityPosts({ limit: 50, isActive: true }))
     dispatch(fetchCategories())
-
-    // Add timeout to prevent infinite loading
-    const timeout = setTimeout(() => {
-      if (loading || categoriesLoading) {
-        console.error('Loading timeout - API calls took too long');
-      }
-    }, 10000) // 10 second timeout
-
-    return () => clearTimeout(timeout)
   }, [dispatch])
 
-  // Add debugging for posts as well
-  useEffect(() => {
-    console.log('Posts from Redux:', posts);
-    console.log('Categories from Redux:', categories);
-    console.log('Loading states:', { loading, categoriesLoading, error });
-    
-    // If we've been loading for too long, show mock data
-    const mockTimeout = setTimeout(() => {
-      if ((loading || categoriesLoading) && (!posts || posts.length === 0)) {
-        console.warn('Loading taking too long, consider showing fallback content');
-      }
-    }, 5000)
-    
-    return () => clearTimeout(mockTimeout)
-  }, [posts, categories, loading, categoriesLoading, error])
+  // Create category mapping from availability posts
+  const getCategoryData = () => {
+    if (!categories || categories.length === 0) {
+      // Fallback categories if no categories from API
+      return [
+        { categoryId: 1, name: 'Graphic Design', color: '#A95BAB', image: null },
+        { categoryId: 2, name: 'Web Design', color: '#3F51B5', image: null },
+        { categoryId: 3, name: 'Mobile Apps', color: '#00BCD4', image: null },
+        { categoryId: 4, name: 'UI/UX Design', color: '#4CAF50', image: null },
+        { categoryId: 5, name: 'Photography', color: '#FF9800', image: null },
+        { categoryId: 6, name: 'Branding', color: '#E91E63', image: null },
+        { categoryId: 7, name: 'Animation', color: '#9C27B0', image: null },
+        { categoryId: 8, name: 'Video Editing', color: '#FF5722', image: null },
+      ]
+    }
 
-  const handleRetry = () => {
-    dispatch(clearError())
-    dispatch(fetchPosts())
-    dispatch(fetchCategories())
+    // Use first 8 categories from the API and find random post images for each
+    const colors = ['#A95BAB', '#3F51B5', '#00BCD4', '#4CAF50', '#FF9800', '#E91E63', '#9C27B0', '#FF5722']
+    
+    return categories.slice(0, 8).map((category, index) => {
+      // Find posts for this category
+      const categoryPosts = availabilityPosts?.filter(post => post.categoryId === category.categoryId) || []
+      
+      // Debug logging
+      console.log(`Category ${category.name} (ID: ${category.categoryId}): ${categoryPosts.length} posts found`)
+      
+      // Get a random post image from this category
+      let randomImage = null
+      if (categoryPosts.length > 0) {
+        const randomPost = categoryPosts[Math.floor(Math.random() * categoryPosts.length)]
+        console.log(`Random post for ${category.name}:`, randomPost)
+        
+        if (randomPost.attachments && randomPost.attachments.length > 0) {
+          // Get first attachment URL
+          const attachments = typeof randomPost.attachments === 'string' 
+            ? JSON.parse(randomPost.attachments) 
+            : randomPost.attachments
+          if (Array.isArray(attachments) && attachments.length > 0) {
+            randomImage = attachments[0].url || attachments[0]
+            console.log(`Image found for ${category.name}:`, randomImage)
+          }
+        }
+      } else {
+        console.log(`No posts found for category ${category.name}`)
+      }
+      
+      return {
+        categoryId: category.categoryId,
+        name: category.name,
+        color: colors[index % colors.length],
+        image: randomImage
+      }
+    })
   }
 
   const buildServiceGrid = () => {
-    console.log('BuildServiceGrid - Loading states:', { loading, categoriesLoading, error });
-    console.log('Posts length:', posts?.length || 0);
-    
-    // Show loading state - but with timeout to prevent infinite loading
-    if (loading || categoriesLoading) {
+    // Show loading state
+    if (availabilityPostsLoading || categoriesLoading) {
       return (
-        <div className="flex flex-col items-center justify-center py-12">
-          <Loader />
-          <p className="text-gray-400 mt-4">Loading services...</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((index) => (
+            <div key={index} className="relative rounded-xl overflow-hidden">
+              <div className="w-full h-48 bg-gray-700/50 animate-pulse flex items-center justify-center">
+                <Loader />
+              </div>
+            </div>
+          ))}
         </div>
       )
     }
 
     // Show error state
-    if (error) {
-      console.error('Error in buildServiceGrid:', error);
+    if (availabilityPostsError) {
       return (
         <div className="text-center py-12">
-          <p className="text-red-400">{error}</p>
+          <p className="text-red-400 mb-4">Failed to load popular services</p>
           <button 
-            onClick={handleRetry}
-            className="mt-4 px-6 py-2 bg-[#A95BAB] text-white rounded-lg hover:bg-[#A95BAB]/80 transition-colors"
+            onClick={() => {
+              dispatch(fetchAvailabilityPosts({ limit: 50, isActive: true }))
+              dispatch(fetchCategories())
+            }}
+            className="text-[#A95BAB] hover:text-[#A95BAB]/80 transition-colors"
           >
             Try Again
           </button>
@@ -121,93 +121,83 @@ export default function PopularServicesSection({ customImages }) {
       )
     }
 
-    // Show empty state
-    if (!posts || posts.length === 0) {
-      console.log('No posts found, showing empty state');
-      return (
-        <div className="text-center py-12">
-          <p className="text-gray-400">No services available at the moment.</p>
-          <button 
-            onClick={handleRetry}
-            className="mt-4 px-6 py-2 bg-[#A95BAB] text-white rounded-lg hover:bg-[#A95BAB]/80 transition-colors"
-          >
-            Retry
-          </button>
-        </div>
-      )
-    }
+    const categoryData = getCategoryData()
 
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {posts.slice(0, 8).map((post, index) => {
-          const categoryName = getCategoryName(post.categoryId)
-          
-          // Get image URL from API attachments
-          let apiImageUrl = null;
-          if (post.attachments && Array.isArray(post.attachments) && post.attachments.length > 0) {
-            // Handle different attachment structures
-            const attachment = post.attachments[0];
-            if (typeof attachment === 'string') {
-              // If attachment is directly a URL string
-              apiImageUrl = attachment;
-            } else if (attachment && typeof attachment === 'object') {
-              // If attachment is an object, try common URL properties
-              apiImageUrl = attachment.url || attachment.src || attachment.path || attachment.link;
-            }
-          }
-          
-          // Fallback images only if API image is not available
-          const fallbackImages = [
-            '/image/Service1.jpg',
-            '/image/Service2.jpg', 
-            '/image/Service3.jpg',
-            '/image/Service4.jpg',
-            '/image/Artist1.jpg',
-            '/image/Artist2.jpg',
-            '/image/Artist3.jpg',
-            '/image/Artist4.jpg'
-          ];
-          
-          // Prioritize API image, fallback to static images
-          const displayImage = apiImageUrl || fallbackImages[index % fallbackImages.length];
-          
-          console.log(`Rendering post ${index}:`, {
-            postId: post.postId,
-            categoryId: post.categoryId,
-            categoryName,
-            apiImageUrl,
-            displayImage,
-            hasPhotos: post.photos?.length || 0
-          });
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        {categoryData.map((category, index) => {
+          const hasCustomImage = customImages && index < customImages.length && customImages[index]
+          const hasPostImage = category.image
           
           return (
             <div 
-              key={post.postId || index} 
+              key={category.categoryId || index} 
               className="relative rounded-xl overflow-hidden group cursor-pointer transform hover:scale-105 transition-all duration-300"
               onClick={() => {
                 // Navigate to marketplace with category filter
-                navigate(`/marketplace?category=${encodeURIComponent(categoryName)}&section=services`)
+                navigate(`/marketplace?category=${encodeURIComponent(category.name)}&section=services`)
               }}
             >
-              <img
-                src={displayImage}
-                alt={categoryName}
-                className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
-                onLoad={() => console.log(`✓ Image ${index} loaded successfully:`, displayImage)}
-                onError={(e) => {
-                  console.error(`✗ Image ${index} failed to load:`, displayImage);
-                  // If API image fails, try fallback
-                  if (apiImageUrl && e.target.src === apiImageUrl) {
-                    console.log(`Falling back to static image for post ${index}`);
-                    e.target.src = fallbackImages[index % fallbackImages.length];
-                  } else {
-                    // If even fallback fails, try a different one
-                    const altIndex = (index + 1) % fallbackImages.length;
-                    e.target.src = fallbackImages[altIndex];
-                  }
-                }}
-              />
-              <HoverOverlay label={categoryName} />
+              {hasCustomImage ? (
+                <div className="relative">
+                  <img
+                    src={customImages[index]}
+                    alt={category.name}
+                    className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
+                    onError={(e) => {
+                      // Fallback to color block if image fails to load
+                      e.target.style.display = 'none'
+                      e.target.nextSibling.style.display = 'flex'
+                    }}
+                  />
+                  <div 
+                    className="w-full h-48 bg-center bg-cover hidden items-center justify-center"
+                    style={{ backgroundColor: category.color }}
+                  >
+                    <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  
+                  {/* Gradient overlay for custom images */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+                </div>
+              ) : hasPostImage ? (
+                <div className="relative">
+                  <img
+                    src={hasPostImage}
+                    alt={category.name}
+                    className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
+                    onError={(e) => {
+                      // Fallback to color block if image fails to load
+                      e.target.style.display = 'none'
+                      e.target.nextSibling.style.display = 'flex'
+                    }}
+                  />
+                  <div 
+                    className="w-full h-48 bg-center bg-cover hidden items-center justify-center"
+                    style={{ backgroundColor: category.color }}
+                  >
+                    <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  
+                  {/* Gradient overlay for post images */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                </div>
+              ) : (
+                <div 
+                  className="w-full h-48 flex items-center justify-center"
+                  style={{ backgroundColor: category.color }}
+                >
+                  <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                </div>
+              )}
+              
+              <HoverOverlay label={category.name} />
             </div>
           )
         })}
