@@ -34,6 +34,22 @@ export const fetchMyAvailabilityPosts = createAsyncThunk(
   }
 );
 
+export const fetchAvailabilityPostsByUserId = createAsyncThunk(
+  'posts/fetchAvailabilityPostsByUserId',
+  async (userId, { rejectWithValue }) => {
+    try {
+      const response = await availabilityPostsAPI.getAll({
+        userId: userId,
+        isActive: true
+      });
+      console.log('API availability posts by userId response:', response.data.posts);
+      return normalizeResponse(response.data, 'posts');
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+
 export const createAvailabilityPost = createAsyncThunk(
   'posts/createAvailabilityPost',
   async (postData) => {
@@ -151,6 +167,9 @@ const initialState = {
   myAvailabilityPosts: [],
   myAvailabilityPostsLoading: false,
   myAvailabilityPostsError: null,
+  userPosts: [], // Posts for a specific user (public view)
+  userPostsLoading: false,
+  userPostsError: null,
   
   // Job Posts (Client Posts)
   jobPosts: [],
@@ -241,6 +260,20 @@ const postsSlice = createSlice({
       .addCase(fetchMyAvailabilityPosts.rejected, (state, action) => {
         state.myAvailabilityPostsLoading = false;
         state.myAvailabilityPostsError = action.error.message || 'Failed to fetch my availability posts';
+      })
+      
+      // Fetch availability posts by user ID
+      .addCase(fetchAvailabilityPostsByUserId.pending, (state) => {
+        state.userPostsLoading = true;
+        state.userPostsError = null;
+      })
+      .addCase(fetchAvailabilityPostsByUserId.fulfilled, (state, action) => {
+        state.userPostsLoading = false;
+        state.userPosts = action.payload;
+      })
+      .addCase(fetchAvailabilityPostsByUserId.rejected, (state, action) => {
+        state.userPostsLoading = false;
+        state.userPostsError = action.payload || 'Failed to fetch user posts';
       })
       
       // Create availability post
@@ -368,6 +401,9 @@ export const selectAvailabilityPosts = (state) => state.posts.availabilityPosts;
 export const selectJobPosts = (state) => state.posts.jobPosts;
 export const selectMyAvailabilityPosts = (state) => state.posts.myAvailabilityPosts;
 export const selectMyJobPosts = (state) => state.posts.myJobPosts;
+export const selectUserPosts = (state) => state.posts.userPosts;
+export const selectUserPostsLoading = (state) => state.posts.userPostsLoading;
+export const selectUserPostsError = (state) => state.posts.userPostsError;
 export const selectCategories = (state) => state.posts.categories;
 export const selectActiveTab = (state) => state.posts.activeTab;
 

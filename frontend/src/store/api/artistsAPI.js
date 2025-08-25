@@ -29,9 +29,22 @@ api.interceptors.request.use(
 export const getArtists = async () => {
   try {
     console.log('📡 Calling /api/artists...')
-    const response = await api.get("/api/artists")
+    // Add query parameter to ensure we get full user data including profile pictures
+    const response = await api.get("/api/artists?include=user,profile")
     console.log('✅ Artists API response status:', response.status)
     console.log('✅ Artists API response data:', response.data)
+    
+    // Log individual artist data to debug profile pictures
+    if (response.data && Array.isArray(response.data)) {
+      response.data.forEach((artist, index) => {
+        console.log(`Artist ${index + 1}:`, {
+          name: artist.user ? `${artist.user.firstName} ${artist.user.lastName}` : 'Unknown',
+          profilePicture: artist.user?.profilePicture,
+          artistId: artist.artistId
+        })
+      })
+    }
+    
     return response.data
   } catch (error) {
     console.error("❌ Error fetching artists:", error)
@@ -132,8 +145,51 @@ export const getTopRatedArtists = async () => {
   }
 }
 
+// Get artist by slug (for public profile pages like GitHub)
+export const getArtistBySlug = async (slug) => {
+  try {
+    console.log('📡 Calling /api/artists/slug/' + slug + '...')
+    const response = await api.get(`/api/artists/slug/${slug}?include=user,profile,posts`)
+    console.log('✅ Artist by slug API response:', response.data)
+    return response.data
+  } catch (error) {
+    console.error("❌ Error fetching artist by slug:", error)
+    console.error("❌ Artist by slug API error details:", {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      url: error.config?.url,
+      slug: slug
+    })
+    throw error
+  }
+}
+
+// Get public artist profile (for public view)
+export const getPublicArtistProfile = async (identifier) => {
+  try {
+    console.log('📡 Calling public artist profile for:', identifier)
+    // Try both slug and ID for flexibility
+    const response = await api.get(`/api/public/artist/${identifier}?include=user,profile,posts,reviews`)
+    console.log('✅ Public artist profile response:', response.data)
+    return response.data
+  } catch (error) {
+    console.error("❌ Error fetching public artist profile:", error)
+    console.error("❌ Public artist profile error details:", {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      url: error.config?.url,
+      identifier: identifier
+    })
+    throw error
+  }
+}
+
 export default {
   getArtists,
   getReviews,
   getTopRatedArtists,
+  getArtistBySlug,
+  getPublicArtistProfile,
 };

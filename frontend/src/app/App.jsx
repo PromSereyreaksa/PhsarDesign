@@ -1,5 +1,10 @@
 import { Route, Routes } from "react-router-dom"
 import ProtectedRoute from "../guards/ProtectedRoute.jsx"
+import ChangePasswordPage from "../pages/auth/ChangePasswordPage"
+import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage"
+import LoginPage from "../pages/auth/LoginPage/index.jsx"
+import OTPVerificationPage from "../pages/auth/OTPVerificationPage"
+import RegisterPage from "../pages/auth/RegisterPage"
 import ArtistDashboard from "../pages/Dashboard/ArtistDashboard.jsx"
 import MyPostsPage from "../pages/Dashboard/MyPostsPage"
 import HomePage from "../pages/HomePage/index.jsx"
@@ -7,17 +12,13 @@ import CreatePostPage from "../pages/Marketplace/CreatePost"
 import EditPostPage from "../pages/Marketplace/EditPostPage"
 import MarketplacePage from "../pages/Marketplace/MarketplacePage"
 import PostDetailPage from "../pages/Marketplace/PostDetailPage"
-import ChangePasswordPage from "../pages/auth/ChangePasswordPage"
-import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage"
-import LoginPage from "../pages/auth/LoginPage/index.jsx"
-import OTPVerificationPage from "../pages/auth/OTPVerificationPage"
-import RegisterPage from "../pages/auth/RegisterPage"
 import ArtistProfile from "../pages/profiles/ArtistProfile.jsx"
 import ClientProfile from "../pages/profiles/ClientProfile.jsx"
 import EditProfile from "../pages/profiles/EditProfile.jsx"
 import ProfileRouter from "../pages/profiles/ProfileRouter.jsx"
 import AboutPage from "../pages/public/AboutPage/index.jsx"
 import LandingPage from "../pages/public/LandingPage/index.jsx"
+import PublicArtistProfile from "../pages/public/PublicArtistProfile.jsx"
 import "./App.css"
 
 function App() {
@@ -129,6 +130,9 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/verify-otp" element={<OTPVerificationPage />} />
         <Route path="/change-password" element={<ChangePasswordPage />} />
+        
+        {/* Public Artist Profile Routes (GitHub-style) - Must be last due to catch-all nature */}
+        <Route path="/:slug" element={<PublicArtistProfile />} />
       </Routes>
     </div>
   )

@@ -30,14 +30,15 @@ export default function AuthNavbar() {
   const activeTab = useSelector((s) => s.posts?.activeTab) // activeTab from posts slice
 
   // Which parent menu is visually active
-  const [activeMenu, setActiveMenu] = useState(null) // "talents" | "works" | "community" | null
+  const [activeMenu, setActiveMenu] = useState(null) // "home" | "talents" | "works" | "community" | null
 
-  // keep menu highlight in sync with Redux activeTab
+  // keep menu highlight in sync with Redux activeTab and current location
   useEffect(() => {
-    if (activeTab === "availability") setActiveMenu("talents")
+    if (location.pathname === "/home") setActiveMenu("home")
+    else if (activeTab === "availability") setActiveMenu("talents")
     else if (activeTab === "jobs") setActiveMenu("works")
     else setActiveMenu(null)
-  }, [activeTab])
+  }, [activeTab, location.pathname])
 
   // Close profile dropdown when clicking outside
   useEffect(() => {
@@ -227,6 +228,16 @@ export default function AuthNavbar() {
           {/* Center nav */}
           <div className="flex items-center justify-center flex-1">
             <div className="flex items-center space-x-6 md:space-x-8">
+              {/* Home */}
+              <DropdownItem
+                text="Home"
+                items={[]}
+                isActive={activeMenu === "home"}
+                onParentClick={() => {
+                  setActiveMenu("home")
+                  navigate("/home")
+                }}
+              />
               {/* Clicking parent sets default tab + navigates */}
               <DropdownItem
                 text="Find Talents"

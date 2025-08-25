@@ -333,7 +333,7 @@ export default function LandingPage() {
                 <Button
                   size="lg"
                   className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-lg px-8 py-4 text-lg font-semibold group transform hover:scale-105 transition-all duration-500 ease-out"
-                  onClick={() => handleNavigation('/marketplace')}
+                  onClick={() => handleNavigation('/home')}
                 >
                   Explore Talent
                   <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-500 ease-out" />

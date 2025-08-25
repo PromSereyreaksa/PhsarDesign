@@ -1,10 +1,10 @@
 "use client"
 
 import { Clock, DollarSign, MapPin, Plus, Tag, Trash2, Upload, X } from "lucide-react"
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
-import { fetchCategories } from "../../store/slices/categoriesSlice"
 import * as marketplaceAPI from "../../store/api/marketplaceAPI"
+import { fetchCategories } from "../../store/slices/categoriesSlice"
 import Loader from "../ui/Loader"
 const CreatePostForm = ({ onSubmit, onCancel, isSubmitting = false }) => {
   const dispatch = useDispatch()
