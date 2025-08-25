@@ -195,7 +195,7 @@ export default function LandingPage() {
 
   // Featured artists data - enhanced with real data
   const getFeaturedArtists = () => {
-    if (artists && artists.length > 0) {
+    if (artists && Array.isArray(artists) && artists.length > 0) {
       return artists.slice(0, 3).map((artist, index) => ({
         id: artist.id || artist.artistId || index + 1,
         name: artist.firstName && artist.lastName 

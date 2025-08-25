@@ -8,6 +8,7 @@ import RegisterPage from "../pages/auth/RegisterPage"
 import ArtistDashboard from "../pages/Dashboard/ArtistDashboard.jsx"
 import MyPostsPage from "../pages/Dashboard/MyPostsPage"
 import HomePage from "../pages/HomePage/index.jsx"
+import ContactArtistPage from "../pages/Marketplace/ContactArtistPage"
 import CreatePostPage from "../pages/Marketplace/CreatePost"
 import EditPostPage from "../pages/Marketplace/EditPostPage"
 import MarketplacePage from "../pages/Marketplace/MarketplacePage"
@@ -34,6 +35,14 @@ function App() {
 
         <Route path="/marketplace" element={<MarketplacePage />} />
         <Route path="/marketplace/:slug" element={<PostDetailPage />} />
+        <Route 
+          path="/marketplace/:slug/contact" 
+          element={
+            <ProtectedRoute>
+              <ContactArtistPage />
+            </ProtectedRoute>
+          } 
+        />
 
         {/* Protected authenticated routes */}
         <Route

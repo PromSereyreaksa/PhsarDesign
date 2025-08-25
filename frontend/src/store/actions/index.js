@@ -18,7 +18,7 @@ import {
   applicationsAPI, 
   messagesAPI,
   projectsAPI
-} from '../../services/api';
+} from '../../lib/api';
 import { 
   addItem, 
   fetchStart, 

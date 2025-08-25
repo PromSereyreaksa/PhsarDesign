@@ -66,8 +66,24 @@ export const fetchPostById = createAsyncThunk("marketplace/fetchPostById", async
 })
 
 export const fetchPostBySlug = createAsyncThunk("marketplace/fetchPostBySlug", async (slug) => {
-  const response = await marketplaceAPI.getJobPostBySlug(slug)
-  return response.data
+  // Try to find in both job posts and availability posts
+  try {
+    console.log('Trying job post API with slug:', slug)
+    const response = await marketplaceAPI.getJobPostBySlug(slug)
+    console.log('Job post API success:', response.data)
+    return { ...response.data, postType: "job" }
+  } catch (jobError) {
+    console.log('Job post API failed:', jobError.message)
+    try {
+      console.log('Trying availability post API with slug:', slug)
+      const response = await marketplaceAPI.getAvailabilityPostBySlug(slug)
+      console.log('Availability post API success:', response.data)
+      return { ...response.data, postType: "availability" }
+    } catch (availabilityError) {
+      console.log('Availability post API also failed:', availabilityError.message)
+      throw jobError // Return the first error
+    }
+  }
 })
 
 export const fetchPostsByClient = createAsyncThunk("marketplace/fetchPostsByClient", async (clientId) => {
@@ -374,6 +390,19 @@ const marketplaceSlice = createSlice({
         state.loading = false
         state.error = action.error.message
       })
+      // Fetch post by slug
+      .addCase(fetchPostBySlug.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchPostBySlug.fulfilled, (state, action) => {
+        state.loading = false
+        state.currentPost = action.payload
+      })
+      .addCase(fetchPostBySlug.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.error.message
+      })
       
       // Create post
       .addCase(createPost.pending, (state) => {
@@ -386,20 +415,6 @@ const marketplaceSlice = createSlice({
         state.userPosts.unshift(action.payload)
       })
       .addCase(createPost.rejected, (state, action) => {
-        state.loading = false
-        state.error = action.payload || action.error.message
-      })
-      
-      // Fetch post by slug
-      .addCase(fetchPostBySlug.pending, (state) => {
-        state.loading = true
-        state.error = null
-      })
-      .addCase(fetchPostBySlug.fulfilled, (state, action) => {
-        state.loading = false
-        state.currentPost = action.payload
-      })
-      .addCase(fetchPostBySlug.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload || action.error.message
       })

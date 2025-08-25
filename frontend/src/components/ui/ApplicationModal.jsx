@@ -1,15 +1,17 @@
-"use client"
-
 import { useState } from "react"
 import { X, Check } from "lucide-react"
-import { Button } from "./button"
+import { Button } from "../ui/button"
 import { applicationsAPI } from "../../lib/api"
 import store from "../../store/store"
 import { JobApplicationForm } from "../marketplace/JobApplicationForm"
 import { ServiceContactForm } from "../marketplace/ServiceContactForm"
-import { showToast } from "./toast"
+import { showToast } from "../ui/toast"
 
-export function MultiStepApplicationModal({ 
+/**
+ * Reusable Application Modal Component
+ * Handles both job applications (artist → client) and service contacts (client → artist)
+ */
+export function ApplicationModal({ 
   isOpen, 
   onClose, 
   post, 
@@ -61,7 +63,7 @@ export function MultiStepApplicationModal({
         // Artist applying to job
         const applicationData = {
           jobPostId: post.jobPostId || post.jobId || post.id,
-          receiverId: post.clientId || post.userId,
+          receiverId: post.clientId || post.client?.clientId || post.userId,
           subject: formData.subject.trim(),
           message: formData.message.trim(),
           proposedBudget: parseFloat(formData.proposedBudget),
@@ -78,7 +80,7 @@ export function MultiStepApplicationModal({
         // Client contacting artist for service
         const applicationData = {
           availabilityPostId: post.availabilityPostId || post.postId || post.id,
-          receiverId: post.artistId || post.userId,
+          receiverId: post.artistId || post.artist?.artistId || post.userId,
           subject: formData.subject.trim(),
           message: formData.message.trim(),
           proposedBudget: parseFloat(formData.proposedBudget),
@@ -207,7 +209,7 @@ export function MultiStepApplicationModal({
               <div className="flex items-center gap-2 mt-2">
                 {post.category && (
                   <span className="px-2 py-1 bg-[#A95BAB]/20 text-[#A95BAB] text-xs rounded">
-                    {post.category}
+                    {post.category.name || post.category}
                   </span>
                 )}
                 {post.budget && (

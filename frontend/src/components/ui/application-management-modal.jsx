@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { applicationsAPI } from "../../services/api"
+import { applicationsAPI } from "../../lib/api"
 import { Button } from "./button"
 import { Textarea } from "./textarea"
 import { Label } from "./label"
