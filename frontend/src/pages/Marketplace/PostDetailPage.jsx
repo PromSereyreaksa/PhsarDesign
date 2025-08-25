@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom"
 import AuthNavbar from "../../components/layout/AuthNavbar"
 import SimplePostCard from "../../components/marketplace/SimplePostCard"
 import Loader from "../../components/ui/Loader"
-import { ApplicationModal } from "../../components/ui/ApplicationModal"
+import { MultiStepApplicationModal } from "../../components/ui/MultiStepApplicationModal"
 import { showToast } from "../../components/ui/toast"
 import { useAppDispatch, useAppSelector } from "../../hook/useRedux"
 import { clearCurrentPost, fetchPostById, fetchPostBySlug, fetchPosts } from "../../store/slices/marketplaceSlice"
@@ -334,7 +334,7 @@ const PostDetailPage = () => {
       </div>
 
       {/* Application Modal */}
-      <ApplicationModal
+      <MultiStepApplicationModal
         isOpen={isApplicationModalOpen}
         onClose={() => setIsApplicationModalOpen(false)}
         post={currentPost}

@@ -3,7 +3,7 @@ import { ArrowRight, Briefcase, MessageCircle } from "lucide-react"
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAppSelector } from "../../hook/useRedux"
-import { ApplicationModal } from "../ui/ApplicationModal"
+import { MultiStepApplicationModal } from "../ui/MultiStepApplicationModal"
 import { showToast } from "../ui/toast"
 
 const PostCard = ({ post }) => {
@@ -157,7 +157,7 @@ const PostCard = ({ post }) => {
       </div>
 
       {/* Application Modal */}
-      <ApplicationModal
+      <MultiStepApplicationModal
         isOpen={isApplicationModalOpen}
         onClose={() => setIsApplicationModalOpen(false)}
         post={post}
