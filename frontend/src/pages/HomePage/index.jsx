@@ -3,11 +3,11 @@
 import { useRef } from "react"
 import FooterSection from "../../components/layout/AuthFooter"
 import AuthNavbar from "../../components/layout/AuthNavbar"
-import ArtistsSection from "../public/LandingPage/ArtistsSection"
-import FreelancingOpportunitiesSection from "../public/LandingPage/FreelancingOpportunitiesSection"
-import PopularServicesSection from "../public/LandingPage/PopularServicesSection"
+import ArtistsSection from "./components/ArtistsSection"
 import ExploreSection from "./components/ExploreSection"
+import FreelancingOpportunitiesSection from "./components/FreelancingOpportunitiesSection"
 import HeroSectionAuth from "./components/HeroSectionAuth"
+import PopularServicesSection from "./components/PopularServicesSection"
 
 export default function HomePage() {
   const freelancingRef = useRef(null)
@@ -44,34 +44,14 @@ export default function HomePage() {
         {/* All sections visible by default */}
         <FreelancingOpportunitiesSection
           titleRef={freelancingRef}
-          customImages={[
-            "/image/freelance1.png",
-            "/image/freelance2.png", 
-            "/image/freelance3.png",
-            "/image/freelance4.png",
-            "/image/freelance5.png",
-            "/image/freelance6.png",
-          ]}
+          
         />
 
         <PopularServicesSection
-          customImages={[
-            "/image/Service1.jpg",
-            "/image/Service2.jpg",
-            "/image/Service3.jpg", 
-            "/image/Service4.jpg",
-          ]}
+         
         />
 
-        <ArtistsSection
-          customImages={[
-            "/image/Artist1.jpg",
-            "/image/Artist2.jpg",
-            "/image/Artist3.jpg",
-            "/image/Artist4.jpg", 
-            "/image/Artist5.jpg",
-          ]}
-        />
+        <ArtistsSection/>
 
         <FooterSection />
       </div>

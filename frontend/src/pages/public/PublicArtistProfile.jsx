@@ -1,11 +1,10 @@
 import {
-    Calendar,
-    Edit,
-    Eye,
-    Heart,
-    MapPin,
-    MessageSquare,
-    Star
+  Calendar,
+  Eye,
+  Heart,
+  MapPin,
+  MessageSquare,
+  Star
 } from 'lucide-react'
 import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
@@ -15,7 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar'
 import { Button } from '../../components/ui/button'
 import { Card, CardContent } from '../../components/ui/card'
 import { fetchArtistBySlug } from '../../store/slices/artistsSlice'
-import { fetchAvailabilityPostsByUserId } from '../../store/slices/postsSlice'
+import { fetchPostsByArtistId } from '../../store/slices/postsSlice'
 
 const PublicArtistProfile = () => {
   const { slug } = useParams()
@@ -23,12 +22,27 @@ const PublicArtistProfile = () => {
   const dispatch = useDispatch()
   
   const { currentArtist, loading, error } = useSelector((state) => state.artists)
-  const { user } = useSelector((state) => state.auth)
+  
   // Use Redux selectors for fetching any user's posts by userId
   const userPosts = useSelector((state) => state.posts.userPosts)
   const postsLoading = useSelector((state) => state.posts.userPostsLoading)
-  
-  const isOwner = user && currentArtist && user.id === currentArtist.userId
+  const postsError = useSelector((state) => state.posts.userPostsError)
+
+  // Debug logging
+  console.log('[PublicArtistProfile] Debug info:', {
+    slug,
+    currentArtist: currentArtist ? {
+      artistId: currentArtist.artistId,
+      userId: currentArtist.userId,
+      userObject: currentArtist.user,
+      firstName: currentArtist.user?.firstName,
+      lastName: currentArtist.user?.lastName,
+      allFields: Object.keys(currentArtist)
+    } : null,
+    loading,
+    error,
+    postsError
+  })
 
   useEffect(() => {
     if (slug) {
@@ -37,27 +51,33 @@ const PublicArtistProfile = () => {
   }, [dispatch, slug])
 
   useEffect(() => {
-    if (currentArtist?.userId) {
-      // Fetch posts for this specific artist (works for any artist, not just current user)
-      console.log('[PublicArtistProfile] Fetching posts for artist userId:', currentArtist.userId)
-      dispatch(fetchAvailabilityPostsByUserId(currentArtist.userId))
+    if (currentArtist) {
+      // Use artistId first, fallback to userId if artistId is not available
+      const artistId = currentArtist.artistId || currentArtist.userId;
+      if (artistId) {
+        console.log('[PublicArtistProfile] Fetching posts for specific artist ID:', artistId);
+        dispatch(fetchPostsByArtistId(artistId))
+          .unwrap()
+          .then((posts) => {
+            console.log('[PublicArtistProfile] ✅ Artist posts fetched successfully:', posts);
+          })
+          .catch((error) => {
+            console.error('[PublicArtistProfile] ❌ Failed to fetch artist posts:', error);
+          });
+      }
     }
-  }, [dispatch, currentArtist?.userId])
+  }, [dispatch, currentArtist?.artistId, currentArtist?.userId])
 
-  // Updated to handle both edit profile scenarios
-  const handleEditProfile = () => {
-    if (isOwner) {
-      navigate('/profile')
-    }
-    // If not owner, do nothing (stay on public view)
+
+
+  // Add error boundary for the entire component
+  if (!slug) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000] flex items-center justify-center">
+        <div className="text-white">Invalid artist URL</div>
+      </div>
+    )
   }
-
-  // Optional: Uncomment to auto-redirect owners to their profile page
-  // useEffect(() => {
-  //   if (isOwner && currentArtist) {
-  //     navigate('/profile')
-  //   }
-  // }, [isOwner, currentArtist, navigate])
 
   if (loading) {
     return (
@@ -70,7 +90,16 @@ const PublicArtistProfile = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000] flex items-center justify-center">
-        <div className="text-white">Error: {error}</div>
+        <div className="text-center">
+          <div className="text-white mb-4">Error loading artist profile</div>
+          <div className="text-red-400 text-sm">{error}</div>
+          <Button 
+            onClick={() => window.location.reload()} 
+            className="mt-4 bg-[#A95BAB] hover:bg-[#A95BAB]/80"
+          >
+            Retry
+          </Button>
+        </div>
       </div>
     )
   }
@@ -83,14 +112,11 @@ const PublicArtistProfile = () => {
     )
   }
 
-  // If user is the owner, they'll see edit options but won't be auto-redirected
-  // This component will render for both owners and non-owners
-
-  // Prepare artist data in the same format as ArtistProfile
-  const artistData = {
-    name: `${currentArtist.user?.firstName || ''} ${currentArtist.user?.lastName || ''}`.trim(),
-    username: `@${currentArtist.user?.username || ''}`,
-    avatar: currentArtist.user?.avatarURL,
+  // Prepare artist data in the same format as ArtistProfile with safety checks
+  const artistData = currentArtist ? {
+    name: `${currentArtist.user?.firstName || ''} ${currentArtist.user?.lastName || ''}`.trim() || 'Unknown Artist',
+    username: `@${currentArtist.user?.username || currentArtist.user?.firstName?.toLowerCase() || 'unknown'}`,
+    avatar: currentArtist.user?.avatarURL || currentArtist.user?.avatar,
     coverImage: currentArtist.coverImage || "/placeholder.svg",
     bio: currentArtist.bio || 'No bio available.',
     location: currentArtist.location || 'Location not specified',
@@ -104,10 +130,19 @@ const PublicArtistProfile = () => {
     skills: currentArtist.skills ? currentArtist.skills.split(',').map(s => s.trim()).filter(Boolean) : [],
     tools: currentArtist.tools ? currentArtist.tools.split(',').map(s => s.trim()).filter(Boolean) : [],
     reviews: currentArtist.reviews || []
-  }
+  } : null
 
   // Use the posts fetched by userId for any artist
   const posts = userPosts;
+
+  // Safety check for artistData
+  if (!artistData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000] flex items-center justify-center">
+        <div className="text-white">Unable to load artist data</div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000] relative">
@@ -148,15 +183,6 @@ const PublicArtistProfile = () => {
                         .join("")}
                     </AvatarFallback>
                   </Avatar>
-                  {isOwner && (
-                    <Button
-                      size="sm"
-                      className="absolute -bottom-2 -right-2 bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-full p-2"
-                      onClick={handleEditProfile}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                  )}
                 </div>
 
                 <div className="flex-1 text-white">
@@ -186,35 +212,18 @@ const PublicArtistProfile = () => {
                       </div>
                     </div>
 
-                    {!isOwner && (
-                      <div className="flex gap-3">
-                        <Button className="bg-[#A95BAB] hover:bg-[#A95BAB]/80">
-                          <MessageSquare className="w-4 h-4 mr-2" />
-                          Message
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="border-white/30 text-white hover:bg-white/10 bg-transparent"
-                        >
-                          Follow
-                        </Button>
-                      </div>
-                    )}
-
-                    {isOwner && (
-                      <div className="flex gap-3">
-                        <Button
-                          onClick={handleEditProfile}
-                          className="bg-white/10 hover:bg-white/20 border border-white/20 text-white"
-                        >
-                          <Edit className="w-4 h-4 mr-2" />
-                          Edit Profile
-                        </Button>
-                        <Button onClick={() => navigate("/dashboard")} className="bg-[#A95BAB] hover:bg-[#A95BAB]/80">
-                          Dashboard
-                        </Button>
-                      </div>
-                    )}
+                    <div className="flex gap-3">
+                      <Button className="bg-[#A95BAB] hover:bg-[#A95BAB]/80">
+                        <MessageSquare className="w-4 h-4 mr-2" />
+                        Message
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="border-white/30 text-white hover:bg-white/10 bg-transparent"
+                      >
+                        Follow
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -339,14 +348,6 @@ const PublicArtistProfile = () => {
               <div>
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-bold text-white">Portfolio</h2>
-                  {isOwner && (
-                    <Button
-                      onClick={() => navigate("/marketplace/create")}
-                      className="bg-[#A95BAB] hover:bg-[#A95BAB]/80"
-                    >
-                      Add New Work
-                    </Button>
-                  )}
                 </div>
 
                 {/* Portfolio section - for any artist's posts */}
@@ -354,14 +355,39 @@ const PublicArtistProfile = () => {
                   <div className="flex items-center justify-center py-12">
                     <div className="text-white">Loading portfolio...</div>
                   </div>
+                ) : postsError ? (
+                  <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+                    <CardContent className="p-8 text-center">
+                      <div className="text-red-400 mb-4">Failed to load portfolio</div>
+                      <div className="text-gray-400 text-sm mb-4">{postsError}</div>
+                      <Button 
+                        onClick={() => {
+                          const artistId = currentArtist.artistId || currentArtist.userId;
+                          if (artistId) {
+                            dispatch(fetchPostsByArtistId(artistId));
+                          }
+                        }}
+                        className="bg-[#A95BAB] hover:bg-[#A95BAB]/80"
+                      >
+                        Retry
+                      </Button>
+                    </CardContent>
+                  </Card>
                 ) : posts && posts.length > 0 ? (
                   <div className="grid md:grid-cols-2 gap-6">
-                    {posts.map((post) => (
+                    {posts.map((post, index) => {
+                      // Safety check for post data
+                      if (!post || typeof post !== 'object') {
+                        console.warn('[PublicArtistProfile] Invalid post data at index:', index, post)
+                        return null
+                      }
+
+                      return (
                       <Card
-                        key={post.postId || post.id || post._id}
+                        key={post.postId || post.id || post._id || index}
                         className="bg-white/5 border-white/10 hover:bg-white/10 rounded-2xl overflow-hidden group cursor-pointer transform hover:scale-105 transition-all duration-500 ease-out"
                         onClick={() => {
-                          const slug = post.title
+                          const slug = String(post.title || 'untitled')
                             .toLowerCase()
                             .replace(/[^a-z0-9]+/g, "-")
                             .replace(/(^-|-$)/g, "")
@@ -370,57 +396,37 @@ const PublicArtistProfile = () => {
                       >
                         <div className="relative">
                           <img
-                            src={post.image || post.imageUrl || "/placeholder.svg?height=200&width=400&query=portfolio work"}
+                            src={post.attachments[0].url || post.imageUrl || "/placeholder.svg?height=200&width=400&query=portfolio work"}
                             alt={post.title}
                             className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
                           />
-                          {isOwner && (
-                            <Button
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                const postId = post.postId || post.id
-                                navigate(`/marketplace/edit/${postId}`)
-                              }}
-                              className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 backdrop-blur-sm"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                          )}
                         </div>
                         <CardContent className="p-4">
-                          <h3 className="font-semibold text-white mb-2">{post.title}</h3>
+                          <h3 className="font-semibold text-white mb-2">{String(post.title || 'Untitled')}</h3>
                           <div className="flex items-center justify-between text-sm text-gray-400">
                             <span className="px-2 py-1 bg-[#A95BAB]/20 rounded-full text-[#A95BAB]">
-                              {post.category}
+                              {typeof post.category === 'object' ? post.category?.name || 'Uncategorized' : post.category || 'Uncategorized'}
                             </span>
                             <div className="flex items-center gap-3">
                               <div className="flex items-center gap-1">
                                 <Heart className="w-4 h-4" />
-                                {post.likes || 0}
+                                <span>{Number(post.likes) || 0}</span>
                               </div>
                               <div className="flex items-center gap-1">
                                 <Eye className="w-4 h-4" />
-                                {post.views || 0}
+                                <span>{Number(post.views) || 0}</span>
                               </div>
                             </div>
                           </div>
                         </CardContent>
                       </Card>
-                    ))}
+                      )
+                    })}
                   </div>
                 ) : (
                   <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
                     <CardContent className="p-8 text-center">
                       <p className="text-gray-400">No portfolio items yet.</p>
-                      {isOwner && (
-                        <Button
-                          onClick={() => navigate("/marketplace/create")}
-                          className="mt-4 bg-[#A95BAB] hover:bg-[#A95BAB]/80"
-                        >
-                          Add Your First Work
-                        </Button>
-                      )}
                     </CardContent>
                   </Card>
                 )}

@@ -76,10 +76,12 @@ const MarketplacePage = () => {
     const category = params.get("category");
     const section = params.get("section");
     const postType = params.get("type"); // 'availability' or 'jobs'
+    const searchTerm = params.get("search"); // Extract search parameter
 
     const newFilters = { ...filters };
     if (category) newFilters.category = category;
     if (section) newFilters.section = section;
+    if (searchTerm) newFilters.search = searchTerm; // Set search filter
 
     // **Set default section based on type if section is missing**
     if (!section) {

@@ -18,6 +18,13 @@ export default function SearchBar({ type = "all", filters, onFilterChange }) {
   const debounceTimer = useRef(null);
   const DEBOUNCE_DELAY = 300;
 
+  // Sync query with search filter from URL
+  useEffect(() => {
+    if (filters?.search && filters.search !== query) {
+      setQuery(filters.search);
+    }
+  }, [filters?.search]);
+
   const categories = [
     { id: "all", label: "All", icon: Search },
     { id: "users", label: "Users", icon: User },

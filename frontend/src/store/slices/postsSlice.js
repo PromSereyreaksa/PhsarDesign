@@ -50,6 +50,24 @@ export const fetchAvailabilityPostsByUserId = createAsyncThunk(
   }
 );
 
+// NEW: Fetch posts specifically by artist ID (more efficient)
+export const fetchPostsByArtistId = createAsyncThunk(
+  'posts/fetchPostsByArtistId',
+  async (artistId, { rejectWithValue }) => {
+    try {
+      console.log('🎯 Fetching posts for specific artist ID:', artistId);
+      const response = await availabilityPostsAPI.getByArtist(artistId, {
+        isActive: true
+      });
+      console.log('✅ API response for artist posts:', response.data);
+      return normalizeResponse(response.data, 'posts');
+    } catch (error) {
+      console.error('❌ Failed to fetch posts for artist:', artistId, error);
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+
 export const createAvailabilityPost = createAsyncThunk(
   'posts/createAvailabilityPost',
   async (postData) => {
@@ -274,6 +292,20 @@ const postsSlice = createSlice({
       .addCase(fetchAvailabilityPostsByUserId.rejected, (state, action) => {
         state.userPostsLoading = false;
         state.userPostsError = action.payload || 'Failed to fetch user posts';
+      })
+      
+      // Fetch posts by artist ID (specific endpoint)
+      .addCase(fetchPostsByArtistId.pending, (state) => {
+        state.userPostsLoading = true;
+        state.userPostsError = null;
+      })
+      .addCase(fetchPostsByArtistId.fulfilled, (state, action) => {
+        state.userPostsLoading = false;
+        state.userPosts = action.payload;
+      })
+      .addCase(fetchPostsByArtistId.rejected, (state, action) => {
+        state.userPostsLoading = false;
+        state.userPostsError = action.payload || 'Failed to fetch artist posts';
       })
       
       // Create availability post
