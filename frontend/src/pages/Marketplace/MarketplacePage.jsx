@@ -348,7 +348,7 @@ const MarketplacePage = () => {
 
             {activeTab === "availability" ? (
               <button
-                onClick={() => navigate("/marketplace/create")}
+                onClick={() => navigate("/marketplace/create?type=availability")}
                 className="inline-flex items-center px-4 py-2 bg-[#A95BAB] hover:bg-[#A95BAB]/80 text-white rounded-lg font-medium text-sm transition-all duration-300 transform hover:scale-105"
               >
                 <Plus className="w-4 h-4 mr-2" />
@@ -356,7 +356,7 @@ const MarketplacePage = () => {
               </button>
             ) : (
               <button
-                onClick={() => navigate("/marketplace/create-job")}
+                onClick={() => navigate("/marketplace/create?type=jobs")}
                 className="inline-flex items-center px-4 py-2 bg-[#A95BAB] hover:bg-[#A95BAB]/80 text-white rounded-lg font-medium text-sm transition-all duration-300 transform hover:scale-105"
               >
                 <Plus className="w-4 h-4 mr-2" />

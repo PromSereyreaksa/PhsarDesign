@@ -53,14 +53,8 @@ function App() {
             </ProtectedRoute>
           }
         />
-         <Route
-          path="/marketplace/create-job"
-          element={
-            <ProtectedRoute>
-              <CreatePostPage />
-            </ProtectedRoute>
-          }
-        />
+        {/* Route removed: /marketplace/create-job now redirects to /marketplace/create?type=jobs */}
+
         <Route
           path="/marketplace/edit/:postId"
           element={
@@ -70,7 +64,7 @@ function App() {
           }
         />
 
-         <Route
+        <Route
           path="/dashboard"
           element={
             <ProtectedRoute>
@@ -130,7 +124,7 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/verify-otp" element={<OTPVerificationPage />} />
         <Route path="/change-password" element={<ChangePasswordPage />} />
-        
+
         {/* Public Artist Profile Routes (GitHub-style) - Must be last due to catch-all nature */}
         <Route path="/:slug" element={<PublicArtistProfile />} />
       </Routes>

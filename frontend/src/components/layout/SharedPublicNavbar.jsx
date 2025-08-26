@@ -7,11 +7,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom"
 import { logout } from "../../store/slices/authSlice"
 import { Button } from "../ui/button"
 
-export default function SharedPublicNavbar({ 
-  showScrollLinks = true, 
-  customLinks = [],
-  className = ""
-}) {
+export default function SharedPublicNavbar({ showScrollLinks = true, customLinks = [], className = "" }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false)
   const location = useLocation()
@@ -30,27 +26,27 @@ export default function SharedPublicNavbar({
       }
     }
 
-    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener("mousedown", handleClickOutside)
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener("mousedown", handleClickOutside)
     }
   }, [])
 
   // Get user initials for avatar
   const getUserInitials = () => {
-    if (!user) return 'U'
-    const firstName = user.firstName || ''
-    const lastName = user.lastName || ''
-    return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase() || 'U'
+    if (!user) return "U"
+    const firstName = user.firstName || ""
+    const lastName = user.lastName || ""
+    return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase() || "U"
   }
 
   // Handle About navigation - always go to /about page and scroll to top
   const handleAboutClick = () => {
     // Always navigate to about page
-    navigate('/about')
+    navigate("/about")
     // Scroll to top immediately
     setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+      window.scrollTo({ top: 0, behavior: "smooth" })
     }, 100)
     setIsMenuOpen(false)
   }
@@ -60,16 +56,19 @@ export default function SharedPublicNavbar({
     navigate(href)
     // Scroll to top after navigation
     setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+      window.scrollTo({ top: 0, behavior: "smooth" })
     }, 100)
     setIsMenuOpen(false)
   }
 
   // Profile menu items
   const profileMenuItems = [
-    { label: 'Profile', icon: User, href: '/profile' },
-    { label: 'Settings', icon: Settings, href: '/settings' },
-    { label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
+    { label: "Profile", icon: User, href: "/profile" },
+    { label: "Settings", icon: Settings, href: "/settings" },
+    // Only show Dashboard for artists, not clients
+    ...(user?.role === "artist" || user?.role === "freelancer"
+      ? [{ label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" }]
+      : []),
   ]
 
   // Handle profile menu item click
@@ -84,7 +83,7 @@ export default function SharedPublicNavbar({
     dispatch(logout())
     setIsProfileDropdownOpen(false)
     // Navigate to login page
-    navigate('/login')
+    navigate("/login")
   }
 
   const smoothScroll = (elementId) => {
@@ -94,7 +93,7 @@ export default function SharedPublicNavbar({
       const elementPosition = element.offsetTop - navbarHeight - 20 // Additional spacing
       window.scrollTo({
         top: elementPosition,
-        behavior: "smooth"
+        behavior: "smooth",
       })
     }
     setIsMenuOpen(false)
@@ -104,7 +103,7 @@ export default function SharedPublicNavbar({
   const defaultScrollLinks = [
     { label: "Services", target: "services" },
     { label: "Categories", target: "categories" },
-    { label: "Artists", target: "artists" }
+    { label: "Artists", target: "artists" },
   ]
 
   // Navigation links based on page context
@@ -112,11 +111,11 @@ export default function SharedPublicNavbar({
     if (customLinks.length > 0) {
       return customLinks
     }
-    
+
     if (location.pathname === "/" && showScrollLinks) {
       return defaultScrollLinks
     }
-    
+
     return []
   }
 
@@ -127,13 +126,16 @@ export default function SharedPublicNavbar({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           <div className="flex items-center">
-            <Link to="/" className="text-3xl font-bold bg-gradient-to-r from-white to-[#A95BAB] bg-clip-text text-transparent">
+            <Link
+              to="/"
+              className="text-3xl font-bold bg-gradient-to-r from-white to-[#A95BAB] bg-clip-text text-transparent"
+            >
               PhsarDesign
             </Link>
           </div>
 
           <div className="hidden md:flex items-center space-x-8">
-            {navigationLinks.map((link, index) => (
+            {navigationLinks.map((link, index) =>
               link.target ? (
                 <button
                   key={index}
@@ -150,9 +152,9 @@ export default function SharedPublicNavbar({
                 >
                   {link.label}
                 </button>
-              )
-            ))}
-            
+              ),
+            )}
+
             {/* Always show About link with smart navigation */}
             <button
               onClick={handleAboutClick}
@@ -174,19 +176,15 @@ export default function SharedPublicNavbar({
                   <div className="w-8 h-8 bg-[#A95BAB] rounded-full flex items-center justify-center">
                     {user?.avatarURL ? (
                       <img
-                        src={user.avatarURL}
+                        src={user.avatarURL || "/placeholder.svg"}
                         alt={user.firstName}
                         className="w-8 h-8 rounded-full object-cover"
                       />
                     ) : (
-                      <span className="text-white text-sm font-bold">
-                        {getUserInitials()}
-                      </span>
+                      <span className="text-white text-sm font-bold">{getUserInitials()}</span>
                     )}
                   </div>
-                  <span className="text-white hidden sm:block">
-                    {user?.firstName || 'User'}
-                  </span>
+                  <span className="text-white hidden sm:block">{user?.firstName || "User"}</span>
                 </button>
 
                 {/* Dropdown Menu */}
@@ -199,22 +197,20 @@ export default function SharedPublicNavbar({
                         <div className="w-10 h-10 bg-[#A95BAB] rounded-full flex items-center justify-center">
                           {user?.avatarURL ? (
                             <img
-                              src={user.avatarURL}
+                              src={user.avatarURL || "/placeholder.svg"}
                               alt={user.firstName}
                               className="w-10 h-10 rounded-full object-cover"
                             />
                           ) : (
-                            <span className="text-white text-sm font-bold">
-                              {getUserInitials()}
-                            </span>
+                            <span className="text-white text-sm font-bold">{getUserInitials()}</span>
                           )}
                         </div>
                         {/* User Name */}
                         <div>
                           <p className="text-white font-bold">
-                            {user?.firstName && user?.lastName 
-                              ? `${user.firstName} ${user.lastName}` 
-                              : user?.email || 'User'}
+                            {user?.firstName && user?.lastName
+                              ? `${user.firstName} ${user.lastName}`
+                              : user?.email || "User"}
                           </p>
                         </div>
                       </div>
@@ -238,7 +234,7 @@ export default function SharedPublicNavbar({
                           </button>
                         )
                       })}
-                      
+
                       {/* Logout Button */}
                       <button
                         onClick={handleLogout}
@@ -289,7 +285,7 @@ export default function SharedPublicNavbar({
         {isMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 bg-[#202020]/95 backdrop-blur-sm rounded-lg mt-2">
-              {navigationLinks.map((link, index) => (
+              {navigationLinks.map((link, index) =>
                 link.target ? (
                   <button
                     key={index}
@@ -306,16 +302,16 @@ export default function SharedPublicNavbar({
                   >
                     {link.label}
                   </button>
-                )
-              ))}
-              
+                ),
+              )}
+
               <button
                 onClick={handleAboutClick}
                 className="block px-3 py-2 text-white hover:text-[#A95BAB] transition-colors duration-300"
               >
                 About
               </button>
-              
+
               <div className="pt-4 space-y-2">
                 <Link to="/login" onClick={() => setIsMenuOpen(false)}>
                   <Button
@@ -326,9 +322,7 @@ export default function SharedPublicNavbar({
                   </Button>
                 </Link>
                 <Link to="/register" onClick={() => setIsMenuOpen(false)}>
-                  <Button className="w-full bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-lg">
-                    Join Us
-                  </Button>
+                  <Button className="w-full bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-lg">Join Us</Button>
                 </Link>
               </div>
             </div>

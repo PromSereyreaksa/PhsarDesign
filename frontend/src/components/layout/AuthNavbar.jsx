@@ -1,8 +1,16 @@
 "use client"
 
 import {
-  Bell, Briefcase, ChevronRight, LayoutDashboard, LogOut,
-  Plus, Search, Settings, User, Users
+  Bell,
+  Briefcase,
+  ChevronRight,
+  LayoutDashboard,
+  LogOut,
+  Plus,
+  Search,
+  Settings,
+  User,
+  Users,
 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
@@ -11,11 +19,7 @@ import { logout } from "../../store/slices/authSlice"
 
 // Import from the correct slice - matching MarketplacePage
 import { setFilters } from "../../store/slices/marketplaceSlice"
-import {
-  fetchAvailabilityPosts,
-  fetchJobPosts,
-  setActiveTab,
-} from "../../store/slices/postsSlice"
+import { fetchAvailabilityPosts, fetchJobPosts, setActiveTab } from "../../store/slices/postsSlice"
 
 export default function AuthNavbar() {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false)
@@ -26,7 +30,7 @@ export default function AuthNavbar() {
 
   // Pull what we need from store - matching MarketplacePage structure
   const { user } = useSelector((s) => s.auth)
-  const { filters } = useSelector((s) => s.marketplace)  // filters from marketplace slice
+  const { filters } = useSelector((s) => s.marketplace) // filters from marketplace slice
   const activeTab = useSelector((s) => s.posts?.activeTab) // activeTab from posts slice
 
   // Which parent menu is visually active
@@ -62,29 +66,29 @@ export default function AuthNavbar() {
   // --- Core: Tab switching function matching MarketplacePage approach
   const handleTabSwitch = (tabType, targetPath = "/marketplace") => {
     console.log(`Navbar: Switching to ${tabType} tab, navigating to ${targetPath}`)
-    
+
     // 1. Set the active tab in Redux
     dispatch(setActiveTab(tabType))
-    
+
     // 2. Update filters based on tab type (matching MarketplacePage logic)
     const newFilters = { ...filters }
     if (tabType === "availability") newFilters.section = "services"
     if (tabType === "jobs") newFilters.section = "jobs"
     dispatch(setFilters(newFilters))
-    
+
     // 3. Navigate to target path with type parameter
     const params = new URLSearchParams()
     params.set("type", tabType)
-    
+
     // Preserve existing category filter if we're on marketplace
     if (location.pathname === "/marketplace" && filters.category) {
       params.set("category", filters.category)
     }
-    
+
     const finalUrl = `${targetPath}?${params.toString()}`
-    console.log('Navbar: Navigating to:', finalUrl)
+    console.log("Navbar: Navigating to:", finalUrl)
     navigate(finalUrl, { replace: targetPath === location.pathname })
-    
+
     // 4. Fetch appropriate posts (matching MarketplacePage)
     if (tabType === "availability") {
       dispatch(fetchAvailabilityPosts(newFilters))
@@ -102,42 +106,42 @@ export default function AuthNavbar() {
 
   // Dropdown menu data (each has tabType + href)
   const findTalentsItems = [
-    { 
-      title: "Post a Recruitment", 
-      icon: Plus, 
-      tabType: "jobs", 
-      href: "/marketplace/create",
+    {
+      title: "Post a Recruitment",
+      icon: Plus,
+      tabType: "jobs",
+      href: "/marketplace/create?type=jobs",
       action: () => {
         // For create pages, just navigate without tab switching
         navigate("/marketplace/create?type=jobs")
-      }
+      },
     },
-    { 
-      title: "Browse Available Artists", 
-      icon: Users, 
-      tabType: "availability", 
+    {
+      title: "Browse Available Artists",
+      icon: Users,
+      tabType: "availability",
       href: "/marketplace",
-      action: () => handleTabSwitch("availability", "/marketplace")
+      action: () => handleTabSwitch("availability", "/marketplace"),
     },
   ]
-  
+
   const findWorksItems = [
-    { 
-      title: "Post your services", 
-      icon: Briefcase, 
-      tabType: "availability", 
+    {
+      title: "Post your services",
+      icon: Briefcase,
+      tabType: "availability",
       href: "/marketplace/create",
       action: () => {
         // For create pages, just navigate without tab switching
         navigate("/marketplace/create?type=availability")
-      }
+      },
     },
-    { 
-      title: "Browse Available Works", 
-      icon: Search, 
-      tabType: "jobs", 
+    {
+      title: "Browse Available Works",
+      icon: Search,
+      tabType: "jobs",
       href: "/marketplace",
-      action: () => handleTabSwitch("jobs", "/marketplace")
+      action: () => handleTabSwitch("jobs", "/marketplace"),
     },
   ]
 
@@ -165,13 +169,11 @@ export default function AuthNavbar() {
         onMouseLeave={() => hasDropdown && setOpen(false)}
       >
         {/* Parent label */}
-        <button
-          type="button"
-          onClick={onParentClick}
-          className="cursor-pointer transition-all duration-300 px-4 py-2"
-        >
+        <button type="button" onClick={onParentClick} className="cursor-pointer transition-all duration-300 px-4 py-2">
           <div className="flex items-center space-x-1">
-            <span className={`font-medium text-base transition-colors duration-300 ${isActive ? "text-[#A95BAB]" : "text-white hover:text-[#A95BAB]"}`}>
+            <span
+              className={`font-medium text-base transition-colors duration-300 ${isActive ? "text-[#A95BAB]" : "text-white hover:text-[#A95BAB]"}`}
+            >
               {text}
             </span>
             {hasDropdown && (
@@ -191,7 +193,7 @@ export default function AuthNavbar() {
                   key={idx}
                   type="button"
                   onClick={() => {
-                    console.log('Navbar: Menu item clicked:', item.title)
+                    console.log("Navbar: Menu item clicked:", item.title)
                     // Use the custom action for each item
                     item.action()
                     setOpen(false)
@@ -200,9 +202,7 @@ export default function AuthNavbar() {
                 >
                   <div className="flex items-center space-x-3">
                     <item.icon className="w-5 h-5 text-white" />
-                    <span className="text-white font-medium whitespace-nowrap">
-                      {item.title}
-                    </span>
+                    <span className="text-white font-medium whitespace-nowrap">{item.title}</span>
                   </div>
                   <ChevronRight className="w-4 h-4 text-gray-400" />
                 </button>
@@ -284,7 +284,7 @@ export default function AuthNavbar() {
                 <div className="w-8 h-8 bg-[#A95BAB] rounded-full flex items-center justify-center">
                   {user?.avatarURL ? (
                     <img
-                      src={user.avatarURL}
+                      src={user.avatarURL || "/placeholder.svg"}
                       alt={user.firstName}
                       className="w-8 h-8 rounded-full object-cover"
                     />
@@ -301,7 +301,7 @@ export default function AuthNavbar() {
                       <div className="w-10 h-10 bg-[#A95BAB] rounded-full flex items-center justify-center">
                         {user?.avatarURL ? (
                           <img
-                            src={user.avatarURL}
+                            src={user.avatarURL || "/placeholder.svg"}
                             alt={user.firstName}
                             className="w-10 h-10 rounded-full object-cover"
                           />
