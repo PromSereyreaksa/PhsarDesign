@@ -135,7 +135,7 @@ export default function PopularServicesSection({ customImages }) {
               className="relative rounded-xl overflow-hidden group cursor-pointer transform hover:scale-105 transition-all duration-300"
               onClick={() => {
                 // Navigate to marketplace with category filter
-                navigate(`/marketplace?category=${encodeURIComponent(category.name)}&section=services`)
+                navigate(`/marketplace?category=${encodeURIComponent(category.name)}&section=services&type=services`)
               }}
             >
               {hasCustomImage ? (
@@ -211,8 +211,8 @@ export default function PopularServicesSection({ customImages }) {
         <div className="flex items-center justify-between mb-16">
           <SectionHeader title="Popular Services" />
           <button
-            onClick={() => navigate('/marketplace?section=services')}
-            className="text-[#A95BAB] hover:text-[#A95BAB]/80 font-medium text-sm transition-colors"
+            onClick={() => navigate('/marketplace?section=services&type=services')}
+            className="text-[#A95BAB] hover:text-[#A95BAB]/80 font-medium text-sm transition-colors cursor-pointer"
           >
             See All →
           </button>

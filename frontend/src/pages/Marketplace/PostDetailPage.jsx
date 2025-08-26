@@ -1,66 +1,164 @@
-"use client"
-
-import { ArrowLeft, Clock, MapPin, Star, Tag, User } from "lucide-react";
-import { useMemo } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import AuthNavbar from "../../components/layout/AuthNavbar";
-import SimplePostCard from "../../components/marketplace/SimplePostCard";
-import { useAppDispatch, useAppSelector } from "../../hook/useRedux";
-import {
-  selectActiveTab,
-  selectAvailabilityPosts,
-  selectJobPosts
-} from "../../store/slices/postsSlice";
-
-// Make sure to import your API functions if needed
-
-// Helper function to extract image URLs
-const getImageUrls = (attachments) => {
-  if (!attachments || !Array.isArray(attachments)) return [];
-  return attachments.map(att => att.url);
-};
-
-// Helper to format price
-const formatPrice = (value) => `$${parseFloat(value).toFixed(2)}`;
+import { ArrowLeft, Clock, MapPin, Star, Tag, User } from "lucide-react"
+import { useEffect, useState } from "react"
+import { useNavigate, useParams } from "react-router-dom"
+import AuthNavbar from "../../components/layout/AuthNavbar"
+import SimplePostCard from "../../components/marketplace/SimplePostCard"
+import Loader from "../../components/ui/Loader"
+import { MultiStepApplicationModal } from "../../components/ui/MultiStepApplicationModal"
+import { showToast } from "../../components/ui/toast"
+import { useAppDispatch, useAppSelector } from "../../hook/useRedux"
+import { clearCurrentPost, fetchPostById, fetchPostBySlug, fetchPosts } from "../../store/slices/marketplaceSlice"
 
 const PostDetailPage = () => {
+  const { slug } = useParams()
+  const navigate = useNavigate()
+  const dispatch = useAppDispatch()
+  const { currentPost, posts, loading, error } = useAppSelector((state) => state.marketplace)
+  const { user, isAuthenticated } = useAppSelector((state) => state.auth)
+  const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false)
 
-  const { slug } = useParams();
-  const navigate = useNavigate();
-  const dispatch = useAppDispatch();
-
-  // Use the same selectors as MarketplacePage
-  const activeTab = useAppSelector(selectActiveTab);
-  const availabilityPosts = useAppSelector(selectAvailabilityPosts);
-  const jobPosts = useAppSelector(selectJobPosts);
-
-  // Use postsToDisplay logic from MarketplacePage
-  const postsToDisplay = useMemo(() => {
-    return activeTab === "availability" ? availabilityPosts : jobPosts;
-  }, [activeTab, availabilityPosts, jobPosts]);
-
-  // Find the post by slug
-  const currentPost = useMemo(() => {
-    return postsToDisplay.find(p => p.slug === slug) || null;
-  }, [slug, postsToDisplay]);
-
-  // Related posts: filter by same artist/client, exclude current
-  const relatedPosts = useMemo(() => {
-    if (!currentPost) return [];
-    if (activeTab === "availability" && currentPost.artist?.artistId) {
-      return postsToDisplay.filter(
-        p => p.artist?.artistId === currentPost.artist.artistId && p.slug !== slug
-      );
+  useEffect(() => {
+    if (slug) {
+      console.log('PostDetailPage - Processing slug:', slug);
+      
+      // Check if slug contains postId (format: title-slug-postId) or is just a slug
+      const parts = slug.split('-');
+      const lastPart = parts[parts.length - 1];
+      
+      console.log('PostDetailPage - Slug parts:', parts);
+      console.log('PostDetailPage - Last part:', lastPart);
+      
+      if (lastPart && !isNaN(lastPart) && lastPart.length > 0) {
+        // Extract postId from slug format: title-slug-postId
+        const postId = parseInt(lastPart);
+        console.log('PostDetailPage - Using ID-based fetch with postId:', postId);
+        dispatch(fetchPostById({ postId, postType: "auto" }));
+      } else {
+        // Use slug directly for slug-based lookup
+        console.log('PostDetailPage - Using slug-based fetch with slug:', slug);
+        dispatch(fetchPostBySlug(slug));
+      }
     }
-    if (activeTab === "jobs" && currentPost.clientId) {
-      return postsToDisplay.filter(
-        p => p.clientId === currentPost.clientId && p.slug !== slug
-      );
-    }
-    return [];
-  }, [currentPost, postsToDisplay, activeTab, slug]);
 
-  const handleBack = () => navigate("/marketplace");
+    return () => {
+      dispatch(clearCurrentPost())
+    }
+  }, [dispatch, slug])
+
+  // Fetch posts by the same artist when currentPost is loaded
+  useEffect(() => {
+    if (currentPost?.artist?.artistId) {
+      // Fetch other posts by the same artist
+      dispatch(fetchPosts({ artistId: currentPost.artist.artistId }))
+    }
+  }, [dispatch, currentPost?.artist?.artistId])
+
+  const handleBack = () => {
+    navigate("/marketplace")
+  }
+
+  const formatPrice = (budget) => {
+    if (budget) {
+      return `$${budget}`
+    }
+    return "Price negotiable"
+  }
+
+  const handleContactArtist = () => {
+    if (!isAuthenticated) {
+      // Redirect to login page with return URL
+      navigate('/login?return=' + encodeURIComponent(window.location.pathname))
+      return
+    }
+    
+    // Check if user is trying to contact themselves
+    if (user?.userId === currentPost?.artist?.userId) {
+      showToast("You cannot contact yourself!", 'error')
+      return
+    }
+    
+    setIsApplicationModalOpen(true)
+  }
+
+  const handleContactArtistPage = () => {
+    if (!isAuthenticated) {
+      // Redirect to login page with return URL  
+      navigate('/login?return=' + encodeURIComponent(window.location.pathname + '/contact'))
+      return
+    }
+    
+    // Check if user is trying to contact themselves
+    if (user?.userId === currentPost?.artist?.userId) {
+      showToast("You cannot contact yourself!", 'error')
+      return
+    }
+    
+    navigate(`/marketplace/${slug}/contact`)
+  }
+
+  // Get all image URLs from attachments
+  const getImageUrls = (attachments) => {
+    if (!attachments || !Array.isArray(attachments)) return []
+    
+    return attachments.map(attachment => {
+      if (typeof attachment === 'string') {
+        return attachment
+      } else if (attachment && typeof attachment === 'object') {
+        return attachment.url || attachment.src || attachment.path || attachment.link
+      }
+      return null
+    }).filter(Boolean)
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000]">
+        <AuthNavbar />
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-white">
+          <Loader />
+          <p className="text-lg text-gray-300 mt-4">Loading post details...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Debug: show what we have
+  console.log("Debug - loading:", loading, "error:", error, "currentPost:", currentPost);
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000]">
+        <AuthNavbar />
+        <div className="pt-28 px-6">
+          <div className="max-w-4xl mx-auto">
+            <button
+              onClick={handleBack}
+              className="inline-flex items-center space-x-2 mb-8 px-4 py-2 bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl text-gray-300 hover:text-white hover:border-gray-600/60 transition-all"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Marketplace</span>
+            </button>
+
+            <div className="text-center py-16">
+              <div className="text-6xl mb-4">⚠️</div>
+              <h2 className="text-3xl font-bold text-white mb-4">Error Loading Post</h2>
+              <p className="text-lg text-gray-300 mb-4">Error: {error}</p>
+              <div className="text-sm text-gray-400 mb-8">
+                <p>Slug: {slug}</p>
+                <p>URL: {window.location.href}</p>
+              </div>
+              <button
+                onClick={() => navigate('/marketplace')}
+                className="px-8 py-3 bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-lg transition-all duration-300 transform hover:scale-105 font-semibold text-white"
+              >
+                Browse Marketplace
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   if (!currentPost) {
     return (
@@ -87,14 +185,15 @@ const PostDetailPage = () => {
     );
   }
 
-  // ...existing code...
-
-
-
-
   const imageUrls = getImageUrls(currentPost?.attachments);
   const artistName = currentPost?.artist?.user ? `${currentPost.artist.user.firstName} ${currentPost.artist.user.lastName}` : "Artist";
   const avatarUrl = currentPost?.artist?.avatar || null;
+
+  // Related posts: filter by same artist, exclude current
+  const relatedPosts = posts?.filter(post => 
+    post.artist?.artistId === currentPost?.artist?.artistId && 
+    post.slug !== slug
+  ) || [];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000]">
@@ -103,7 +202,7 @@ const PostDetailPage = () => {
       <div className="pt-28 max-w-7xl mx-auto px-6 pb-12">
         <button
           onClick={handleBack}
-          className="inline-flex items-center space-x-2 mb-8 px-4 py-2 bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl text-gray-300 hover:text-white hover:border-gray-600/60 transition-all"
+          className="inline-flex items-center space-x-2 mb-8 px-4 py-2 bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl text-gray-300 hover:text-white hover:border-gray-600/60 transition-all cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to Marketplace</span>
@@ -185,13 +284,46 @@ const PostDetailPage = () => {
               </div>
             )}
 
+            {/* Action Buttons */}
+            <div className="space-y-3">
+              {/* Determine if this is a job post or artist service based on post data */}
+              {currentPost.postType === "job" || currentPost.jobId || currentPost.client ? (
+                // This is a job post - show Apply button for artists
+                <button 
+                  onClick={() => {
+                    if (!isAuthenticated) {
+                      showToast("Please login to apply for this job", 'error')
+                      return
+                    }
+                    setIsApplicationModalOpen(true)
+                  }}
+                  className="w-full py-4 bg-gradient-to-r from-[#A95BAB] to-[#A95BAB]/80 rounded-xl text-white font-semibold text-lg transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg hover:shadow-[#A95BAB]/20 cursor-pointer"
+                >
+                  {!isAuthenticated ? 'Login to Apply for Job' : 'Apply for Job'}
+                </button>
+              ) : (
+                // This is an artist service - show Contact button for clients
+                <button 
+                  onClick={() => {
+                    if (!isAuthenticated) {
+                      showToast("Please login to contact this artist", 'error')
+                      return
+                    }
+                    setIsApplicationModalOpen(true)
+                  }}
+                  className="w-full py-4 bg-gradient-to-r from-[#A95BAB] to-[#A95BAB]/80 rounded-xl text-white font-semibold text-lg transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg hover:shadow-[#A95BAB]/20 cursor-pointer"
+                >
+                  {!isAuthenticated ? 'Login to Contact Artist' : 'Contact Artist'}
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Related Posts */}
         {relatedPosts.length > 0 && (
           <div className="mt-16">
-            <h2 className="text-2xl font-bold text-white mb-8">More from this {activeTab === "availability" ? "Artist" : "Client"}</h2>
+            <h2 className="text-2xl font-bold text-white mb-8">More from this Artist</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {relatedPosts.slice(0, 3).map((post) => (
                 <SimplePostCard key={post.id || post.jobId} post={post} />
@@ -200,6 +332,25 @@ const PostDetailPage = () => {
           </div>
         )}
       </div>
+
+      {/* Application Modal */}
+      <MultiStepApplicationModal
+        isOpen={isApplicationModalOpen}
+        onClose={() => setIsApplicationModalOpen(false)}
+        post={currentPost}
+        applicationType={
+          currentPost?.postType === "job" || currentPost?.jobId || currentPost?.client 
+            ? "artist_to_job" 
+            : "client_to_service"
+        }
+        onSuccess={() => {
+          setIsApplicationModalOpen(false)
+          const message = currentPost?.postType === "job" || currentPost?.jobId || currentPost?.client
+            ? "Your job application has been submitted successfully!"
+            : "Your service request has been sent to the artist successfully!"
+          showToast(message, 'success')
+        }}
+      />
     </div>
   );
 };

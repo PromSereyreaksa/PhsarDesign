@@ -5,7 +5,7 @@ import { X, Star } from "lucide-react"
 import { Button } from "./button"
 import { Textarea } from "./textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "./card"
-import { reviewsAPI } from "../../services/api"
+import { reviewsAPI } from "../../lib/api"
 
 export function ReviewModal({ 
   isOpen, 

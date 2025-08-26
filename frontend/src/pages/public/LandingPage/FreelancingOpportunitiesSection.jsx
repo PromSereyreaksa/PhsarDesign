@@ -135,7 +135,7 @@ export default function FreelancingOpportunitiesSection({ customImages, titleRef
               className="relative rounded-xl overflow-hidden group cursor-pointer"
               onClick={() => {
                 // Navigate to marketplace with category filter for jobs
-                navigate(`/marketplace?category=${encodeURIComponent(artwork.name)}&section=jobs`)
+                navigate(`/marketplace?category=${encodeURIComponent(artwork.name)}&section=jobs&type=jobs`)
               }}
             >
               {hasCustomImage ? (
@@ -211,8 +211,8 @@ export default function FreelancingOpportunitiesSection({ customImages, titleRef
         <div className="flex items-center justify-between mb-16">
           <SectionHeader title="Freelancing Opportunities" titleRef={titleRef} />
           <button
-            onClick={() => navigate('/marketplace?section=jobs')}
-            className="text-[#A95BAB] hover:text-[#A95BAB]/80 font-medium text-sm transition-colors"
+            onClick={() => navigate('/marketplace?section=jobs&type=jobs')}
+            className="text-[#A95BAB] hover:text-[#A95BAB]/80 font-medium text-sm transition-colors cursor-pointer"
           >
             See All →
           </button>
