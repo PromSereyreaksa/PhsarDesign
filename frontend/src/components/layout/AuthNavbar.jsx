@@ -220,9 +220,14 @@ export default function AuthNavbar() {
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
           <div className="flex items-center">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-[#A95BAB] bg-clip-text text-transparent">
-              PhsarDesign
-            </h1>
+            <button
+              onClick={() => navigate("/home")}
+              className="cursor-pointer"
+            >
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-[#A95BAB] bg-clip-text text-transparent">
+                PhsarDesign
+              </h1>
+            </button>
           </div>
 
           {/* Center nav */}

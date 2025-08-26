@@ -6,7 +6,7 @@ export default function ExploreSection({ isExpanded, onToggle }) {
   const [isHovered, setIsHovered] = useState(false)
 
   return (
-    <section className="py-8 mb-25 mt-10">
+    <section className="py-4 mb-8 mt-4">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-center">
         <button
