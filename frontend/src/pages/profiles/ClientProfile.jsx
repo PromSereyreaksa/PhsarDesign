@@ -10,23 +10,33 @@ import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar"
 import { Button } from "../../components/ui/button"
 import { Card, CardContent } from "../../components/ui/card"
 import { clientsAPI } from "../../lib/api"
+import { useAppDispatch, useAppSelector } from "../../hook/useRedux"
+// Import the marketplace action instead of creating a new one
+import { fetchMyJobPosts } from "../../store/slices/postsSlice"
 
 export default function ClientProfile() {
   const { userId } = useParams()
   const navigate = useNavigate()
+  const dispatch = useAppDispatch()
   const { user } = useSelector((state) => state.auth)
+  const {
+    myJobPosts: jobPosts,
+    myJobPostsLoading: postsLoading,
+    myJobPostsError: postsError,
+  } = useAppSelector((state) => state.posts)
   const [isOwner, setIsOwner] = useState(false)
-  const [clientData, setClientData] = useState(null) // Changed to null for clarity
+  const [clientData, setClientData] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [networkError, setNetworkError] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
   const [isPhonePublic, setIsPhonePublic] = useState(true)
+  const [debugInfo, setDebugInfo] = useState({})
   const hasFetchedRef = useRef(null)
 
   useEffect(() => {
     // Prevent double execution for the same userId
     if (hasFetchedRef.current === userId) {
-      console.log('🚫 Skipping fetch - already fetched for userId:', userId)
+      console.log("🚫 Skipping fetch - already fetched for userId:", userId)
       return
     }
 
@@ -35,12 +45,24 @@ export default function ClientProfile() {
         hasFetchedRef.current = userId
         setIsOwner(true)
         setIsLoading(true)
+        setDebugInfo({ stage: "starting", timestamp: new Date().toISOString() })
 
         try {
           console.log("[v0] Fetching fresh client data from API for userId:", user.userId)
+          console.log("[v0] User object:", {
+            userId: user.userId,
+            role: user.role,
+            token: user.token ? "present" : "missing",
+            permissions: user.permissions || "none",
+          })
+
+          setDebugInfo((prev) => ({ ...prev, userInfo: user, stage: "fetching_client" }))
+
           const clientResponse = await clientsAPI.getByUserId(user.userId)
           const freshClientData = clientResponse.data
           console.log("[v0] Fresh client data received:", freshClientData)
+
+          setDebugInfo((prev) => ({ ...prev, clientDataSuccess: true, stage: "processing_avatar" }))
 
           // Process avatar
           const avatarFromBackend =
@@ -65,11 +87,13 @@ export default function ClientProfile() {
 
           const clientDataToSet = {
             id: freshClientData.userId || "",
+            clientId: freshClientData.clientId || freshClientData.userId || "",
             firstName: freshClientData.user?.firstName || "",
             lastName: freshClientData.user?.lastName || "",
-            username: freshClientData.user?.firstName && freshClientData.user?.lastName
-              ? `@${freshClientData.user.firstName.toLowerCase()}${freshClientData.user.lastName.toLowerCase()}`
-              : "@user",
+            username:
+              freshClientData.user?.firstName && freshClientData.user?.lastName
+                ? `@${freshClientData.user.firstName.toLowerCase()}${freshClientData.user.lastName.toLowerCase()}`
+                : "@user",
             avatar: processedAvatarUrl,
             bio: freshClientData.user?.bio || "",
             industry: freshClientData.industry || "",
@@ -81,23 +105,48 @@ export default function ClientProfile() {
             organizationName: freshClientData.organizationName || "",
             rating: freshClientData.rating || 0,
             totalReviews: freshClientData.reviews?.length || 0,
-            totalProjects: freshClientData.jobPosts?.length || 0,
-            projectsPosted: freshClientData.jobPosts || [],
+            totalProjects: 0, // Will be updated from jobPosts
+            projectsPosted: [], // Will be populated from jobPosts
             reviews: freshClientData.reviews || [],
             coverImage: freshClientData.user?.coverUrl || "/placeholder.svg",
           }
 
           console.log("[v0] Final client data:", clientDataToSet)
           setClientData(clientDataToSet)
+
+          // Update client data with job posts count from Redux
+          setClientData((prev) => ({
+            ...prev,
+            totalProjects: jobPosts?.length || 0,
+            projectsPosted: jobPosts || [],
+          }))
+
+          setDebugInfo((prev) => ({ ...prev, stage: "completed", success: true }))
         } catch (error) {
           console.error("[v0] Error fetching fresh client data:", error)
+          setDebugInfo((prev) => ({
+            ...prev,
+            clientError: {
+              message: error.message,
+              status: error.response?.status,
+              statusText: error.response?.statusText,
+              data: error.response?.data,
+              code: error.code,
+            },
+            stage: "error_handling",
+          }))
+
           if (error.code === "ERR_NETWORK" || error.message === "Network Error") {
             setNetworkError(true)
             setErrorMessage(
-              "Unable to connect to server. Please check if the backend is running and CORS is configured properly."
+              "Unable to connect to server. Please check if the backend is running and CORS is configured properly.",
             )
+          } else if (error.response?.status === 403) {
+            setErrorMessage("Access denied. Please check your permissions or login again.")
+          } else if (error.response?.status === 500) {
+            setErrorMessage("Server error occurred. Please try again later or contact support.")
           } else {
-            setErrorMessage("Failed to fetch client data. Using cached information.")
+            setErrorMessage(`Failed to fetch client data: ${error.message}`)
           }
 
           // Fallback to existing user data
@@ -112,11 +161,13 @@ export default function ClientProfile() {
 
           const fallbackClientData = {
             id: user.userId || "",
+            clientId: user.clientId || user.userId || "",
             firstName: user.firstName || "",
             lastName: user.lastName || "",
-            username: user.firstName && user.lastName
-              ? `@${user.firstName.toLowerCase()}${user.lastName.toLowerCase()}`
-              : "@user",
+            username:
+              user.firstName && user.lastName
+                ? `@${user.firstName.toLowerCase()}${user.lastName.toLowerCase()}`
+                : "@user",
             avatar: fallbackAvatarUrl,
             bio: user.about || user.bio || "",
             industry: user.industry || "",
@@ -127,13 +178,14 @@ export default function ClientProfile() {
             joinDate: user.createdAt || "Recently",
             rating: user.rating || 0,
             totalReviews: user.reviews?.length || 0,
-            totalProjects: user.jobPosts?.length || 0,
-            projectsPosted: user.jobPosts || [],
+            totalProjects: jobPosts?.length || 0,
+            projectsPosted: jobPosts || [],
             reviews: user.reviews || [],
             coverImage: user.coverUrl || "/placeholder.svg",
           }
 
           setClientData(fallbackClientData)
+          setDebugInfo((prev) => ({ ...prev, fallbackUsed: true }))
         } finally {
           setIsLoading(false)
         }
@@ -145,7 +197,27 @@ export default function ClientProfile() {
     }
 
     fetchClientData()
-  }, [userId, user]) // Added user to dependency array
+
+    if (user && user.userId) {
+      console.log("[v0] Dispatching fetchMyJobPosts for client profile")
+      dispatch(fetchMyJobPosts())
+    }
+  }, [userId, user, dispatch])
+
+  // Update client data when job posts are loaded from Redux
+  useEffect(() => {
+    if (clientData && jobPosts && Array.isArray(jobPosts)) {
+      // Only update if the count has actually changed
+      if (clientData.totalProjects !== jobPosts.length) {
+        setClientData((prev) => ({
+          ...prev,
+          totalProjects: jobPosts.length,
+          projectsPosted: jobPosts,
+        }))
+        console.log("[v0] Updated client data with job posts:", jobPosts.length, "posts")
+      }
+    }
+  }, [jobPosts])
 
   const handleEditProfile = () => {
     console.log("[v0] Edit Profile button clicked - navigating to /profile/edit")
@@ -157,13 +229,14 @@ export default function ClientProfile() {
   }
 
   const getStatusColor = (isActive) => {
-    return (isActive) ? "text-green-400 bg-green-400/20" : "text-gray-400 bg-gray-400/20"
+    return isActive ? "text-green-400 bg-green-400/20" : "text-gray-400 bg-gray-400/20"
   }
 
   const handleRetry = () => {
     setNetworkError(false)
     setErrorMessage("")
     setIsLoading(true)
+    setDebugInfo({})
     hasFetchedRef.current = null // Reset to allow refetch
   }
 
@@ -176,7 +249,10 @@ export default function ClientProfile() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000] flex items-center justify-center">
-        <p className="text-white text-lg">Loading...</p>
+        <div className="text-center">
+          <p className="text-white text-lg mb-4">Loading...</p>
+          {debugInfo.stage && <p className="text-gray-400 text-sm">Stage: {debugInfo.stage}</p>}
+        </div>
       </div>
     )
   }
@@ -188,6 +264,13 @@ export default function ClientProfile() {
         <AuthNavbar />
         <div className="max-w-7xl mx-auto px-6 py-10 text-white text-center">
           <p>No client data available.</p>
+          {/* Debug info for development */}
+          {process.env.NODE_ENV === "development" && (
+            <details className="mt-4 text-left text-xs">
+              <summary className="cursor-pointer text-gray-400">Debug Info</summary>
+              <pre className="bg-gray-800 p-4 mt-2 rounded overflow-auto">{JSON.stringify(debugInfo, null, 2)}</pre>
+            </details>
+          )}
         </div>
         <AuthFooter />
       </div>
@@ -198,7 +281,7 @@ export default function ClientProfile() {
     <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000] relative">
       <AuthNavbar />
 
-      {networkError && (
+      {(networkError || errorMessage) && (
         <div className="bg-red-500/20 border-b border-red-500/30 px-6 py-4">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3 text-red-200">
@@ -213,6 +296,16 @@ export default function ClientProfile() {
               <RefreshCw className="w-4 h-4 mr-2" />
               Try Again
             </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Posts error handling */}
+      {postsError && (
+        <div className="bg-yellow-500/20 border-b border-yellow-500/30 px-6 py-4">
+          <div className="max-w-7xl mx-auto flex items-center gap-3 text-yellow-200">
+            <AlertCircle className="w-5 h-5" />
+            <span className="text-sm">Job posts could not be loaded: {postsError || "Unknown error"}</span>
           </div>
         </div>
       )}
@@ -271,9 +364,7 @@ export default function ClientProfile() {
                             <span className="text-xl font-semibold text-yellow-400">{clientData?.rating || 0}</span>
                           </div>
                           <div className="text-gray-300">•</div>
-                          <div className="text-lg font-medium text-[#A95BAB]">
-                            {clientData?.totalProjects || 0} projects
-                          </div>
+                          <div className="text-lg font-medium text-[#A95BAB]">{jobPosts.length} job posts</div>
                         </div>
                       </div>
                       <p className="text-gray-300 mb-3">{clientData?.username || "@user"}</p>
@@ -321,6 +412,16 @@ export default function ClientProfile() {
         </div>
 
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 py-10">
+          {/* Debug info for development */}
+          {process.env.NODE_ENV === "development" && (
+            <details className="mb-6 text-white">
+              <summary className="cursor-pointer text-gray-400 text-sm mb-2">Debug Info</summary>
+              <div className="bg-gray-800 p-4 rounded text-xs overflow-auto max-h-40">
+                <pre>{JSON.stringify({ ...debugInfo, jobPostsCount: jobPosts.length }, null, 2)}</pre>
+              </div>
+            </details>
+          )}
+
           <div className="grid lg:grid-cols-3 gap-10">
             <div className="space-y-8">
               <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
@@ -441,22 +542,22 @@ export default function ClientProfile() {
             <div className="lg:col-span-2 space-y-10">
               <div>
                 <div className="flex items-center justify-between mb-8">
-                  <h2 className="text-2xl font-bold text-white">Posts</h2>
+                  <h2 className="text-2xl font-bold text-white">Job Posts</h2>
                   {isOwner && (
                     <Button
-                      onClick={() => navigate("/marketplace/create")}
+                      onClick={() => navigate("/marketplace/create?type=jobs")}
                       className="bg-[#A95BAB] hover:bg-[#A95BAB]/80"
                     >
-                      Create New Post
+                      Create New Job Post
                     </Button>
                   )}
                 </div>
 
-                {clientData?.totalProjects > 0 ? (
+                {jobPosts.length > 0 ? (
                   <div className="space-y-6">
-                    {clientData.projectsPosted.map((jobPost) => (
+                    {jobPosts.map((jobPost) => (
                       <Card
-                        key={jobPost.jobId}
+                        key={jobPost.jobId || jobPost.id || jobPost.postId}
                         className="bg-white/5 border-white/10 hover:bg-white/10 backdrop-blur-sm transition-all duration-300"
                       >
                         <CardContent className="p-8">
@@ -465,14 +566,14 @@ export default function ClientProfile() {
                               <div className="flex items-center gap-3 mb-3">
                                 <h3 className="text-xl font-semibold text-white">{jobPost.title || "Untitled"}</h3>
                                 <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(jobPost.isActive)}`}>
-                                  {jobPost.isActive ? "Active": ""}
+                                  {jobPost.isActive ? "Active" : "Inactive"}
                                 </span>
                               </div>
                               <p
                                 style={{
-                                  color: "#d1d5db", // text-gray-300
-                                  marginBottom: "1.5rem", // mb-6
-                                  lineHeight: "1.625", // leading-relaxed
+                                  color: "#d1d5db",
+                                  marginBottom: "1.5rem",
+                                  lineHeight: "1.625",
                                   overflow: "hidden",
                                   textOverflow: "ellipsis",
                                   display: "-webkit-box",
@@ -486,11 +587,13 @@ export default function ClientProfile() {
                               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-sm">
                                 <div>
                                   <span className="text-gray-400 block mb-1">Budget</span>
-                                  <div className="text-white font-medium">{jobPost.budget || "N/A"}</div>
+                                  <div className="text-white font-medium">${jobPost.budget || "N/A"}</div>
                                 </div>
                                 <div>
                                   <span className="text-gray-400 block mb-1">Deadline</span>
-                                  <div className="text-white font-medium">{new Date(jobPost.deadline).toLocaleDateString() || "N/A"}</div>
+                                  <div className="text-white font-medium">
+                                    {jobPost.deadline ? new Date(jobPost.deadline).toLocaleDateString() : "N/A"}
+                                  </div>
                                 </div>
                                 <div>
                                   <span className="text-gray-400 block mb-1">Applicants</span>
@@ -498,7 +601,9 @@ export default function ClientProfile() {
                                 </div>
                                 <div>
                                   <span className="text-gray-400 block mb-1">Category</span>
-                                  <div className="text-[#A95BAB] font-medium">{jobPost.category.name || "N/A"}</div>
+                                  <div className="text-[#A95BAB] font-medium">
+                                    {jobPost.category?.name || jobPost.categoryName || "N/A"}
+                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -506,7 +611,7 @@ export default function ClientProfile() {
                             {isOwner && (
                               <Button
                                 size="sm"
-                                onClick={() => handleEditPost(jobPost.jobId)}
+                                onClick={() => handleEditPost(jobPost.jobId || jobPost.id || jobPost.postId)}
                                 className="bg-white/10 hover:bg-white/20 border border-white/20 text-white ml-6"
                               >
                                 <Edit className="w-4 h-4" />
@@ -520,14 +625,33 @@ export default function ClientProfile() {
                 ) : (
                   <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
                     <CardContent className="p-10 text-center">
-                      <p className="text-gray-400 mb-4">No posts yet.</p>
-                      {isOwner && (
-                        <Button
-                          onClick={() => navigate("/marketplace/create")}
-                          className="bg-[#A95BAB] hover:bg-[#A95BAB]/80"
-                        >
-                          Create Your First Post
-                        </Button>
+                      {postsLoading ? (
+                        <p className="text-gray-400 mb-4">Loading job posts...</p>
+                      ) : postsError ? (
+                        <div>
+                          <p className="text-red-400 mb-4">Failed to load job posts</p>
+                          <p className="text-gray-400 text-sm mb-4">{postsError}</p>
+                          <Button
+                            onClick={() => dispatch(fetchMyJobPosts())}
+                            size="sm"
+                            className="bg-[#A95BAB] hover:bg-[#A95BAB]/80"
+                          >
+                            <RefreshCw className="w-4 h-4 mr-2" />
+                            Retry Loading Job Posts
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <p className="text-gray-400 mb-4">No job posts yet.</p>
+                          {isOwner && (
+                            <Button
+                              onClick={() => navigate("/marketplace/create?type=jobs")}
+                              className="bg-[#A95BAB] hover:bg-[#A95BAB]/80"
+                            >
+                              Create Your First Job Post
+                            </Button>
+                          )}
+                        </>
                       )}
                     </CardContent>
                   </Card>

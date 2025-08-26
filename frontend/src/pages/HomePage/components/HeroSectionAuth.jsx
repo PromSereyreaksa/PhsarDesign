@@ -126,7 +126,7 @@ export default function HeroSectionAuth({ backgroundImageUrl }) {
 
   const buildMobileLayout = () => {
     return (
-      <div className="flex flex-col space-y-6">
+      <div className="space-y-6">
         <div className="space-y-6">
           <h1 className="text-4xl md:text-5xl font-bold text-white leading-tight">
             Find Artists, See Work, Be Discovered
@@ -190,7 +190,7 @@ export default function HeroSectionAuth({ backgroundImageUrl }) {
             </div>
           </div>
         </div>
-        <div className="absolute right-0 bottom-5">
+        <div className="mt-8">
           <GradientTitle />
         </div>
       </div>
@@ -219,10 +219,11 @@ export default function HeroSectionAuth({ backgroundImageUrl }) {
             className="text-3xl md:text-4xl font-bold leading-tight"
             style={{
               background:
-                "linear-gradient(to bottom, rgba(34, 197, 94, 1) 0%, rgba(156, 163, 175, 0.6) 100%)",
+                "linear-gradient(135deg, #22c55e 0%, #9ca3af 100%)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
               backgroundClip: "text",
+              color: "transparent",
             }}
           >
             Dreams Take Shape.
@@ -246,10 +247,8 @@ export default function HeroSectionAuth({ backgroundImageUrl }) {
 
   return (
     <div className="w-full">
-      <WelcomeText />
-
       <div
-        className="w-full min-h-[400px] relative overflow-hidden"
+        className="w-full min-h-[520px] relative overflow-hidden"
         style={{
           backgroundImage: `
       linear-gradient(to right, #1c1c1c 0%, #1c1c1c 70%, rgba(192, 0, 199, 0.51) 100%),
@@ -260,7 +259,16 @@ export default function HeroSectionAuth({ backgroundImageUrl }) {
           backgroundRepeat: "no-repeat",
         }}
       >
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Welcome text now inside the hero background */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+          <h2 className="text-3xl md:text-4xl font-bold">
+            <span className="text-white">Welcome, </span>
+            <span className="text-[#A95BAB]">{getUserName()}!</span>
+          </h2>
+        </div>
+        
+        {/* Main hero content */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
           {getLayout()}
         </div>
       </div>

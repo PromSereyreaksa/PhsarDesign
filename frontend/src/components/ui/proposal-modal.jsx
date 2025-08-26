@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useSelector } from "react-redux"
-import { applicationsAPI, artistsAPI } from "../../services/api"
+import { applicationsAPI, artistsAPI } from "../../lib/api"
 import { Button } from "./button"
 import { Input } from "./input"
 import { Textarea } from "./textarea"

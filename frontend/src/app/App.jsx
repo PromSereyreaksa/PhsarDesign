@@ -8,6 +8,7 @@ import RegisterPage from "../pages/auth/RegisterPage"
 import ArtistDashboard from "../pages/Dashboard/ArtistDashboard.jsx"
 import MyPostsPage from "../pages/Dashboard/MyPostsPage"
 import HomePage from "../pages/HomePage/index.jsx"
+import ContactArtistPage from "../pages/Marketplace/ContactArtistPage"
 import CreatePostPage from "../pages/Marketplace/CreatePost"
 import EditPostPage from "../pages/Marketplace/EditPostPage"
 import MarketplacePage from "../pages/Marketplace/MarketplacePage"
@@ -34,6 +35,14 @@ function App() {
 
         <Route path="/marketplace" element={<MarketplacePage />} />
         <Route path="/marketplace/:slug" element={<PostDetailPage />} />
+        <Route 
+          path="/marketplace/:slug/contact" 
+          element={
+            <ProtectedRoute>
+              <ContactArtistPage />
+            </ProtectedRoute>
+          } 
+        />
 
         {/* Protected authenticated routes */}
         <Route
@@ -53,14 +62,8 @@ function App() {
             </ProtectedRoute>
           }
         />
-         <Route
-          path="/marketplace/create-job"
-          element={
-            <ProtectedRoute>
-              <CreatePostPage />
-            </ProtectedRoute>
-          }
-        />
+        {/* Route removed: /marketplace/create-job now redirects to /marketplace/create?type=jobs */}
+
         <Route
           path="/marketplace/edit/:postId"
           element={
@@ -70,7 +73,7 @@ function App() {
           }
         />
 
-         <Route
+        <Route
           path="/dashboard"
           element={
             <ProtectedRoute>
@@ -130,7 +133,7 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/verify-otp" element={<OTPVerificationPage />} />
         <Route path="/change-password" element={<ChangePasswordPage />} />
-        
+
         {/* Public Artist Profile Routes (GitHub-style) - Must be last due to catch-all nature */}
         <Route path="/:slug" element={<PublicArtistProfile />} />
       </Routes>

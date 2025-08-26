@@ -13,16 +13,17 @@ const CreatePostPage = () => {
   const dispatch = useAppDispatch()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const isJobPost = location.pathname === "/marketplace/create-job"
+  const urlParams = new URLSearchParams(location.search)
+  const isJobPost = location.pathname === "/marketplace/create-job" || urlParams.get("type") === "jobs"
 
   const handleSubmit = async (postData) => {
     console.log("=== POST DATA BEING SUBMITTED ===")
     console.log("postData type:", typeof postData)
-    
+
     // If it's FormData, log the entries
     if (postData instanceof FormData) {
       console.log("FormData entries:")
-      for (let [key, value] of postData.entries()) {
+      for (const [key, value] of postData.entries()) {
         console.log(key, value)
       }
     } else {
@@ -35,7 +36,7 @@ const CreatePostPage = () => {
       console.log("=== POST CREATION SUCCESS ===")
       console.log(result)
 
-      alert("Post created successfully!")
+      console.log("Uploaded successfully")
       navigate("/marketplace")
     } catch (error) {
       console.error("=== POST CREATION ERROR ===")
@@ -43,8 +44,8 @@ const CreatePostPage = () => {
       console.error("Error message:", error.message)
       console.error("Error stack:", error.stack)
 
-      // More detailed error message
       const errorMessage = error.message || error.error || "Unknown error occurred"
+      console.log("Create job failed:", errorMessage)
       alert(`Failed to create post: ${errorMessage}`)
     } finally {
       setIsSubmitting(false)
@@ -80,14 +81,10 @@ const CreatePostPage = () => {
             </p>
           </div>
         </div>
-        
+
         {/* Use the correct form component based on post type */}
         {isJobPost ? (
-          <CreateJobPostForm
-            onSubmit={handleSubmit}
-            onCancel={handleCancel}
-            isSubmitting={isSubmitting}
-          />
+          <CreateJobPostForm onSubmit={handleSubmit} onCancel={handleCancel} isSubmitting={isSubmitting} />
         ) : (
           <CreatePostForm
             onSubmit={handleSubmit}
