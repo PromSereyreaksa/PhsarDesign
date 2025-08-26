@@ -94,6 +94,9 @@ export const getTopRatedArtists = async () => {
     const artists = artistsResponse.data
     const reviews = reviewsResponse.data
     
+    console.log('🎨 Raw artists data:', artists);
+    console.log('⭐ Raw reviews data:', reviews);
+    
     // Add validation
     if (!Array.isArray(artists)) {
       console.error('❌ Artists data is not an array:', artists)
@@ -107,7 +110,16 @@ export const getTopRatedArtists = async () => {
     
     // Calculate ratings (same logic as before)
     const artistsWithRatings = artists.map(artist => {
-      const artistReviews = reviews.filter(review => review.artistId === artist.id)
+      // Try both possible ID fields for matching reviews
+      const artistId = artist.artistId || artist.id;
+      const artistReviews = reviews.filter(review => 
+        review.artistId === artistId || 
+        review.artistId === artist.id ||
+        review.artistId === artist.artistId
+      );
+      
+      console.log(`🎨 Artist ${artistId} has ${artistReviews.length} reviews`);
+      
       if (artistReviews.length === 0) {
         return {
           ...artist,
