@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import SearchBox from "../../../components/common/SearchBox";
 import SuggestionChip from "../../../components/common/SuggestionChip";
 
 export default function HeroSectionAuth({ backgroundImageUrl }) {
   const [searchController, setSearchController] = useState("");
+  const navigate = useNavigate();
 
   // Get user from Redux store
   const { user } = useSelector((state) => state.auth);
@@ -16,6 +18,60 @@ export default function HeroSectionAuth({ backgroundImageUrl }) {
     if (user?.firstName) return user.firstName;
     if (user?.email) return user.email.split("@")[0];
     return "User";
+  };
+
+  // Handle search functionality
+  const handleSearch = (searchTerm) => {
+    if (searchTerm.trim()) {
+      const params = new URLSearchParams();
+      
+      // Map search terms to category names (this should match your database categories)
+      const categoryMapping = {
+        "logo": "Logo Design",
+        "graphic design": "Graphic Design", 
+        "3D Render": "3D Design",
+        "3d render": "3D Design",
+        "illustration": "Digital Art",
+        "branding": "Branding",
+        "web design": "Web Design",
+        "ui design": "UI/UX Design",
+        "ux design": "UI/UX Design",
+        "character design": "Character Design"
+      };
+      
+      const searchLower = searchTerm.toLowerCase().trim();
+      const matchedCategory = categoryMapping[searchLower];
+      
+      if (matchedCategory) {
+        // If search term matches a category, search by category
+        console.log(`🏷️ Search term "${searchTerm}" mapped to category "${matchedCategory}"`);
+        params.set("category", matchedCategory);
+        params.set("type", "availability");
+        navigate(`/marketplace?${params.toString()}`);
+      } else {
+        // Otherwise, search by text
+        console.log(`🔍 Search term "${searchTerm}" will be used as text search`);
+        params.set("search", searchTerm.trim());
+        params.set("type", "availability");
+        navigate(`/marketplace?${params.toString()}`);
+      }
+    }
+  };
+
+  // Handle suggestion chip click
+  const handleSuggestionClick = (suggestion) => {
+    setSearchController(suggestion);
+    handleSearch(suggestion); // Immediately search when clicking a chip
+  };
+
+  // Handle search input change
+  const handleSearchChange = (value) => {
+    setSearchController(value);
+  };
+
+  // Handle enter key press in search
+  const handleSearchSubmit = () => {
+    handleSearch(searchController);
   };
 
   const buildSuggestionButtons = () => {
@@ -45,7 +101,7 @@ export default function HeroSectionAuth({ backgroundImageUrl }) {
             <SuggestionChip
               key={index}
               label={suggestion}
-              onTap={() => setSearchController(suggestion)}
+              onTap={() => handleSuggestionClick(suggestion)}
               fontSize={getFontSize()}
             />
           ))}
@@ -60,7 +116,7 @@ export default function HeroSectionAuth({ backgroundImageUrl }) {
           <SuggestionChip
             key={index}
             label={suggestion}
-            onTap={() => setSearchController(suggestion)}
+            onTap={() => handleSuggestionClick(suggestion)}
             fontSize={getFontSize()}
           />
         ))}
@@ -78,7 +134,8 @@ export default function HeroSectionAuth({ backgroundImageUrl }) {
           <div className="space-y-4">
             <SearchBox
               value={searchController}
-              onChange={setSearchController}
+              onChange={handleSearchChange}
+              onSubmit={handleSearchSubmit}
             />
             {buildSuggestionButtons()}
           </div>
@@ -100,7 +157,8 @@ export default function HeroSectionAuth({ backgroundImageUrl }) {
           <div className="space-y-4">
             <SearchBox
               value={searchController}
-              onChange={setSearchController}
+              onChange={handleSearchChange}
+              onSubmit={handleSearchSubmit}
             />
             {buildSuggestionButtons()}
           </div>
@@ -114,21 +172,26 @@ export default function HeroSectionAuth({ backgroundImageUrl }) {
 
   const buildDesktopLayout = () => {
     return (
-      <div className="space-y-6">
-        <div className="space-y-6">
-          <h1 className="text-5xl lg:text-6xl font-bold text-white leading-tight">
-            Find Artists, See Work, Be Discovered
-          </h1>
-          <div className="space-y-4">
-            <SearchBox
-              value={searchController}
-              onChange={setSearchController}
-            />
-            {buildSuggestionButtons()}
+      <div className="relative">
+        <div className="flex">
+          <div className="flex-1 max-w-2xl">
+            <div className="space-y-6">
+              <h1 className="text-5xl lg:text-6xl font-bold text-white leading-tight">
+                Find Artists, See Work, Be Discovered
+              </h1>
+              <div className="space-y-4">
+                <SearchBox
+                  value={searchController}
+                  onChange={handleSearchChange}
+                  onSubmit={handleSearchSubmit}
+                />
+                {buildSuggestionButtons()}
+              </div>
+            </div>
           </div>
-          <div className="mt-8">
-            <GradientTitle />
-          </div>
+        </div>
+        <div className="mt-8">
+          <GradientTitle />
         </div>
       </div>
     );

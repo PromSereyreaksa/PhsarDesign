@@ -508,7 +508,7 @@ console.log("My post:", myAvailabilityPosts);
                       >
                         <div className="relative">
                           <img
-                            src={post.image || "/placeholder.svg?height=200&width=400&query=portfolio work"}
+                            src={post.attachments[0].url || "/placeholder.svg?height=200&width=400&query=portfolio work"}
                             alt={post.title}
                             className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
                           />

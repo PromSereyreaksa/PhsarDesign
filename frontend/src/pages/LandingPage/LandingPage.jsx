@@ -3,9 +3,9 @@
 import { useRef } from "react"
 import FooterSection from "../../components/shared/AuthFooter"
 import AuthNavbar from "../../components/shared/AuthNavbar"
-import ArtistsSection from "../public/LandingPage/ArtistsSection"
-import FreelancingOpportunitiesSection from "../public/LandingPage/FreelancingOpportunitiesSection"
-import PopularServicesSection from "../public/LandingPage/PopularServicesSection"
+import ArtistsSection from "../HomePage/components/ArtistsSection"
+import FreelancingOpportunitiesSection from "../HomePage/components/FreelancingOpportunitiesSection"
+import PopularServicesSection from "../HomePage/components/PopularServicesSection"
 import ExploreSection from "./components/ExploreSection"
 import HeroSectionAuth from "./components/HeroSectionAuth"
 
