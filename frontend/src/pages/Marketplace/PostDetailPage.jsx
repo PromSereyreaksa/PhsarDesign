@@ -1,7 +1,7 @@
 "use client"
 
 import { ArrowLeft, Clock, MapPin, Star, Tag, User } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import AuthNavbar from "../../components/layout/AuthNavbar"
 import SimplePostCard from "../../components/marketplace/SimplePostCard"
@@ -55,11 +55,11 @@ const PostDetailPage = () => {
 
   const handleBack = () => navigate("/marketplace")
 
-  const formatPrice = (budget?: number | string) =>
+  const formatPrice = (budget) =>
     budget ? `$${budget}` : "Price negotiable"
 
   // 🔹 Extract all possible image URLs from attachments
-  const getImageUrls = (attachments: any[]) => {
+  const getImageUrls = (attachments) => {
     if (!attachments || !Array.isArray(attachments)) return []
     return attachments
       .map((att) =>
