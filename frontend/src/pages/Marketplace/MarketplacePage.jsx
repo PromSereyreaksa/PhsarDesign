@@ -77,7 +77,6 @@ const MarketplacePage = () => {
     const params = new URLSearchParams(location.search);
     const category = params.get("category");
     const section = params.get("section");
-
     const postType = params.get("type"); // 'availability' or 'jobs'
     const searchTerm = params.get("search"); // Extract search parameter
 
@@ -85,11 +84,6 @@ const MarketplacePage = () => {
     if (category) newFilters.category = category;
     if (section) newFilters.section = section;
     if (searchTerm) newFilters.search = searchTerm; // Set search filter
-
-    const postType = params.get("type"); // 'services' or 'jobs'
-
-    const newFilters = { ...filters };
-    if (category) newFilters.category = category;
 
     // Ensure consistency between section and type
     if (postType === 'jobs') {
@@ -366,6 +360,7 @@ const MarketplacePage = () => {
               <button
                 onClick={() => navigate("/marketplace/create?type=availability")}
                 className="inline-flex items-center px-4 py-2 bg-[#A95BAB] hover:bg-[#A95BAB]/80 text-white rounded-lg font-medium text-sm transition-all duration-300 transform hover:scale-105"
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 Create Service
               </button>
