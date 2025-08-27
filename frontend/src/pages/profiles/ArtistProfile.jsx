@@ -365,24 +365,24 @@ console.log("My post:", myAvailabilityPosts);
           <div className="grid lg:grid-cols-3 gap-8">
             <div className="space-y-6">
               <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-bold text-white mb-4">About</h3>
-                  <p className="text-gray-300 leading-relaxed mb-6">{artistData.bio}</p>
+                <CardContent className="p-6 space-y-6">
+                  <h3 className="text-xl font-bold text-white mb-6 pt-2">About</h3>
+                  <p className="text-gray-300 leading-relaxed text-sm break-words">{artistData.bio}</p>
 
-                  <div className="space-y-3 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Response Time</span>
-                      <span className="text-white">{artistData.responseTime}</span>
+                  <div className="space-y-4 pt-4 border-t border-white/10">
+                    <div className="flex justify-between items-center gap-4">
+                      <span className="text-gray-400 text-sm flex-shrink-0">Response Time</span>
+                      <span className="text-white text-sm font-medium text-right">{artistData.responseTime}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Availability</span>
-                      <span className={artistData.availability === "Available" ? "text-green-400" : "text-red-400"}>
+                    <div className="flex justify-between items-center gap-4">
+                      <span className="text-gray-400 text-sm flex-shrink-0">Availability</span>
+                      <span className={`text-sm font-medium text-right ${artistData.availability === "Available" ? "text-green-400" : "text-red-400"}`}>
                         {artistData.availability}
                       </span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Hourly Rate</span>
-                      <span className="text-white">{artistData.hourlyRate}</span>
+                    <div className="flex justify-between items-center gap-4">
+                      <span className="text-gray-400 text-sm flex-shrink-0">Hourly Rate</span>
+                      <span className="text-white text-sm font-medium text-right">{artistData.hourlyRate}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -390,7 +390,7 @@ console.log("My post:", myAvailabilityPosts);
 
               <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
                 <CardContent className="p-6">
-                  <h3 className="text-xl font-bold text-white mb-4">Skills & Expertise</h3>
+                  <h3 className="text-xl font-bold text-white mb-6 pt-2">Skills & Expertise</h3>
                   <div className="flex flex-wrap gap-2 mb-6">
                     {artistData.skills.map((skill, index) => (
                       <span
@@ -402,7 +402,7 @@ console.log("My post:", myAvailabilityPosts);
                     ))}
                   </div>
 
-                  <h3 className="text-xl font-bold text-white mb-4">Tools & Software</h3>
+                  <h3 className="text-xl font-bold text-white mb-6 pt-2">Tools & Software</h3>
                   <div className="flex flex-wrap gap-2">
                     {artistData.tools?.map((tool, index) => (
                       <span
@@ -420,14 +420,14 @@ console.log("My post:", myAvailabilityPosts);
               </Card>
 
               <div>
-                <h2 className="text-2xl font-bold text-white mb-6">Reviews ({artistData.totalReviews})</h2>
+                <h2 className="text-2xl font-bold text-white mb-6 px-2">Reviews ({artistData.totalReviews})</h2>
 
                 {artistData.reviews.length > 0 ? (
                   <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
                     {artistData.reviews.map((review) => (
                       <Card key={review.id} className="bg-white/5 border-white/10 backdrop-blur-sm">
-                        <CardContent className="p-6">
-                          <div className="flex items-start gap-4">
+                        <CardContent className="p-8">
+                          <div className="flex items-start gap-4 pt-2">
                             <Avatar className="w-10 h-10">
                               <AvatarImage src={review.clientAvatar || "/placeholder.svg"} alt={review.clientName} />
                               <AvatarFallback className="bg-[#A95BAB] text-white">
@@ -438,7 +438,7 @@ console.log("My post:", myAvailabilityPosts);
                               </AvatarFallback>
                             </Avatar>
                             <div className="flex-1">
-                              <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center justify-between mb-3">
                                 <div>
                                   <h4 className="font-semibold text-white">{review.clientName}</h4>
                                   <p className="text-sm text-gray-400">{review.project}</p>
@@ -497,7 +497,7 @@ console.log("My post:", myAvailabilityPosts);
                     {posts.map((post) => (
                       <Card
                         key={post.postId || post.id || post._id}
-                        className="bg-white/5 border-white/10 hover:bg-white/10 rounded-2xl overflow-hidden group cursor-pointer transform hover:scale-105 transition-all duration-500 ease-out"
+                        className="bg-white/5 border-white/10 hover:bg-white/10 rounded-2xl overflow-hidden group cursor-pointer transform hover:scale-[1.02] transition-all duration-300 ease-out"
                         onClick={() => {
                           const slug = post.title
                             .toLowerCase()
@@ -506,11 +506,11 @@ console.log("My post:", myAvailabilityPosts);
                           navigate(`/marketplace/${slug}`)
                         }}
                       >
-                        <div className="relative">
+                        <div className="relative overflow-hidden">
                           <img
-                            src={post.attachments[0].url || "/placeholder.svg?height=200&width=400&query=portfolio work"}
+                            src={post.attachments?.[0]?.url || "/placeholder.svg?height=200&width=400&query=portfolio work"}
                             alt={post.title}
-                            className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
+                            className="w-full h-48 object-cover transition-transform duration-300 ease-out"
                           />
                           {isOwner && (
                             <Button
@@ -524,26 +524,28 @@ console.log("My post:", myAvailabilityPosts);
                                 console.log('ArtistProfile edit button clicked - using postId:', postId)
                                 handleEditPost(postId)
                               }}
-                              className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 backdrop-blur-sm"
+                              className="absolute top-3 right-3 bg-black/70 hover:bg-black/80 backdrop-blur-sm border border-white/20 z-10"
                             >
                               <Edit className="w-4 h-4" />
                             </Button>
                           )}
                         </div>
-                        <CardContent className="p-4">
-                          <h3 className="font-semibold text-white mb-2">{post.title}</h3>
-                          <div className="flex items-center justify-between text-sm text-gray-400">
-                            <span className="px-2 py-1 bg-[#A95BAB]/20 rounded-full text-[#A95BAB]">
+                        <CardContent className="p-8 space-y-5">
+                          <h3 className="font-semibold text-white text-lg leading-tight line-clamp-2 min-h-[3.5rem] flex items-start pt-2">
+                            {post.title}
+                          </h3>
+                          <div className="flex items-center justify-between text-sm pt-3">
+                            <span className="px-3 py-1.5 bg-[#A95BAB]/20 rounded-full text-[#A95BAB] border border-[#A95BAB]/30 text-xs font-medium whitespace-nowrap">
                               {post.category}
                             </span>
-                            <div className="flex items-center gap-3">
-                              <div className="flex items-center gap-1">
-                                <Heart className="w-4 h-4" />
-                                {post.likes}
+                            <div className="flex items-center gap-4 text-gray-400 ml-3">
+                              <div className="flex items-center gap-1.5">
+                                <Heart className="w-4 h-4 flex-shrink-0" />
+                                <span className="text-sm">{post.likes || 0}</span>
                               </div>
-                              <div className="flex items-center gap-1">
-                                <Eye className="w-4 h-4" />
-                                {post.views}
+                              <div className="flex items-center gap-1.5">
+                                <Eye className="w-4 h-4 flex-shrink-0" />
+                                <span className="text-sm">{post.views || 0}</span>
                               </div>
                             </div>
                           </div>
