@@ -1,14 +1,30 @@
+import { FileText, Home, Plus, Search, Sparkles } from "lucide-react"
 import { Link, useLocation } from "react-router-dom"
-import { Search, Plus, FileText, Home, Sparkles } from "lucide-react"
+import { useAppSelector } from "../../hook/useRedux"
 
 const MarketplaceNav = () => {
   const location = useLocation()
+  const { user } = useAppSelector((state) => state.auth)
 
-  const navItems = [
-    { path: "/marketplace", label: "Browse Jobs", icon: Search },
-    { path: "/marketplace/create", label: "Post Job", icon: Plus },
-    { path: "/dashboard/my-posts", label: "My Posts", icon: FileText },
-  ]
+  // Define navigation items based on user role
+  const getNavItems = () => {
+    const baseItems = [
+      { path: "/marketplace", label: "Browse", icon: Search },
+      { path: "/dashboard/my-posts", label: "My Posts", icon: FileText },
+    ]
+
+    // Add role-specific create buttons
+    if (user?.role === 'client') {
+      baseItems.splice(1, 0, { path: "/marketplace/create?type=jobs", label: "Post Job", icon: Plus })
+    } else if (user?.role === 'artist' || user?.role === 'freelancer') {
+      baseItems.splice(1, 0, { path: "/marketplace/create?type=availability", label: "Create Service", icon: Plus })
+    }
+    // If not logged in or unknown role, don't show create button
+
+    return baseItems
+  }
+
+  const navItems = getNavItems()
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-[#202020]/98 backdrop-blur-sm shadow-lg">

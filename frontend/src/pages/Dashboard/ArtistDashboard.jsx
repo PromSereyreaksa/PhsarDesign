@@ -1,22 +1,22 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import {
+    Activity,
+    BarChart3,
+    Bookmark,
+    Briefcase,
+    Calendar,
+    DollarSign,
+    Eye,
+    Heart,
+    MessageCircle,
+    PieChart,
+    Share2,
+    TrendingUp,
+} from "lucide-react"
+import { useEffect, useState } from "react"
 import { useSelector } from "react-redux"
 import { useNavigate } from "react-router-dom"
-import {
-  TrendingUp,
-  Eye,
-  Heart,
-  MessageCircle,
-  Share2,
-  Bookmark,
-  DollarSign,
-  Briefcase,
-  Calendar,
-  BarChart3,
-  PieChart,
-  Activity,
-} from "lucide-react"
 import AuthNavbar from "../../components/layout/AuthNavbar"
 
 const ArtistDashboard = () => {
@@ -315,7 +315,7 @@ const ArtistDashboard = () => {
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold text-white">Your Marketplace Posts</h2>
                 <button
-                  onClick={() => navigate("/marketplace/create")}
+                  onClick={() => navigate("/marketplace/create?type=availability")}
                   className="px-6 py-3 bg-[#A95BAB] hover:bg-[#A95BAB]/80 text-white rounded-lg transition-all duration-300 transform hover:scale-105 font-semibold"
                 >
                   + Create New Post
@@ -398,7 +398,7 @@ const ArtistDashboard = () => {
                   <h3 className="text-2xl font-bold mb-2 text-white">No marketplace posts yet</h3>
                   <p className="text-gray-400 mb-6">Create your first post to start connecting with clients.</p>
                   <button
-                    onClick={() => navigate("/marketplace/create")}
+                    onClick={() => navigate("/marketplace/create?type=availability")}
                     className="px-8 py-3 bg-[#A95BAB] hover:bg-[#A95BAB]/80 text-white rounded-lg transition-all duration-300 transform hover:scale-105 font-semibold"
                   >
                     Create Your First Post

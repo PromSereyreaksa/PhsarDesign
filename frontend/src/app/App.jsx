@@ -8,6 +8,7 @@ import RegisterPage from "../pages/auth/RegisterPage"
 import ArtistDashboard from "../pages/Dashboard/ArtistDashboard.jsx"
 import MyPostsPage from "../pages/Dashboard/MyPostsPage"
 import HomePage from "../pages/HomePage/index.jsx"
+import CategoryPage from "../pages/Marketplace/CategoryPage"
 import ContactArtistPage from "../pages/Marketplace/ContactArtistPage"
 import CreatePostPage from "../pages/Marketplace/CreatePost"
 import EditPostPage from "../pages/Marketplace/EditPostPage"
@@ -34,6 +35,7 @@ function App() {
         <Route path="/about" element={<AboutPage />} />
 
         <Route path="/marketplace" element={<MarketplacePage />} />
+        <Route path="/marketplace/category/:categoryName" element={<CategoryPage />} />
         <Route path="/marketplace/:slug" element={<PostDetailPage />} />
         <Route 
           path="/marketplace/:slug/contact" 
