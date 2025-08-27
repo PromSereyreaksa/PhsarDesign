@@ -200,6 +200,9 @@ export default function ClientProfile() {
 
     if (user && user.userId) {
       console.log("[v0] Dispatching fetchMyJobPosts for client profile")
+      console.log("[v0] Current Redux state - myJobPosts:", jobPosts)
+      console.log("[v0] Current Redux state - loading:", postsLoading)
+      console.log("[v0] Current Redux state - error:", postsError)
       dispatch(fetchMyJobPosts())
     }
   }, [userId, user, dispatch])

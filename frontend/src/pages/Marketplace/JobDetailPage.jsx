@@ -15,10 +15,12 @@ import {
   fetchPosts,
 } from "../../store/slices/marketplaceSlice"
 
-const PostDetailPage = () => {
+const JobDetailPage = () => {
   const { slug } = useParams()
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
+
+  console.log('JobDetailPage component mounted with slug:', slug)
 
   const { currentPost, posts, loading, error } = useAppSelector(
     (state) => state.marketplace
@@ -29,7 +31,9 @@ const PostDetailPage = () => {
 
   // 🔹 Load post by slug
   useEffect(() => {
+    console.log('JobDetailPage useEffect - slug:', slug)
     if (slug) {
+      console.log('JobDetailPage dispatching fetchPostBySlug with:', slug)
       dispatch(fetchPostBySlug(slug))
     }
 
@@ -38,12 +42,12 @@ const PostDetailPage = () => {
     }
   }, [dispatch, slug])
 
-  // 🔹 Fetch other posts by same artist for related section
+  // 🔹 Fetch other posts by same client for related section
   useEffect(() => {
-    if (currentPost?.artist?.artistId) {
-      dispatch(fetchPosts({ section: "services", artistId: currentPost.artist.artistId }))
+    if (currentPost?.client?.clientId) {
+      dispatch(fetchPosts({ section: "jobs" }))
     }
-  }, [dispatch, currentPost?.artist?.artistId])
+  }, [dispatch, currentPost?.client?.clientId])
 
   const handleBack = () => navigate("/marketplace")
 
@@ -109,20 +113,20 @@ const PostDetailPage = () => {
     )
   }
 
-  const imageUrls = getImageUrls(currentPost.attachments)
-  const artistName = currentPost?.artist?.user
-    ? `${currentPost.artist.user.firstName} ${currentPost.artist.user.lastName}`
-    : "Artist"
-  const avatarUrl = currentPost?.artist?.user.avatarURL || null
-  console.log(avatarUrl)
-  // 🔹 Related posts
+  const imageUrls = getImageUrls(currentPost.attachment || currentPost.attachments)
+  const clientName = currentPost?.client?.user
+    ? `${currentPost.client.user.firstName} ${currentPost.client.user.lastName}`
+    : currentPost?.client?.organizationName || "Client"
+  const avatarUrl = currentPost?.client?.user?.avatarURL 
+
+  // 🔹 Related posts (other jobs from same client)
   const relatedPosts =
     posts?.filter(
       (post) =>
-        post.artist?.artistId === currentPost?.artist?.artistId &&
+        post.client?.clientId === currentPost?.client?.clientId &&
         post.slug !== slug
     ) || []
-
+  console.log(relatedPosts)
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000]">
       <AuthNavbar />
@@ -160,6 +164,11 @@ const PostDetailPage = () => {
             </h1>
             <div className="text-3xl font-bold text-[#A95BAB]">
               {formatPrice(currentPost.budget)}
+              {currentPost.budgetType && (
+                <span className="text-lg text-gray-400 ml-2">
+                  ({currentPost.budgetType})
+                </span>
+              )}
             </div>
 
             {currentPost.category && (
@@ -168,13 +177,31 @@ const PostDetailPage = () => {
               </span>
             )}
 
+            {/* Job specific info */}
+            <div className="flex flex-wrap gap-3">
+              {currentPost.experienceLevel && (
+                <span className="inline-block px-3 py-1 bg-blue-500/20 border border-blue-500/30 rounded-full text-sm text-blue-300">
+                  {currentPost.experienceLevel} Level
+                </span>
+              )}
+              {currentPost.applicationCount !== undefined && (
+                <span className="inline-block px-3 py-1 bg-green-500/20 border border-green-500/30 rounded-full text-sm text-green-300">
+                  {currentPost.applicationCount} Applications
+                </span>
+              )}
+            </div>
+
             <div className="flex items-center space-x-4 text-sm text-gray-400 my-4">
               <div className="flex items-center space-x-1">
                 <Clock className="w-4 h-4" />
-                <span>
-                  {new Date(currentPost.createdAt).toLocaleDateString()}
-                </span>
+                <span>Posted: {new Date(currentPost.createdAt).toLocaleDateString()}</span>
               </div>
+              {currentPost.deadline && (
+                <div className="flex items-center space-x-1 text-orange-400">
+                  <Clock className="w-4 h-4" />
+                  <span>Deadline: {new Date(currentPost.deadline).toLocaleDateString()}</span>
+                </div>
+              )}
               {currentPost.location && (
                 <div className="flex items-center space-x-1">
                   <MapPin className="w-4 h-4" />
@@ -183,13 +210,13 @@ const PostDetailPage = () => {
               )}
             </div>
 
-            {/* Artist Info */}
+            {/* Client Info */}
             <div className="bg-gray-900/60 backdrop-blur-xl border border-gray-700/40 rounded-2xl p-4 flex items-center space-x-3">
               <div className="w-12 h-12 rounded-full border-2 border-gray-700/40 overflow-hidden">
                 {avatarUrl ? (
                   <img
                     src={avatarUrl}
-                    alt={artistName}
+                    alt={clientName}
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -199,13 +226,13 @@ const PostDetailPage = () => {
                 )}
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-medium text-white">{artistName}</h3>
-                <p className="text-sm text-gray-400">Creative Professional</p>
-                {currentPost.artist?.rating && (
+                <h3 className="text-lg font-medium text-white">{clientName}</h3>
+                <p className="text-sm text-gray-400">Client</p>
+                {currentPost.client?.rating && (
                   <div className="flex items-center space-x-1 mt-1">
                     <Star className="w-3 h-3 text-yellow-400 fill-current" />
                     <span className="text-xs text-gray-300">
-                      {currentPost.artist.rating}
+                      {currentPost.client.rating}
                     </span>
                   </div>
                 )}
@@ -221,16 +248,16 @@ const PostDetailPage = () => {
             </div>
 
             {/* Skills */}
-            {currentPost.skills && (
+            {currentPost.skillRequired && (
               <div className="bg-gray-900/60 backdrop-blur-xl border border-gray-700/40 rounded-2xl p-4">
                 <h3 className="text-base font-medium text-white mb-3 flex items-center space-x-2">
                   <Tag className="w-4 h-4" />
                   <span>Skills Required</span>
                 </h3>
                 <div className="flex flex-wrap gap-2">
-                  {currentPost.skills.split(",").map((skill, index) => (
+                  {currentPost.skillRequired.split(",").map((skill, index) => (
                     <span
-                      key={index}
+                      key={`skill-${index}-${skill.trim()}`}
                       className="px-2 py-1 bg-gray-700/50 rounded-full text-xs text-gray-300 border border-gray-600/30"
                     >
                       {skill.trim()}
@@ -281,11 +308,14 @@ const PostDetailPage = () => {
         {relatedPosts.length > 0 && (
           <div className="mt-16">
             <h2 className="text-2xl font-bold text-white mb-8">
-              More from this Artist
+              More Jobs from this Client
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {relatedPosts.slice(0, 3).map((post) => (
-                <SimplePostCard key={post.id || post.jobId} post={post} />
+              {relatedPosts.slice(0, 3).map((post, index) => (
+                <SimplePostCard 
+                  key={post.jobId || post.id || post.postId || post._id || `job-${index}`} 
+                  post={post} 
+                />
               ))}
             </div>
           </div>
@@ -319,4 +349,4 @@ const PostDetailPage = () => {
   )
 }
 
-export default PostDetailPage
+export default JobDetailPage
