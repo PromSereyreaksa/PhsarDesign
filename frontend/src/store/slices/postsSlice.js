@@ -14,14 +14,25 @@ const normalizeResponse = (data, key) => {
 export const fetchAvailabilityPosts = createAsyncThunk(
   'posts/fetchAvailabilityPosts',
   async (params = {}) => {
+    const { page = 1, limit = 6, ...otherParams } = params;
     const response = await availabilityPostsAPI.getAll({
-      limit: 9,
+      page,
+      limit,
       isActive: true,
-      ...params
+      ...otherParams
     });
-         console.log('API avialbity response for job posts:', response.data.posts);
-
-    return normalizeResponse(response.data, 'posts');
+    
+    console.log('API availability response:', response.data);
+    
+    return {
+      posts: normalizeResponse(response.data, 'posts'),
+      pagination: {
+        currentPage: response.data.currentPage || page,
+        totalPages: response.data.totalPages || 1,
+        totalCount: response.data.totalCount || response.data.total || 0,
+        limit: response.data.limit || limit
+      }
+    };
   }
 );
 
@@ -96,8 +107,25 @@ export const deleteAvailabilityPost = createAsyncThunk(
 export const fetchJobPosts = createAsyncThunk(
   'posts/fetchJobPosts',
   async (params = {}) => {
-    const response = await jobPostsAPI.getAll({ limit: 9, isActive: true, ...params });
-    return normalizeResponse(response.data, 'jobPosts');
+    const { page = 1, limit = 6, ...otherParams } = params;
+    const response = await jobPostsAPI.getAll({ 
+      page,
+      limit, 
+      isActive: true, 
+      ...otherParams 
+    });
+    
+    console.log('API job posts response:', response.data);
+    
+    return {
+      posts: normalizeResponse(response.data, 'jobPosts'),
+      pagination: {
+        currentPage: response.data.currentPage || page,
+        totalPages: response.data.totalPages || 1,
+        totalCount: response.data.totalCount || response.data.total || 0,
+        limit: response.data.limit || limit
+      }
+    };
   }
 );
 
@@ -169,7 +197,7 @@ export const fetchPosts = createAsyncThunk(
   async (params = {}) => {
     // Default to availability posts for backward compatibility
     const response = await availabilityPostsAPI.getAll({
-      limit: 9,
+      limit: 6,
       isActive: true,
       ...params
     });
@@ -182,6 +210,12 @@ const initialState = {
   availabilityPosts: [],
   availabilityPostsLoading: false,
   availabilityPostsError: null,
+  availabilityPostsPagination: {
+    currentPage: 1,
+    totalPages: 1,
+    totalCount: 0,
+    limit: 6
+  },
   myAvailabilityPosts: [],
   myAvailabilityPostsLoading: false,
   myAvailabilityPostsError: null,
@@ -193,6 +227,12 @@ const initialState = {
   jobPosts: [],
   jobPostsLoading: false,
   jobPostsError: null,
+  jobPostsPagination: {
+    currentPage: 1,
+    totalPages: 1,
+    totalCount: 0,
+    limit: 6
+  },
   myJobPosts: [],
   myJobPostsLoading: false,
   myJobPostsError: null,
@@ -235,6 +275,31 @@ const postsSlice = createSlice({
     setActiveTab: (state, action) => {
       state.activeTab = action.payload;
     },
+    // Pagination action creators
+    setAvailabilityPostsPage: (state, action) => {
+      state.availabilityPostsPagination.currentPage = action.payload;
+    },
+    setJobPostsPage: (state, action) => {
+      state.jobPostsPagination.currentPage = action.payload;
+    },
+    resetAvailabilityPostsPagination: (state) => {
+      state.availabilityPostsPagination = {
+        currentPage: 1,
+        totalPages: 1,
+        totalCount: 0,
+        limit: 6,
+        isLoading: false
+      };
+    },
+    resetJobPostsPagination: (state) => {
+      state.jobPostsPagination = {
+        currentPage: 1,
+        totalPages: 1,
+        totalCount: 0,
+        limit: 6,
+        isLoading: false
+      };
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -254,15 +319,31 @@ const postsSlice = createSlice({
       
       // Fetch availability posts
       .addCase(fetchAvailabilityPosts.pending, (state) => {
-        state.availabilityPostsLoading = true;
+        state.availabilityPostsPagination.isLoading = true;
         state.availabilityPostsError = null;
       })
       .addCase(fetchAvailabilityPosts.fulfilled, (state, action) => {
-        state.availabilityPostsLoading = false;
-        state.availabilityPosts = action.payload;
+        state.availabilityPostsPagination.isLoading = false;
+        
+        // Handle the new response structure: { posts: [...], pagination: {...} }
+        if (action.payload.posts) {
+          state.availabilityPosts = action.payload.posts;
+          
+          // Update pagination metadata
+          const pagination = action.payload.pagination;
+          if (pagination) {
+            state.availabilityPostsPagination.currentPage = pagination.currentPage || 1;
+            state.availabilityPostsPagination.totalPages = pagination.totalPages || 1;
+            state.availabilityPostsPagination.totalCount = pagination.totalCount || 0;
+            state.availabilityPostsPagination.limit = pagination.limit || 6;
+          }
+        } else {
+          // Fallback for old response structure
+          state.availabilityPosts = action.payload.data || action.payload;
+        }
       })
       .addCase(fetchAvailabilityPosts.rejected, (state, action) => {
-        state.availabilityPostsLoading = false;
+        state.availabilityPostsPagination.isLoading = false;
         state.availabilityPostsError = action.error.message || 'Failed to fetch availability posts';
       })
       
@@ -310,16 +391,20 @@ const postsSlice = createSlice({
       
       // Create availability post
       .addCase(createAvailabilityPost.pending, (state) => {
-        state.availabilityPostsLoading = true;
+        state.availabilityPostsPagination.isLoading = true;
         state.availabilityPostsError = null;
       })
       .addCase(createAvailabilityPost.fulfilled, (state, action) => {
-        state.availabilityPostsLoading = false;
+        state.availabilityPostsPagination.isLoading = false;
         state.availabilityPosts.unshift(action.payload);
         state.myAvailabilityPosts.unshift(action.payload);
+        // Update total count if pagination is active
+        if (state.availabilityPostsPagination.totalCount > 0) {
+          state.availabilityPostsPagination.totalCount += 1;
+        }
       })
       .addCase(createAvailabilityPost.rejected, (state, action) => {
-        state.availabilityPostsLoading = false;
+        state.availabilityPostsPagination.isLoading = false;
         state.availabilityPostsError = action.error.message || 'Failed to create availability post';
       })
       
@@ -343,19 +428,39 @@ const postsSlice = createSlice({
         const deletedId = action.payload;
         state.availabilityPosts = state.availabilityPosts.filter(post => post.id !== deletedId);
         state.myAvailabilityPosts = state.myAvailabilityPosts.filter(post => post.id !== deletedId);
+        // Update total count if pagination is active
+        if (state.availabilityPostsPagination.totalCount > 0) {
+          state.availabilityPostsPagination.totalCount -= 1;
+        }
       })
       
       // Fetch job posts
       .addCase(fetchJobPosts.pending, (state) => {
-        state.jobPostsLoading = true;
+        state.jobPostsPagination.isLoading = true;
         state.jobPostsError = null;
       })
       .addCase(fetchJobPosts.fulfilled, (state, action) => {
-        state.jobPostsLoading = false;
-        state.jobPosts = action.payload;
+        state.jobPostsPagination.isLoading = false;
+        
+        // Handle the new response structure: { posts: [...], pagination: {...} }
+        if (action.payload.posts) {
+          state.jobPosts = action.payload.posts;
+          
+          // Update pagination metadata
+          const pagination = action.payload.pagination;
+          if (pagination) {
+            state.jobPostsPagination.currentPage = pagination.currentPage || 1;
+            state.jobPostsPagination.totalPages = pagination.totalPages || 1;
+            state.jobPostsPagination.totalCount = pagination.totalCount || 0;
+            state.jobPostsPagination.limit = pagination.limit || 6;
+          }
+        } else {
+          // Fallback for old response structure
+          state.jobPosts = action.payload.data || action.payload;
+        }
       })
       .addCase(fetchJobPosts.rejected, (state, action) => {
-        state.jobPostsLoading = false;
+        state.jobPostsPagination.isLoading = false;
         state.jobPostsError = action.error.message || 'Failed to fetch job posts';
       })
       
@@ -375,16 +480,20 @@ const postsSlice = createSlice({
       
       // Create job post
       .addCase(createJobPost.pending, (state) => {
-        state.jobPostsLoading = true;
+        state.jobPostsPagination.isLoading = true;
         state.jobPostsError = null;
       })
       .addCase(createJobPost.fulfilled, (state, action) => {
-        state.jobPostsLoading = false;
+        state.jobPostsPagination.isLoading = false;
         state.jobPosts.unshift(action.payload);
         state.myJobPosts.unshift(action.payload);
+        // Update total count if pagination is active
+        if (state.jobPostsPagination.totalCount > 0) {
+          state.jobPostsPagination.totalCount += 1;
+        }
       })
       .addCase(createJobPost.rejected, (state, action) => {
-        state.jobPostsLoading = false;
+        state.jobPostsPagination.isLoading = false;
         state.jobPostsError = action.error.message || 'Failed to create job post';
       })
       
@@ -408,6 +517,10 @@ const postsSlice = createSlice({
         const deletedId = action.payload;
         state.jobPosts = state.jobPosts.filter(post => post.id !== deletedId);
         state.myJobPosts = state.myJobPosts.filter(post => post.id !== deletedId);
+        // Update total count if pagination is active
+        if (state.jobPostsPagination.totalCount > 0) {
+          state.jobPostsPagination.totalCount -= 1;
+        }
       })
       
       // Fetch categories
@@ -426,7 +539,16 @@ const postsSlice = createSlice({
   },
 });
 
-export const { clearError, clearPosts, clearMyPosts, setActiveTab } = postsSlice.actions;
+export const { 
+  clearError, 
+  clearPosts, 
+  clearMyPosts, 
+  setActiveTab,
+  setAvailabilityPostsPage,
+  setJobPostsPage,
+  resetAvailabilityPostsPagination,
+  resetJobPostsPagination
+} = postsSlice.actions;
 
 // Selectors
 export const selectAvailabilityPosts = (state) => state.posts.availabilityPosts;
@@ -438,6 +560,14 @@ export const selectUserPostsLoading = (state) => state.posts.userPostsLoading;
 export const selectUserPostsError = (state) => state.posts.userPostsError;
 export const selectCategories = (state) => state.posts.categories;
 export const selectActiveTab = (state) => state.posts.activeTab;
+
+// Pagination selectors
+export const selectAvailabilityPostsPagination = (state) => state.posts.availabilityPostsPagination;
+export const selectJobPostsPagination = (state) => state.posts.jobPostsPagination;
+export const selectAvailabilityPostsLoading = (state) => state.posts.availabilityPostsPagination.isLoading;
+export const selectJobPostsLoading = (state) => state.posts.jobPostsPagination.isLoading;
+export const selectAvailabilityPostsError = (state) => state.posts.availabilityPostsError;
+export const selectJobPostsError = (state) => state.posts.jobPostsError;
 
 // Legacy selectors for backward compatibility
 export const selectPosts = (state) => state.posts.posts;

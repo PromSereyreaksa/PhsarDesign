@@ -10,6 +10,7 @@ import { deletePost, fetchUserPosts } from "../../store/slices/marketplaceSlice"
 const MyPostsPage = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
+  const { user } = useAppSelector((state) => state.auth)
   const { userPosts, loading, error } = useAppSelector((state) => state.marketplace)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
 
@@ -34,7 +35,14 @@ const MyPostsPage = () => {
   }, [userPosts])
 
   const handleCreateNew = () => {
-    navigate("/marketplace/create")
+    // Route based on user role
+    if (user?.role === 'client') {
+      navigate("/marketplace/create?type=jobs")
+    } else if (user?.role === 'artist' || user?.role === 'freelancer') {
+      navigate("/marketplace/create?type=availability")
+    } else {
+      navigate("/marketplace/create")
+    }
   }
 
   const handleEdit = (postId) => {

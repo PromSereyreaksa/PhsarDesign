@@ -1,6 +1,7 @@
 import axios from "axios"
-import store from "../store"
 import { loginSuccess, logout } from "../slices/authSlice"
+import store from "../store"
+import categoryAPI from "./categoryAPI"
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/"
 
@@ -313,3 +314,14 @@ export const getAvailabilityPostById = (id) => {
 }
 export const getAvailabilityPostBySlug = (slug) => availabilityPostsAPI.getBySlug(slug)
 export const getMyAvailabilityPosts = (params) => availabilityPostsAPI.getMyPosts(params)
+
+// ========== CATEGORY-SPECIFIC POST FUNCTIONS ==========
+export const getAvailabilityPostsByCategory = (categoryId, filters = {}) => {
+  console.log("getAvailabilityPostsByCategory called with:", categoryId, filters)
+  return categoryAPI.getAvailabilityPostsByCategory(categoryId, filters)
+}
+
+export const getJobPostsByCategory = (categoryId, filters = {}) => {
+  console.log("getJobPostsByCategory called with:", categoryId, filters)
+  return categoryAPI.getJobPostsByCategory(categoryId, filters)
+}

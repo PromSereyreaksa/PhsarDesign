@@ -6,16 +6,20 @@ import * as marketplaceAPI from "../api/marketplaceAPI"
 export const fetchPosts = createAsyncThunk("marketplace/fetchPosts", async (filters = {}) => {
   console.log("🔍 Fetching posts with filters:", filters)
 
+  // Extract pagination parameters
+  const { page = 1, limit = 6, ...otherFilters } = filters // Changed from 9 to 6 for marketplace
+  const paginatedFilters = { ...otherFilters, page, limit }
+
   // Determine which API to call based on section filter
   const section = filters.section || "services"
   let response
 
   if (section === "jobs") {
     // Call job posts API for jobs section
-    response = await marketplaceAPI.getAllJobPosts(filters)
+    response = await marketplaceAPI.getAllJobPosts(paginatedFilters)
   } else {
     // Call availability posts API for services section
-    response = await marketplaceAPI.getAllAvailabilityPosts(filters)
+    response = await marketplaceAPI.getAllAvailabilityPosts(paginatedFilters)
   }
 
   console.log("📡 API Response:", response)
@@ -98,12 +102,12 @@ export const createPost = createAsyncThunk(
     try {
       let response
 
-      // Handle FormData vs regular object
+      // Handle FormData vs regular object - default to availability post if no type specified
       let postType
       if (postData instanceof FormData) {
-        postType = postData.get("postType")
+        postType = postData.get("postType") || "availability"
       } else {
-        postType = postData.postType
+        postType = postData.postType || "availability"
       }
 
       console.log("=== REDUX CREATE POST DEBUG ===")
@@ -118,19 +122,40 @@ export const createPost = createAsyncThunk(
         response = await marketplaceAPI.availabilityPostsAPI.create(postData)
       }
 
-      return response.data
+      console.log("=== POST CREATION SUCCESS ===")
+      console.log("Response:", response)
+      console.log("Response data:", response.data)
+
+      // Ensure we return the correct data structure
+      const createdPost = {
+        ...response.data,
+        postType: postType
+      }
+
+      return createdPost
     } catch (error) {
       console.error("=== REDUX CREATE POST ERROR ===")
       console.error("Error:", error)
       console.error("Error response:", error.response)
+      console.error("Error response data:", error.response?.data)
 
-      // Handle different types of errors
+      // Handle different types of errors with specific messages
       if (error.response?.status === 401) {
         return rejectWithValue("Authentication required. Please log in.")
       } else if (error.response?.status === 403) {
         return rejectWithValue("You don't have permission to create posts.")
+      } else if (error.response?.status === 400) {
+        const errorMessage = error.response?.data?.error || error.response?.data?.message || "Invalid data provided."
+        return rejectWithValue(errorMessage)
+      } else if (error.response?.status === 422) {
+        const errorMessage = error.response?.data?.error || error.response?.data?.message || "Validation failed."
+        return rejectWithValue(errorMessage)
       } else if (error.response?.data?.error) {
         return rejectWithValue(error.response.data.error)
+      } else if (error.response?.data?.message) {
+        return rejectWithValue(error.response.data.message)
+      } else if (error.message) {
+        return rejectWithValue(error.message)
       } else {
         return rejectWithValue("Failed to create post. Please try again.")
       }
@@ -309,6 +334,37 @@ export const filterCategories = createAsyncThunk(
   },
 )
 
+// Category-specific post fetching with pagination
+export const fetchAvailabilityPostsByCategory = createAsyncThunk(
+  "marketplace/fetchAvailabilityPostsByCategory", 
+  async ({ categoryId, filters = {} }, { rejectWithValue }) => {
+    try {
+      console.log("🎯 Fetching availability posts for category:", categoryId, "with filters:", filters)
+      const response = await marketplaceAPI.getAvailabilityPostsByCategory(categoryId, filters)
+      console.log("📡 Category availability posts response:", response)
+      return { ...response, categoryId, filters }
+    } catch (error) {
+      console.error("❌ Failed to fetch availability posts by category:", error)
+      return rejectWithValue(error.response?.data?.message || "Failed to fetch posts for this category")
+    }
+  }
+)
+
+export const fetchJobPostsByCategory = createAsyncThunk(
+  "marketplace/fetchJobPostsByCategory", 
+  async ({ categoryId, filters = {} }, { rejectWithValue }) => {
+    try {
+      console.log("🎯 Fetching job posts for category:", categoryId, "with filters:", filters)
+      const response = await marketplaceAPI.getJobPostsByCategory(categoryId, filters)
+      console.log("📡 Category job posts response:", response)
+      return { ...response, categoryId, filters }
+    } catch (error) {
+      console.error("❌ Failed to fetch job posts by category:", error)
+      return rejectWithValue(error.response?.data?.message || "Failed to fetch posts for this category")
+    }
+  }
+)
+
 const initialState = {
   // Posts state
   posts: [],
@@ -328,7 +384,9 @@ const initialState = {
   pagination: {
     currentPage: 1,
     totalPages: 1,
-    totalPosts: 0,
+    totalCount: 0,
+    limit: 6, // Changed from 9 to 6 for marketplace
+    isLoading: false,
   },
 
   // Categories state
@@ -337,6 +395,33 @@ const initialState = {
   currentCategory: null,
   categoriesLoading: false,
   categoriesError: null,
+
+  // Category posts state
+  categoryPosts: {
+    availability: {
+      posts: [],
+      loading: false,
+      error: null,
+      pagination: {
+        currentPage: 1,
+        totalPages: 1,
+        totalCount: 0,
+        limit: 9, // Changed from 10 to 9 for category pages
+      },
+    },
+    jobs: {
+      posts: [],
+      loading: false,
+      error: null,
+      pagination: {
+        currentPage: 1,
+        totalPages: 1,
+        totalCount: 0,
+        limit: 9, // Changed from 10 to 9 for category pages
+      },
+    },
+    currentCategoryId: null,
+  },
 }
 
 const marketplaceSlice = createSlice({
@@ -358,6 +443,17 @@ const marketplaceSlice = createSlice({
     clearError: (state) => {
       state.error = null
     },
+    
+    // Pagination actions
+    setCurrentPage: (state, action) => {
+      state.pagination.currentPage = action.payload
+    },
+    setPaginationLoading: (state, action) => {
+      state.pagination.isLoading = action.payload
+    },
+    resetPagination: (state) => {
+      state.pagination = initialState.pagination
+    },
 
     // Category reducers
     clearCategoriesError: (state) => {
@@ -369,16 +465,47 @@ const marketplaceSlice = createSlice({
     setFilteredCategories: (state, action) => {
       state.filteredCategories = action.payload
     },
+
+    // Category posts actions
+    setCategoryPostsPage: (state, action) => {
+      const { postType, page } = action.payload
+      console.log(`🚨 [REDUX] setCategoryPostsPage called:`, { postType, page });
+      console.log(`🚨 [REDUX] Before update - ${postType} current page:`, state.categoryPosts[postType]?.pagination?.currentPage);
+      
+      if (state.categoryPosts[postType]) {
+        state.categoryPosts[postType].pagination.currentPage = page
+        console.log(`🚨 [REDUX] After update - ${postType} current page:`, state.categoryPosts[postType].pagination.currentPage);
+      } else {
+        console.error(`🚨 [REDUX] ERROR: postType "${postType}" not found in categoryPosts`);
+      }
+    },
+    clearCategoryPosts: (state) => {
+      console.log("🧹 [REDUX] clearCategoryPosts called - clearing all posts");
+      state.categoryPosts.availability.posts = []
+      state.categoryPosts.jobs.posts = []
+      state.categoryPosts.availability.error = null
+      state.categoryPosts.jobs.error = null
+      state.categoryPosts.currentCategoryId = null
+    },
+    setCategoryPostsLimit: (state, action) => {
+      const { postType, limit } = action.payload
+      if (state.categoryPosts[postType]) {
+        state.categoryPosts[postType].pagination.limit = limit
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
       // Fetch posts
       .addCase(fetchPosts.pending, (state) => {
         state.loading = true
+        state.pagination.isLoading = true
         state.error = null
       })
       .addCase(fetchPosts.fulfilled, (state, action) => {
         state.loading = false
+        state.pagination.isLoading = false
+        
         // Handle different possible response structures
         if (Array.isArray(action.payload)) {
           state.posts = action.payload
@@ -393,15 +520,19 @@ const marketplaceSlice = createSlice({
         } else {
           state.posts = []
         }
+        
         // Update pagination from API response
         state.pagination = {
-          currentPage: action.payload?.currentPage || 1,
-          totalPages: action.payload?.totalPages || 1,
-          totalPosts: action.payload?.totalCount || 0,
+          ...state.pagination,
+          currentPage: action.payload?.currentPage || action.payload?.page || 1,
+          totalPages: action.payload?.totalPages || Math.ceil((action.payload?.totalCount || state.posts.length) / state.pagination.limit),
+          totalCount: action.payload?.totalCount || action.payload?.total || state.posts.length,
+          isLoading: false
         }
       })
       .addCase(fetchPosts.rejected, (state, action) => {
         state.loading = false
+        state.pagination.isLoading = false
         state.error = action.error.message
       })
 
@@ -437,15 +568,28 @@ const marketplaceSlice = createSlice({
       .addCase(createPost.pending, (state) => {
         state.loading = true
         state.error = null
+        console.log("🔄 Post creation started...")
       })
       .addCase(createPost.fulfilled, (state, action) => {
         state.loading = false
+        state.error = null
+        console.log("✅ Post creation successful:", action.payload)
+        
+        // Add the new post to the beginning of the posts array
         state.posts.unshift(action.payload)
+        
+        // Also add to userPosts if it exists
         state.userPosts.unshift(action.payload)
+        
+        // Update pagination count
+        state.pagination.totalCount += 1
+        // Recalculate total pages
+        state.pagination.totalPages = Math.ceil(state.pagination.totalCount / state.pagination.limit)
       })
       .addCase(createPost.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload || action.error.message
+        console.error("❌ Post creation failed:", action.payload || action.error.message)
       })
 
       // Fetch posts by client
@@ -583,6 +727,62 @@ const marketplaceSlice = createSlice({
         state.categoriesLoading = false
         state.categoriesError = action.payload
       })
+
+      // Fetch availability posts by category
+      .addCase(fetchAvailabilityPostsByCategory.pending, (state, action) => {
+        state.categoryPosts.availability.loading = true
+        state.categoryPosts.availability.error = null
+        state.categoryPosts.currentCategoryId = action.meta.arg.categoryId
+      })
+      .addCase(fetchAvailabilityPostsByCategory.fulfilled, (state, action) => {
+        state.categoryPosts.availability.loading = false
+        
+        // Extract posts from the correct nested structure
+        const posts = action.payload.data?.posts || action.payload.posts || []
+        
+        state.categoryPosts.availability.posts = posts
+        state.categoryPosts.availability.pagination = {
+          ...state.categoryPosts.availability.pagination,
+          currentPage: action.payload.data?.currentPage || action.payload.currentPage || action.payload.page || 1,
+          totalPages: action.payload.data?.totalPages || action.payload.totalPages || Math.ceil((action.payload.data?.totalCount || action.payload.totalCount || 0) / (action.payload.data?.limit || action.payload.limit || 9)),
+          totalCount: action.payload.data?.totalCount || action.payload.totalCount || 0,
+          limit: action.payload.data?.limit || action.payload.limit || 9,
+        }
+        state.categoryPosts.availability.error = null
+      })
+      .addCase(fetchAvailabilityPostsByCategory.rejected, (state, action) => {
+        state.categoryPosts.availability.loading = false
+        state.categoryPosts.availability.error = action.payload
+        state.categoryPosts.availability.posts = []
+      })
+
+      // Fetch job posts by category  
+      .addCase(fetchJobPostsByCategory.pending, (state, action) => {
+        state.categoryPosts.jobs.loading = true
+        state.categoryPosts.jobs.error = null
+        state.categoryPosts.currentCategoryId = action.meta.arg.categoryId
+      })
+      .addCase(fetchJobPostsByCategory.fulfilled, (state, action) => {
+        state.categoryPosts.jobs.loading = false
+        
+        // Extract posts from the correct nested structure
+        const posts = action.payload.data?.posts || action.payload.posts || []
+        
+        state.categoryPosts.jobs.posts = posts
+        state.categoryPosts.jobs.pagination = {
+          ...state.categoryPosts.jobs.pagination,
+          currentPage: action.payload.data?.currentPage || action.payload.currentPage || action.payload.page || 1,
+          totalPages: action.payload.data?.totalPages || action.payload.totalPages || Math.ceil((action.payload.data?.totalCount || action.payload.totalCount || 0) / (action.payload.data?.limit || action.payload.limit || 9)),
+          totalCount: action.payload.data?.totalCount || action.payload.totalCount || 0,
+          limit: action.payload.data?.limit || action.payload.limit || 9,
+        }
+        state.categoryPosts.jobs.error = null
+      })
+      .addCase(fetchJobPostsByCategory.rejected, (state, action) => {
+        state.categoryPosts.jobs.loading = false
+        state.categoryPosts.jobs.error = action.payload
+        state.categoryPosts.jobs.posts = []
+      })
   },
 })
 
@@ -592,10 +792,29 @@ export const {
   setCurrentPost,
   clearCurrentPost,
   clearError,
+  // Pagination actions
+  setCurrentPage,
+  setPaginationLoading,
+  resetPagination,
   // Category actions
   clearCategoriesError,
   clearCurrentCategory,
   setFilteredCategories,
+  // Category posts actions
+  setCategoryPostsPage,
+  clearCategoryPosts,
+  setCategoryPostsLimit,
 } = marketplaceSlice.actions
+
+// Selectors for category posts
+export const selectCategoryAvailabilityPosts = (state) => state.marketplace.categoryPosts.availability.posts
+export const selectCategoryJobPosts = (state) => state.marketplace.categoryPosts.jobs.posts
+export const selectCategoryAvailabilityLoading = (state) => state.marketplace.categoryPosts.availability.loading
+export const selectCategoryJobLoading = (state) => state.marketplace.categoryPosts.jobs.loading
+export const selectCategoryAvailabilityError = (state) => state.marketplace.categoryPosts.availability.error
+export const selectCategoryJobError = (state) => state.marketplace.categoryPosts.jobs.error
+export const selectCategoryAvailabilityPagination = (state) => state.marketplace.categoryPosts.availability.pagination
+export const selectCategoryJobPagination = (state) => state.marketplace.categoryPosts.jobs.pagination
+export const selectCurrentCategoryId = (state) => state.marketplace.categoryPosts.currentCategoryId
 
 export default marketplaceSlice.reducer

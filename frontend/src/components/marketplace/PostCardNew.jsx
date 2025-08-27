@@ -6,95 +6,6 @@ import { useAppSelector } from "../../hook/useRedux"
 import { MultiStepApplicationModal } from "../ui/MultiStepApplicationModal"
 import { showToast } from "../ui/toast"
 
-// PostImage component to handle image loading and fallbacks
-const PostImage = ({ src, alt, fallbackIcon }) => {
-  const [imageError, setImageError] = useState(false)
-  const [imageLoading, setImageLoading] = useState(true)
-
-  const handleImageLoad = () => {
-    setImageLoading(false)
-  }
-
-  const handleImageError = () => {
-    console.log('PostImage: Image load failed for URL:', fullImageUrl)
-    setImageError(true)
-    setImageLoading(false)
-  }
-
-  // Helper function to build full image URL
-  const getImageUrl = (imageSrc) => {
-    console.log('🔍 PostImage getImageUrl input:', imageSrc);
-    
-    if (!imageSrc) {
-      console.log('❌ No image source provided');
-      return null;
-    }
-    
-    // If it's already a full URL (http/https), return as is
-    if (imageSrc.startsWith('http://') || imageSrc.startsWith('https://')) {
-      console.log('✅ Full URL detected:', imageSrc);
-      return imageSrc;
-    }
-    
-    // Handle cloudinary URLs
-    if (imageSrc.includes('cloudinary.com')) {
-      const cloudinaryUrl = imageSrc.startsWith('//') ? `https:${imageSrc}` : imageSrc;
-      console.log('☁️ Cloudinary URL processed:', cloudinaryUrl);
-      return cloudinaryUrl;
-    }
-    
-    // If it's a relative path, build the full URL
-    const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:3000"
-    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl
-    const cleanImageSrc = imageSrc.startsWith('/') ? imageSrc : `/${imageSrc}`
-    
-    const fullUrl = `${cleanBaseUrl}${cleanImageSrc}`
-    console.log('🔧 Built URL:', { original: imageSrc, baseUrl, fullUrl })
-    return fullUrl
-  }
-
-  const fullImageUrl = getImageUrl(src)
-
-  console.log('PostImage Debug:', {
-    originalSrc: src,
-    fullImageUrl: fullImageUrl,
-    imageError: imageError,
-    imageLoading: imageLoading
-  });
-
-  if (!fullImageUrl || imageError) {
-    return (
-      <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center text-3xl">
-        {fallbackIcon}
-      </div>
-    )
-  }
-
-  return (
-    <div className="relative w-full h-full">
-      {imageLoading && (
-        <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center text-3xl z-10">
-          {fallbackIcon}
-        </div>
-      )}
-      <img
-        src={fullImageUrl}
-        alt={alt}
-        className="w-full h-full object-cover"
-        style={{ 
-          outline: 'none !important',
-          border: 'none !important',
-          boxShadow: 'none !important',
-          background: 'none !important'
-        }}
-        loading="lazy"
-        onLoad={handleImageLoad}
-        onError={handleImageError}
-      />
-    </div>
-  )
-}
-
 const PostCard = ({ post }) => {
   const navigate = useNavigate()
   const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false)
@@ -137,50 +48,20 @@ const PostCard = ({ post }) => {
   // Price display
   const formatPrice = (budget) => (budget ? `$${budget}` : "Price negotiable")
 
-  // Image handling with improved URL processing
+  // Image handling
   const getImageUrls = (attachments) => {
     if (!attachments) return []
-    
-    // Handle different attachment formats
-    let processedAttachments = []
-    
-    if (typeof attachments === 'string') {
-      try {
-        // Try to parse JSON string
-        processedAttachments = JSON.parse(attachments)
-      } catch (e) {
-        // If it's just a single URL string
-        processedAttachments = [attachments]
-      }
-    } else if (Array.isArray(attachments)) {
-      processedAttachments = attachments
-    } else if (typeof attachments === 'object' && attachments !== null) {
-      // Single attachment object
-      processedAttachments = [attachments]
-    }
-    
-    return processedAttachments
-      .map((att) => {
-        if (typeof att === "string") return att
-        return att?.url || att?.path || att?.src || att?.attachmentUrl || null
-      })
-      .filter(Boolean)
+    return Array.isArray(attachments)
+      ? attachments
+          .map((att) =>
+            typeof att === "string" ? att : att?.url || att?.path
+          )
+          .filter(Boolean)
+      : []
   }
 
-  const imageUrls = getImageUrls(post.images || post.attachments || post.attachment)
-  const mainImageUrl = imageUrls[0] || post.image || post.thumbnail || post.imageUrl || post.attachmentUrl
-  
-  // Debug logging for image issues
-  console.log('🎯 PostCard Debug:', {
-    postId: post.id || post.jobId || post.postId,
-    title: post.title,
-    attachments: post.attachments,
-    imageUrls: imageUrls,
-    mainImageUrl: mainImageUrl,
-    hasAttachments: !!post.attachments,
-    attachmentsLength: post.attachments?.length || 0,
-    firstAttachment: post.attachments?.[0]
-  });
+  const imageUrls = getImageUrls(post.images || post.attachments)
+  const mainImageUrl = imageUrls[0] || post.image || post.thumbnail
 
   // Get poster information
   const getPosterInfo = () => {
@@ -236,11 +117,25 @@ const PostCard = ({ post }) => {
         >
           {/* Image Section - Better size for wider cards */}
           <div className="relative h-48 overflow-hidden">
-            <PostImage
-              src={mainImageUrl}
-              alt={post.title}
-              fallbackIcon={posterInfo.type === "client" ? "💼" : "🎨"}
-            />
+            {mainImageUrl ? (
+              <img
+                src={mainImageUrl}
+                alt={post.title}
+                className="w-full h-full object-cover"
+                loading="lazy"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'flex';
+                }}
+              />
+            ) : null}
+            {/* Fallback when no image or image fails to load */}
+            <div 
+              className={`w-full h-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center text-3xl ${mainImageUrl ? 'hidden' : 'flex'}`}
+              style={{ display: mainImageUrl ? 'none' : 'flex' }}
+            >
+              {posterInfo.type === "client" ? "💼" : "🎨"}
+            </div>
 
             {/* Category badge */}
             <div className="absolute top-2 left-2">
@@ -254,14 +149,9 @@ const PostCard = ({ post }) => {
               <div className="w-8 h-8 rounded-full border-2 border-white/20 backdrop-blur-sm bg-white/10 overflow-hidden flex items-center justify-center">
                 {posterInfo.avatar ? (
                   <img
-                    src={posterInfo.avatar.startsWith('http') ? posterInfo.avatar : `${import.meta.env.VITE_API_URL || "http://localhost:3000/"}${posterInfo.avatar.startsWith('/') ? posterInfo.avatar.substring(1) : posterInfo.avatar}`}
+                    src={posterInfo.avatar}
                     alt={posterInfo.name}
                     className="w-full h-full object-cover"
-                    style={{ 
-                      outline: 'none',
-                      border: 'none',
-                      boxShadow: 'none'
-                    }}
                   />
                 ) : (
                   <span className="text-white text-xs font-bold">

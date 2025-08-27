@@ -5,7 +5,8 @@ import { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { fetchCategories } from "../../store/slices/categoriesSlice"
 import Loader from "../ui/Loader"
-const CreatePostForm = ({ onSubmit, onCancel, isSubmitting = false }) => {
+
+const CreateAvailabilityPostForm = ({ onSubmit, onCancel, isSubmitting = false }) => {
   const dispatch = useDispatch()
   const { categories, loading: categoriesLoading } = useSelector((state) => state.categories)
   const { user } = useSelector((state) => state.auth)
@@ -28,25 +29,16 @@ const CreatePostForm = ({ onSubmit, onCancel, isSubmitting = false }) => {
   const [newSkill, setNewSkill] = useState("")
   const [uploadingImages, setUploadingImages] = useState(false)
 
-  // Function to reset form - can be called by parent on successful submission
-  const resetForm = () => {
-    setFormData({
-      title: "",
-      description: "",
-      budget: "",
-      duration: "",
-      expireAt: "",
-      availabilityType: "freelance",
-      location: "",
-      skills: [],
-      category: "",
-      categoryId: "",
-      attachments: [],
-      isActive: true,
-    });
-    setNewSkill("");
-    setUploadingImages(false);
-  };
+  // RBAC Check - Only artists can use this form
+  useEffect(() => {
+    if (user && user.role !== 'artist' && user.role !== 'freelancer') {
+      const showToast = async () => {
+        const { showToast } = await import("../../components/ui/toast")
+        showToast(`Access denied. Only artists can create availability posts. Your role: ${user.role}`, 'error')
+      }
+      showToast()
+    }
+  }, [user])
 
   // Fetch categories on component mount
   useEffect(() => {
@@ -139,7 +131,9 @@ const CreatePostForm = ({ onSubmit, onCancel, isSubmitting = false }) => {
       const { showToast } = await import("../../components/ui/toast")
       showToast('You can upload maximum 5 images', 'error')
       return;
-    }    setUploadingImages(true);
+    }
+
+    setUploadingImages(true);
 
     try {
       // Create local URLs for preview while keeping the File objects for upload
@@ -153,7 +147,7 @@ const CreatePostForm = ({ onSubmit, onCancel, isSubmitting = false }) => {
                 file: file, // Keep the actual File object for upload
                 name: file.name,
                 uploaded: false, // Will be set to true after successful backend upload
-                size: file.size
+                size: file.size,
               });
             };
             reader.readAsDataURL(file);
@@ -161,7 +155,7 @@ const CreatePostForm = ({ onSubmit, onCancel, isSubmitting = false }) => {
         })
       );
 
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         attachments: [...prev.attachments, ...newAttachments],
       }));
@@ -192,10 +186,13 @@ const removeAttachment = (index) => {
 // Updated form submission function - use Redux only
 const handleFormSubmit = async (e) => {
   e.preventDefault();
-  
-  console.log("=== FORM SUBMIT TRIGGERED ===");
-  console.log("Event:", e);
-  console.log("Form data:", formData);
+
+  // RBAC enforcement - Double check user role
+  if (!user || (user.role !== 'artist' && user.role !== 'freelancer')) {
+    const { showToast } = await import("../../components/ui/toast")
+    showToast('Access denied. Only artists can create availability posts.', 'error')
+    return;
+  }
 
   try {
     setUploadingImages(true);
@@ -286,38 +283,10 @@ const handleFormSubmit = async (e) => {
       return;
     }
 
-    // Check if user is authenticated and has artistId
-    console.log("=== USER AUTHENTICATION DEBUG ===");
-    console.log("User object:", user);
-    console.log("User keys:", user ? Object.keys(user) : "No user");
-    console.log("User.artistId:", user?.artistId);
-    console.log("User.id:", user?.id);
-    console.log("User._id:", user?._id);
-    console.log("User.userId:", user?.userId);
-    console.log("User.role:", user?.role);
-    console.log("User.firstName:", user?.firstName);
-    console.log("User.lastName:", user?.lastName);
-    
-    if (!user) {
-      const { showToast } = await import("../../components/ui/toast")
-      showToast("You must be logged in to create posts", 'error')
-      setUploadingImages(false);
-      return;
-    }
-
-    // Check if user is an artist/freelancer
-    if (user.role !== 'artist' && user.role !== 'freelancer') {
-      const { showToast } = await import("../../components/ui/toast")
-      showToast(`Only artists can create availability posts. Your current role is: ${user.role || "unknown"}`, 'error')
-      setUploadingImages(false);
-      return;
-    }
-
     // Try different possible field names for artistId
     const artistId = user.userId || user.artistId || user.id || user._id;
     console.log("=== ARTIST ID DETECTION ===");
     console.log("Detected artistId:", artistId);
-    console.log("Using user.userId as artistId since it's the standard field in this app");
     
     if (!artistId) {
       console.error("=== ARTIST ID ERROR ===");
@@ -340,7 +309,7 @@ const handleFormSubmit = async (e) => {
     submitData.append("budget", parseFloat(formData.budget).toString()); // Ensure it's a number string, not formatted
     submitData.append("isActive", formData.isActive.toString()); // Convert boolean to string
     
-    // IMPORTANT: Add postType to identify this as an availability post
+    // Add postType to indicate this is an availability post
     submitData.append("postType", "availability");
     
     // Optional fields
@@ -367,21 +336,32 @@ const handleFormSubmit = async (e) => {
       }
     });
 
-    console.log("=== FORM SUBMISSION DEBUG ===");
+    console.log("=== AVAILABILITY POST FORM SUBMISSION DEBUG ===");
     console.log("Submitting form data:");
     for (let [key, value] of submitData.entries()) {
       console.log(key, value);
     }
 
-    console.log("=== CALLING PARENT onSubmit ===");
-    console.log("About to call onSubmit with submitData");
+    // Reset form immediately after validation passes
+    setFormData({
+      title: "",
+      description: "",
+      budget: "",
+      duration: "",
+      expireAt: "",
+      availabilityType: "freelance",
+      location: "",
+      skills: [],
+      category: "",
+      categoryId: "",
+      attachments: [],
+      isActive: true,
+    });
     
-    // Call parent onSubmit (which uses Redux) - BEFORE resetting form
-    // Don't reset form here - let parent handle success/error and reset accordingly
+    // Call parent onSubmit (which uses Redux) - no direct API call here
     onSubmit(submitData);
-    
   } catch (error) {
-    console.error("=== FORM SUBMISSION ERROR ===");
+    console.error("=== AVAILABILITY POST FORM SUBMISSION ERROR ===");
     console.error("Error object:", error);
     const { showToast } = await import("../../components/ui/toast")
     const errorMessage = error.message || "An unexpected error occurred";
@@ -405,6 +385,28 @@ const handleFormSubmit = async (e) => {
     }))
   }
 
+  // Early return for unauthorized users
+  if (!user || (user.role !== 'artist' && user.role !== 'freelancer')) {
+    return (
+      <div className="bg-gray-800/20 backdrop-blur border border-red-500/50 rounded-xl p-8">
+        <div className="text-center space-y-4">
+          <div className="text-red-400 text-xl">🚫 Access Denied</div>
+          <h3 className="text-xl font-semibold text-white">Artists Only</h3>
+          <p className="text-gray-300">
+            Only artists and freelancers can create availability posts.
+            {user ? ` Your current role is: ${user.role}` : ' Please log in as an artist.'}
+          </p>
+          <button
+            onClick={onCancel}
+            className="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="bg-gray-800/20 backdrop-blur border border-gray-700/50 rounded-xl p-8">
       <form onSubmit={handleFormSubmit} className="space-y-8">
@@ -414,89 +416,145 @@ const handleFormSubmit = async (e) => {
             <span className="w-2 h-2 bg-[#A95BAB] rounded-full mr-3"></span>
             Basic Information
           </h3>
-
-          <div className="space-y-2">
-            <label htmlFor="title" className="block text-sm font-medium text-gray-300">
-              Project Title *
-            </label>
-            <input
-              type="text"
-              id="title"
-              name="title"
-              value={formData.title}
-              onChange={handleInputChange}
-              placeholder="e.g., Professional Logo Design Available"
-              maxLength={255}
-              className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-[#A95BAB] focus:border-[#A95BAB] transition-all"
-              required
-            />
-            <div className="text-xs text-gray-400 text-right">
-              {formData.title.length}/255 characters
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="title" className="block text-sm font-medium text-gray-300">
+                <Tag className="inline w-4 h-4 mr-1" />
+                Title *
+              </label>
+              <input
+                type="text"
+                id="title"
+                name="title"
+                value={formData.title}
+                onChange={handleInputChange}
+                placeholder="e.g., Expert UI/UX Designer Available for Projects"
+                maxLength={255}
+                className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-[#A95BAB] focus:border-[#A95BAB] transition-all"
+                required
+              />
+              {formData.title && (
+                <div className="text-xs text-gray-400 text-right">
+                  {formData.title.length}/255 characters
+                </div>
+              )}
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <label htmlFor="categoryId" className="block text-sm font-medium text-gray-300">
-              Category *
-            </label>
-            <select 
-              id="categoryId" 
-              name="categoryId" 
-              value={formData.categoryId} 
-              onChange={handleInputChange} 
-              className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-lg text-white focus:ring-2 focus:ring-[#A95BAB] focus:border-[#A95BAB] transition-all"
-              required
-              disabled={categoriesLoading}
-            >
-              <option value="">{categoriesLoading ? "Loading categories..." : "Select a category"}</option>
-              {categories && categories.map((category) => (
-                <option key={category.categoryId} value={category.categoryId}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="description" className="block text-sm font-medium text-gray-300">
-              Project Description *
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              placeholder="Describe your services, experience, and what makes you unique..."
-              rows={6}
-              maxLength={5000}
-              className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-[#A95BAB] focus:border-[#A95BAB] transition-all resize-none"
-              required
-            />
-            <div className="text-xs text-gray-400 text-right">
-              {formData.description.length}/5000 characters (minimum 20)
+            <div className="space-y-2">
+              <label htmlFor="description" className="block text-sm font-medium text-gray-300">
+                Description *
+              </label>
+              <textarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                placeholder="Describe your skills, experience, and what services you offer..."
+                rows={6}
+                maxLength={5000}
+                className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-[#A95BAB] focus:border-[#A95BAB] transition-all resize-none"
+                required
+              />
+              {formData.description && (
+                <div className="text-xs text-gray-400 text-right">
+                  {formData.description.length}/5000 characters
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Skills Section */}
+        {/* Category & Pricing */}
+        <div className="space-y-6">
+          <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
+            <span className="w-2 h-2 bg-[#A95BAB] rounded-full mr-3"></span>
+            Category & Pricing
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label htmlFor="categoryId" className="block text-sm font-medium text-gray-300">
+                Category *
+              </label>
+              {categoriesLoading ? (
+                <div className="flex items-center py-3">
+                  <Loader />
+                  <span className="ml-2 text-gray-400">Loading categories...</span>
+                </div>
+              ) : (
+                <select
+                  id="categoryId"
+                  name="categoryId"
+                  value={formData.categoryId}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-lg text-white focus:ring-2 focus:ring-[#A95BAB] focus:border-[#A95BAB] transition-all"
+                  required
+                >
+                  <option value="">Select a category</option>
+                  {categories.map((category) => (
+                    <option key={category.categoryId} value={category.categoryId}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="budget" className="block text-sm font-medium text-gray-300">
+                <DollarSign className="inline w-4 h-4 mr-1" />
+                Rate/Budget (USD) *
+              </label>
+              <input
+                type="number"
+                id="budget"
+                name="budget"
+                value={formData.budget}
+                onChange={handleInputChange}
+                placeholder="e.g., 50"
+                min="0"
+                step="0.01"
+                className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-[#A95BAB] focus:border-[#A95BAB] transition-all"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="availabilityType" className="block text-sm font-medium text-gray-300">
+              Availability Type
+            </label>
+            <select
+              id="availabilityType"
+              name="availabilityType"
+              value={formData.availabilityType}
+              onChange={handleInputChange}
+              className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-lg text-white focus:ring-2 focus:ring-[#A95BAB] focus:border-[#A95BAB] transition-all"
+            >
+              <option value="freelance">Freelance</option>
+              <option value="part-time">Part-time</option>
+              <option value="full-time">Full-time</option>
+              <option value="contract">Contract</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Skills */}
         <div className="space-y-6">
           <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
             <span className="w-2 h-2 bg-[#A95BAB] rounded-full mr-3"></span>
             Skills *
           </h3>
-
-          {/* Popular Skills */}
-          <div className="space-y-3">
-            <label className="block text-sm font-medium text-gray-300">
-              Popular Skills
-            </label>
+          
+          <div className="space-y-4">
             <div className="flex flex-wrap gap-2">
               {popularSkills.map((skill) => (
                 <button
                   key={skill}
                   type="button"
                   onClick={() => handleSkillToggle(skill)}
-                  className={`px-3 py-2 rounded-full text-sm font-medium transition-all ${
+                  className={`px-3 py-1.5 rounded-full text-sm transition-all ${
                     formData.skills.includes(skill)
                       ? "bg-[#A95BAB] text-white"
                       : "bg-gray-700/50 text-gray-300 hover:bg-gray-600/50"
@@ -506,151 +564,106 @@ const handleFormSubmit = async (e) => {
                 </button>
               ))}
             </div>
-          </div>
-
-          {/* Custom Skill Input */}
-          <div className="space-y-3">
-            <label className="block text-sm font-medium text-gray-300">
-              Add Custom Skill
-            </label>
+            
             <div className="flex gap-2">
               <input
                 type="text"
                 value={newSkill}
                 onChange={(e) => setNewSkill(e.target.value)}
-                placeholder="Type a skill..."
+                placeholder="Add custom skill..."
                 className="flex-1 px-4 py-2 bg-gray-700/50 border border-gray-600/50 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-[#A95BAB] focus:border-[#A95BAB] transition-all"
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddCustomSkill())}
+                onKeyPress={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault()
+                    handleAddCustomSkill()
+                  }
+                }}
               />
               <button
                 type="button"
                 onClick={handleAddCustomSkill}
-                className="px-4 py-2 bg-[#A95BAB] hover:bg-[#A95BAB]/80 text-white rounded-lg transition-colors flex items-center"
+                className="px-4 py-2 bg-[#A95BAB] hover:bg-[#A95BAB]/80 text-white rounded-lg transition-colors"
               >
                 <Plus className="w-4 h-4" />
               </button>
             </div>
-          </div>
-
-          {/* Selected Skills */}
-          {formData.skills.length > 0 && (
-            <div className="space-y-3">
-              <label className="block text-sm font-medium text-gray-300">
-                Selected Skills ({formData.skills.length})
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {formData.skills.map((skill, index) => (
-                  <span
-                    key={index}
-                    className="inline-flex items-center px-3 py-1 bg-[#A95BAB]/20 text-[#A95BAB] rounded-full text-sm"
-                  >
-                    <Tag className="w-3 h-3 mr-1" />
-                    {skill}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveSkill(skill)}
-                      className="ml-2 hover:text-red-400 transition-colors"
+            
+            {formData.skills.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm text-gray-400">Selected skills:</p>
+                <div className="flex flex-wrap gap-2">
+                  {formData.skills.map((skill, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-[#A95BAB]/20 text-[#A95BAB] border border-[#A95BAB]/30"
                     >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                ))}
+                      {skill}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveSkill(skill)}
+                        className="ml-2 hover:bg-[#A95BAB]/30 rounded-full p-0.5 transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
               </div>
-              <div className="text-xs text-gray-400 text-right">
-                Skills text: {formData.skills.join(", ").length}/1000 characters
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
-        {/* Pricing & Timeline */}
+        {/* Additional Details */}
         <div className="space-y-6">
           <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
             <span className="w-2 h-2 bg-[#A95BAB] rounded-full mr-3"></span>
-            Pricing & Timeline
+            Additional Details
           </h3>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label htmlFor="budget" className="block text-sm font-medium text-gray-300">
-                <DollarSign className="inline w-4 h-4 mr-1" />
-                Budget *
+              <label htmlFor="duration" className="block text-sm font-medium text-gray-300">
+                <Clock className="inline w-4 h-4 mr-1" />
+                Duration/Availability
               </label>
               <input
-                type="number"
-                id="budget"
-                name="budget"
-                value={formData.budget}
+                type="text"
+                id="duration"
+                name="duration"
+                value={formData.duration}
                 onChange={handleInputChange}
-                placeholder="0"
-                min="0.01"
-                step="0.01"
+                placeholder="e.g., 1 week, 2-3 days, 1 month"
+                maxLength={100}
                 className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-[#A95BAB] focus:border-[#A95BAB] transition-all"
-                required
               />
+              {formData.duration && (
+                <div className="text-xs text-gray-400 text-right">
+                  {formData.duration.length}/100 characters
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="availabilityType" className="block text-sm font-medium text-gray-300">
-                Availability Type
+              <label htmlFor="location" className="block text-sm font-medium text-gray-300">
+                <MapPin className="inline w-4 h-4 mr-1" />
+                Location
               </label>
-              <select
-                id="availabilityType"
-                name="availabilityType"
-                value={formData.availabilityType}
+              <input
+                type="text"
+                id="location"
+                name="location"
+                value={formData.location}
                 onChange={handleInputChange}
+                placeholder="e.g., Remote, New York, Worldwide"
+                maxLength={100}
                 className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-[#A95BAB] focus:border-[#A95BAB] transition-all"
-              >
-                <option value="freelance">Freelance</option>
-                <option value="full-time">Full Time</option>
-                <option value="part-time">Part Time</option>
-                <option value="contract">Contract</option>
-              </select>
+              />
+              {formData.location && (
+                <div className="text-xs text-gray-400 text-right">
+                  {formData.location.length}/100 characters
+                </div>
+              )}
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="duration" className="block text-sm font-medium text-gray-300">
-              <Clock className="inline w-4 h-4 mr-1" />
-              Project Duration
-            </label>
-            <input
-              type="text"
-              id="duration"
-              name="duration"
-              value={formData.duration}
-              onChange={handleInputChange}
-              placeholder="e.g., 1 week, 2-3 days, 1 month"
-              maxLength={100}
-              className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-[#A95BAB] focus:border-[#A95BAB] transition-all"
-            />
-            {formData.duration && (
-              <div className="text-xs text-gray-400 text-right">
-                {formData.duration.length}/100 characters
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="location" className="block text-sm font-medium text-gray-300">
-              <MapPin className="inline w-4 h-4 mr-1" />
-              Location
-            </label>
-            <input
-              type="text"
-              id="location"
-              name="location"
-              value={formData.location}
-              onChange={handleInputChange}
-              placeholder="e.g., Remote, New York, Worldwide"
-              maxLength={100}
-              className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-[#A95BAB] focus:border-[#A95BAB] transition-all"
-            />
-            {formData.location && (
-              <div className="text-xs text-gray-400 text-right">
-                {formData.location.length}/100 characters
-              </div>
-            )}
           </div>
         </div>
 
@@ -681,20 +694,20 @@ const handleFormSubmit = async (e) => {
         <div className="space-y-6">
           <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
             <span className="w-2 h-2 bg-[#A95BAB] rounded-full mr-3"></span>
-            Attachments
+            Portfolio Images
           </h3>
           <div className="space-y-4">
             <label htmlFor="attachments" className="cursor-pointer">
               <div className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-600/50 border-dashed rounded-lg hover:border-[#A95BAB]/50 transition-colors">
                 <Upload className="w-8 h-8 text-gray-400 mb-2" />
-                <p className="text-gray-400 text-sm">Click to upload images</p>
-                <p className="text-gray-500 text-xs">PNG, JPG, or JPEG up to 10MB each</p>
+                <p className="text-gray-400 text-sm">Click to upload portfolio images</p>
+                <p className="text-gray-500 text-xs">PNG, JPG, or JPEG up to 10MB each (max 5 images)</p>
               </div>
             </label>
             <input
               type="file"
               multiple
-              accept="image/png,image/jpeg,image/jpg"
+              accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
               onChange={handleImageUpload}
               className="hidden"
               id="attachments"
@@ -704,7 +717,7 @@ const handleFormSubmit = async (e) => {
             {uploadingImages && (
               <div className="flex items-center justify-center py-4">
                 <Loader />
-                <span className="ml-2 text-gray-300">Uploading images...</span>
+                <span className="ml-2 text-gray-300">Processing images...</span>
               </div>
             )}
             
@@ -716,7 +729,7 @@ const handleFormSubmit = async (e) => {
                       <div className="aspect-square rounded-lg overflow-hidden border border-gray-600 bg-gray-800">
                         <img
                           src={photo.url}
-                          alt={`Attachment ${index + 1}`}
+                          alt={`Portfolio ${index + 1}`}
                           className="w-full h-full object-cover transition-transform group-hover:scale-105"
                           onError={(e) => {
                             console.error('Image failed to load:', photo.url);
@@ -753,7 +766,7 @@ const handleFormSubmit = async (e) => {
                 </div>
                 <div className="text-sm text-gray-400 flex items-center">
                   <Upload className="w-4 h-4 mr-2" />
-                  {formData.attachments.length} of 5 attachment{formData.attachments.length !== 1 ? 's' : ''} selected
+                  {formData.attachments.length} of 5 image{formData.attachments.length !== 1 ? 's' : ''} selected
                 </div>
               </div>
             )}
@@ -770,23 +783,6 @@ const handleFormSubmit = async (e) => {
           >
             Cancel
           </button>
-          
-          {/* Test button to check if function is working */}
-          <button
-            type="button"
-            onClick={() => {
-              console.log("=== TEST BUTTON CLICKED ===");
-              console.log("onSubmit function:", typeof onSubmit);
-              const testData = new FormData();
-              testData.append("test", "value");
-              console.log("Calling onSubmit with test data...");
-              onSubmit(testData);
-            }}
-            className="px-4 py-2 bg-blue-600 text-white rounded text-sm"
-          >
-            TEST
-          </button>
-          
           <button
             type="submit"
             disabled={isSubmitting || uploadingImages}
@@ -799,15 +795,15 @@ const handleFormSubmit = async (e) => {
             {isSubmitting ? (
               <div className="flex items-center justify-center">
                 <Loader />
-                <span className="ml-2">Creating Post...</span>
+                <span className="ml-2">Creating Availability Post...</span>
               </div>
             ) : uploadingImages ? (
               <div className="flex items-center justify-center">
                 <Loader />
-                <span className="ml-2">Uploading Images...</span>
+                <span className="ml-2">Processing Images...</span>
               </div>
             ) : (
-              "Create Post"
+              "Create Availability Post"
             )}
           </button>
         </div>
@@ -816,4 +812,4 @@ const handleFormSubmit = async (e) => {
   )
 }
 
-export default CreatePostForm
+export default CreateAvailabilityPostForm

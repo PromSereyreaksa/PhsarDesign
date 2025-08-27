@@ -57,6 +57,41 @@ const categoryAPI = {
     const response = await API.delete(`/api/categories/${categoryId}`);
     return response.data;
   },
+
+  // Get posts by category
+  getAvailabilityPostsByCategory: async (categoryId, filters = {}) => {
+    const params = new URLSearchParams();
+    
+    // Add pagination parameters
+    if (filters.page) params.append('page', filters.page);
+    if (filters.limit) params.append('limit', filters.limit || 10);
+    
+    // Add other filters
+    if (filters.search) params.append('search', filters.search);
+    if (filters.sortBy) params.append('sortBy', filters.sortBy);
+    if (filters.budget_min) params.append('budget_min', filters.budget_min);
+    if (filters.budget_max) params.append('budget_max', filters.budget_max);
+    
+    const response = await API.get(`/api/categories/${categoryId}/availability-posts?${params.toString()}`);
+    return response.data;
+  },
+
+  getJobPostsByCategory: async (categoryId, filters = {}) => {
+    const params = new URLSearchParams();
+    
+    // Add pagination parameters
+    if (filters.page) params.append('page', filters.page);
+    if (filters.limit) params.append('limit', filters.limit || 10);
+    
+    // Add other filters
+    if (filters.search) params.append('search', filters.search);
+    if (filters.sortBy) params.append('sortBy', filters.sortBy);
+    if (filters.budget_min) params.append('budget_min', filters.budget_min);
+    if (filters.budget_max) params.append('budget_max', filters.budget_max);
+    
+    const response = await API.get(`/api/categories/${categoryId}/job-posts?${params.toString()}`);
+    return response.data;
+  },
 };
 
 export default categoryAPI;

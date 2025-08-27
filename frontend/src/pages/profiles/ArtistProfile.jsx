@@ -480,7 +480,7 @@ console.log("My post:", myAvailabilityPosts);
                   <h2 className="text-2xl font-bold text-white">Portfolio</h2>
                   {isOwner && (
                     <Button
-                      onClick={() => navigate("/marketplace/create")}
+                      onClick={() => navigate("/marketplace/create?type=availability")}
                       className="bg-[#A95BAB] hover:bg-[#A95BAB]/80"
                     >
                       Add New Work
@@ -557,7 +557,7 @@ console.log("My post:", myAvailabilityPosts);
                       <p className="text-gray-400">No portfolio items yet.</p>
                       {isOwner && (
                         <Button
-                          onClick={() => navigate("/marketplace/create")}
+                          onClick={() => navigate("/marketplace/create?type=availability")}
                           className="mt-4 bg-[#A95BAB] hover:bg-[#A95BAB]/80"
                         >
                           Add Your First Work

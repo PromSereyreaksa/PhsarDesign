@@ -1,38 +1,47 @@
 "use client"
 
 import { Briefcase, Calendar, DollarSign, MapPin, Tag, Trash2, Upload, Users } from "lucide-react"
-import { useState } from "react"
-import { useDispatch } from "react-redux"
-import { createPost } from "../../store/slices/marketplaceSlice"; // Update path as needed
+import { useEffect, useState } from "react"
+import { useDispatch, useSelector } from "react-redux"
+import { fetchCategories } from "../../store/slices/categoriesSlice"
 import Loader from "../ui/Loader"
 
 const CreateJobPostForm = ({ onSubmit, onCancel, isSubmitting = false }) => {
   const dispatch = useDispatch()
+  const { categories, loading: categoriesLoading } = useSelector((state) => state.categories)
+  const { user } = useSelector((state) => state.auth)
+  
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     budget: "",
-    budgetType: "",
+    budgetType: "fixed",
     deadline: "",
     skillRequired: "",
     experienceLevel: "",
     categoryId: "",
     location: "",
     attachments: [],
+    isActive: true,
   })
 
   const [uploadingImages, setUploadingImages] = useState(false)
 
-  const categories = [
-    "Graphic Design",
-    "Web Design",
-    "Logo Design",
-    "Illustration",
-    "Photography",
-    "Video Editing",
-    "Animation",
-    "UI/UX Design",
-  ]
+  // RBAC Check - Only clients can use this form
+  useEffect(() => {
+    if (user && user.role !== 'client') {
+      const showToast = async () => {
+        const { showToast } = await import("../../components/ui/toast")
+        showToast(`Access denied. Only clients can create job posts. Your role: ${user.role}`, 'error')
+      }
+      showToast()
+    }
+  }, [user])
+
+  // Fetch categories on component mount
+  useEffect(() => {
+    dispatch(fetchCategories())
+  }, [dispatch])
 
   const experienceLevels = ["Entry Level", "Intermediate", "Expert", "Any Level"]
 
@@ -56,17 +65,32 @@ const CreateJobPostForm = ({ onSubmit, onCancel, isSubmitting = false }) => {
       const isValidSize = file.size <= 10 * 1024 * 1024 // 10MB
 
       if (!isValidType) {
-        alert(`${file.name} is not a valid image file`)
+        const showToast = async () => {
+          const { showToast } = await import("../../components/ui/toast")
+          showToast(`${file.name} is not a valid image file`, 'error')
+        }
+        showToast()
         return false
       }
       if (!isValidSize) {
-        alert(`${file.name} is too large (max 10MB)`)
+        const showToast = async () => {
+          const { showToast } = await import("../../components/ui/toast")
+          showToast(`${file.name} is too large (max 10MB)`, 'error')
+        }
+        showToast()
         return false
       }
       return true
     })
 
     if (validFiles.length === 0) return
+
+    // Check total attachments limit
+    if (formData.attachments.length + validFiles.length > 5) {
+      const { showToast } = await import("../../components/ui/toast")
+      showToast('You can upload maximum 5 images', 'error')
+      return;
+    }
 
     setUploadingImages(true)
 
@@ -96,10 +120,12 @@ const CreateJobPostForm = ({ onSubmit, onCancel, isSubmitting = false }) => {
       }))
 
       console.log("Files prepared for upload:", newAttachments.length)
-      alert(`${newAttachments.length} image(s) added successfully! Images will be uploaded when you submit the form.`)
+      const { showToast } = await import("../../components/ui/toast")
+      showToast(`${newAttachments.length} image(s) added successfully! Images will be uploaded when you submit the form.`, 'success')
     } catch (error) {
       console.error("Image processing failed:", error)
-      alert(`Failed to process images: ${error.message}`)
+      const { showToast } = await import("../../components/ui/toast")
+      showToast(`Failed to process images: ${error.message}`, 'error')
     } finally {
       setUploadingImages(false)
       // Reset file input
@@ -115,43 +141,96 @@ const CreateJobPostForm = ({ onSubmit, onCancel, isSubmitting = false }) => {
     }))
   }
 
-  // Form submission function
+  // Form submission function - Redux-only approach with RBAC
   const handleFormSubmit = async (e) => {
     e.preventDefault()
 
-    // Validation
-    if (!formData.title.trim()) {
-      alert("Please enter a job title")
-      return
-    }
-
-    if (!formData.description.trim()) {
-      alert("Please enter a job description")
-      return
-    }
-
-    if (!formData.budget) {
-      alert("Please enter a budget")
-      return
-    }
-
-    if (!formData.deadline) {
-      alert("Please select a deadline")
-      return
-    }
-
-    // Check if deadline is in the future
-    const deadlineDate = new Date(formData.deadline)
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-
-    if (deadlineDate <= today) {
-      alert("Deadline must be in the future")
-      return
+    // RBAC enforcement - Double check user role
+    if (!user || user.role !== 'client') {
+      const { showToast } = await import("../../components/ui/toast")
+      showToast('Access denied. Only clients can create job posts.', 'error')
+      return;
     }
 
     try {
       setUploadingImages(true)
+
+      // Validation with toast notifications
+      if (!formData.title.trim()) {
+        const { showToast } = await import("../../components/ui/toast")
+        showToast("Please enter a job title", 'error')
+        setUploadingImages(false)
+        return
+      }
+
+      if (formData.title.trim().length < 5 || formData.title.trim().length > 255) {
+        const { showToast } = await import("../../components/ui/toast")
+        showToast("Job title must be between 5 and 255 characters", 'error')
+        setUploadingImages(false)
+        return
+      }
+
+      if (!formData.description.trim()) {
+        const { showToast } = await import("../../components/ui/toast")
+        showToast("Please enter a job description", 'error')
+        setUploadingImages(false)
+        return
+      }
+
+      if (formData.description.trim().length < 20 || formData.description.trim().length > 5000) {
+        const { showToast } = await import("../../components/ui/toast")
+        showToast("Job description must be between 20 and 5000 characters", 'error')
+        setUploadingImages(false)
+        return
+      }
+
+      if (!formData.categoryId) {
+        const { showToast } = await import("../../components/ui/toast")
+        showToast("Please select a category", 'error')
+        setUploadingImages(false)
+        return
+      }
+
+      if (!formData.budget || parseFloat(formData.budget) <= 0) {
+        const { showToast } = await import("../../components/ui/toast")
+        showToast("Please enter a valid budget", 'error')
+        setUploadingImages(false)
+        return
+      }
+
+      if (!formData.deadline) {
+        const { showToast } = await import("../../components/ui/toast")
+        showToast("Please select a deadline", 'error')
+        setUploadingImages(false)
+        return
+      }
+
+      // Check if deadline is in the future
+      const deadlineDate = new Date(formData.deadline)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+
+      if (deadlineDate <= today) {
+        const { showToast } = await import("../../components/ui/toast")
+        showToast("Deadline must be in the future", 'error')
+        setUploadingImages(false)
+        return
+      }
+
+      // Get client ID
+      const clientId = user.userId || user.clientId || user.id || user._id;
+      console.log("=== CLIENT ID DETECTION ===");
+      console.log("Detected clientId:", clientId);
+      
+      if (!clientId) {
+        console.error("=== CLIENT ID ERROR ===");
+        console.error("Could not find any valid user ID field");
+        console.error("Available user fields:", Object.keys(user || {}));
+        const { showToast } = await import("../../components/ui/toast")
+        showToast("Unable to identify your user ID. Please try logging out and logging in again.", 'error')
+        setUploadingImages(false);
+        return;
+      }
 
       // Construct multipart payload expected by backend route upload.array('attachment', 10)
       const submitData = new FormData()
@@ -161,17 +240,21 @@ const CreateJobPostForm = ({ onSubmit, onCancel, isSubmitting = false }) => {
         }
       }
 
+      appendIfPresent("clientId", clientId)
       appendIfPresent("title", formData.title?.trim())
       appendIfPresent("description", formData.description?.trim())
-      appendIfPresent("budget", formData.budget)
+      appendIfPresent("budget", parseFloat(formData.budget))
       appendIfPresent("budgetType", formData.budgetType)
       appendIfPresent("skillRequired", formData.skillRequired?.trim())
       appendIfPresent("experienceLevel", formData.experienceLevel)
-      appendIfPresent("categoryId", formData.categoryId)
+      appendIfPresent("categoryId", parseInt(formData.categoryId))
       appendIfPresent("location", formData.location?.trim())
       // Convert date to ISO if possible
       appendIfPresent("deadline", formData.deadline ? new Date(formData.deadline).toISOString() : undefined)
-      appendIfPresent("isActive", true)
+      appendIfPresent("isActive", formData.isActive.toString())
+
+      // Add postType to indicate this is a job post for the Redux thunk
+      submitData.append("postType", "job")
 
       // Append files
       ;(formData.attachments || [])
@@ -179,35 +262,35 @@ const CreateJobPostForm = ({ onSubmit, onCancel, isSubmitting = false }) => {
         .filter(Boolean)
         .forEach((file) => submitData.append("attachment", file))
 
-      // Add postType to indicate this is a job post for the Redux thunk
-      submitData.append("postType", "job")
+      console.log("=== JOB POST FORM SUBMISSION DEBUG ===");
+      console.log("Submitting form data:");
+      for (let [key, value] of submitData.entries()) {
+        console.log(key, value);
+      }
 
-      // Use Redux action instead of calling API directly
-      const response = await dispatch(createPost(submitData)).unwrap()
-
-      console.log("Job post submitted successfully:", response)
-      alert("Job post created successfully!")
-
-      // Reset form
+      // Reset form after validation passes
       setFormData({
         title: "",
         description: "",
         budget: "",
-        budgetType: "",
+        budgetType: "fixed",
         deadline: "",
         skillRequired: "",
         experienceLevel: "",
         categoryId: "",
         location: "",
         attachments: [],
+        isActive: true,
       })
 
-      if (onSubmit) {
-        onSubmit(response)
-      }
+      // Call parent onSubmit (which uses Redux)
+      onSubmit(submitData)
     } catch (error) {
-      console.error("Form submission error:", error)
-      alert(`Failed to submit job post: ${error.response?.data?.error || error.message || error}`)
+      console.error("=== JOB POST FORM SUBMISSION ERROR ===");
+      console.error("Error object:", error);
+      const { showToast } = await import("../../components/ui/toast")
+      const errorMessage = error.message || "An unexpected error occurred";
+      showToast(`Failed to submit job post: ${errorMessage}`, 'error')
     } finally {
       setUploadingImages(false)
     }
@@ -225,6 +308,28 @@ const CreateJobPostForm = ({ onSubmit, onCancel, isSubmitting = false }) => {
       ...prev,
       attachments: prev.attachments.filter((_, i) => i !== index),
     }))
+  }
+
+  // Early return for unauthorized users
+  if (!user || user.role !== 'client') {
+    return (
+      <div className="bg-gray-800/20 backdrop-blur border border-red-500/50 rounded-xl p-8">
+        <div className="text-center space-y-4">
+          <div className="text-red-400 text-xl">🚫 Access Denied</div>
+          <h3 className="text-xl font-semibold text-white">Clients Only</h3>
+          <p className="text-gray-300">
+            Only clients can create job posts.
+            {user ? ` Your current role is: ${user.role}` : ' Please log in as a client.'}
+          </p>
+          <button
+            onClick={onCancel}
+            className="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -255,22 +360,30 @@ const CreateJobPostForm = ({ onSubmit, onCancel, isSubmitting = false }) => {
 
           <div className="space-y-2">
             <label htmlFor="categoryId" className="block text-sm font-medium text-gray-300">
-              Category
+              Category *
             </label>
-            <select
-              id="categoryId"
-              name="categoryId"
-              value={formData.categoryId}
-              onChange={handleInputChange}
-              className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-lg text-white focus:ring-2 focus:ring-[#A95BAB] focus:border-[#A95BAB] transition-all"
-            >
-              <option value="">Select a category</option>
-              {categories.map((category, index) => (
-                <option key={category} value={index + 1}>
-                  {category}
-                </option>
-              ))}
-            </select>
+            {categoriesLoading ? (
+              <div className="flex items-center py-3">
+                <Loader />
+                <span className="ml-2 text-gray-400">Loading categories...</span>
+              </div>
+            ) : (
+              <select
+                id="categoryId"
+                name="categoryId"
+                value={formData.categoryId}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-lg text-white focus:ring-2 focus:ring-[#A95BAB] focus:border-[#A95BAB] transition-all"
+                required
+              >
+                <option value="">Select a category</option>
+                {categories.map((category) => (
+                  <option key={category.categoryId} value={category.categoryId}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
           <div className="space-y-2">

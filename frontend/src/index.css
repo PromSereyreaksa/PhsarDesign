@@ -8,3 +8,72 @@
 body {
   font-family: 'Poppins', sans-serif;
 }
+
+/* Remove ALL blue outlines and loading animations */
+* {
+  outline: none !important;
+}
+
+*:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Remove blue outlines and loading animations from images */
+img {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: none !important;
+}
+
+/* Remove focus outlines on images */
+img:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Remove any browser default loading states */
+img[loading="lazy"] {
+  opacity: 1 !important;
+  transition: opacity 0.3s ease;
+}
+
+/* Remove blue loading ring animations */
+img:not([src]), img[src=""], img[src*="loading"] {
+  background: none !important;
+}
+
+/* Remove any default image loading placeholders */
+img::before, img::after {
+  display: none !important;
+}
+
+/* Custom animations for floating button */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out forwards;
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 3s ease-in-out infinite;
+}
