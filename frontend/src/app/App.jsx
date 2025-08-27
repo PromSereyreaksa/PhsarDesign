@@ -22,6 +22,7 @@ import AboutPage from "../pages/public/AboutPage/index.jsx"
 import LandingPage from "../pages/public/LandingPage/index.jsx"
 import PublicArtistProfile from "../pages/public/PublicArtistProfile.jsx"
 import "./App.css"
+import JobDetailPage from "../pages/Marketplace/JobDetailPage.jsx"
 
 function App() {
   return (
@@ -36,7 +37,8 @@ function App() {
 
         <Route path="/marketplace" element={<MarketplacePage />} />
         <Route path="/marketplace/category/:categoryName" element={<CategoryPage />} />
-        <Route path="/marketplace/:slug" element={<PostDetailPage />} />
+        <Route path="/marketplace/service/:slug" element={<PostDetailPage />} />
+        <Route path="/marketplace/job/:slug" element={<JobDetailPage />} />
         <Route 
           path="/marketplace/:slug/contact" 
           element={

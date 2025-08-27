@@ -135,7 +135,7 @@ export const fetchMyJobPosts = createAsyncThunk(
   'posts/fetchMyJobPosts',
   async (params = {}) => {
     const response = await jobPostsAPI.getMyPosts(params);
-    return normalizeResponse(response.data, 'posts');
+    return normalizeResponse(response.data.data, 'jobPosts');
   }
 );
 

@@ -6,9 +6,9 @@ const SimplePostCard = ({ post }) => {
   const navigate = useNavigate()
 
   const handleViewDetails = () => {
-    // Create slug from title
-    const slug = post.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-    navigate(`/marketplace/${slug}-${post.jobId}`)
+    const isPostId = post.postId ? true : false;
+    if (isPostId) navigate(`/marketplace/service/${post.slug}`)
+    else navigate(`/marketplace/job/${post.slug}`)
   }
 
   const formatPrice = (budget) => {
@@ -32,10 +32,10 @@ const SimplePostCard = ({ post }) => {
     }).filter(Boolean)
   }
 
-  const imageUrls = getImageUrls(post.attachments)
+  const imageUrls = getImageUrls(post.attachments || post.attachment)
   const mainImageUrl = imageUrls.length > 0 ? imageUrls[0] : null
-  const artistName = post.artist?.user ? `${post.artist.user.firstName} ${post.artist.user.lastName}` : "Artist"
-  const avatarUrl = post.artist?.avatar || null
+  const artistName = post.artist?.user ? `${post.artist.user.firstName} ${post.artist.user.lastName}` : `${post.client.user.firstName} ${post.client.user.lastName}`
+  const avatarUrl = post.artist?.user.avatarURL || post.client?.user?.avatarURL || null
 
   return (
     <div className="group relative h-full">
