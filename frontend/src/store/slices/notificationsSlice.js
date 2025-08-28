@@ -9,6 +9,7 @@ export const fetchNotifications = createAsyncThunk(
       console.log('[Notifications] Fetching notifications with params:', params)
       const response = await notificationsAPI.getAll(params)
       console.log('[Notifications] Successfully fetched notifications:', response.data)
+      console.log('[Notifications] First notification structure:', response.data?.notifications?.[0] || response.data?.data?.[0])
       return response.data
     } catch (error) {
       console.error('[Notifications] Error fetching notifications:', error)
@@ -84,10 +85,8 @@ const initialState = {
   unreadCount: 0,
   loading: false,
   error: null,
-  total: 0,
-  limit: 20,
-  offset: 0
-}
+  lastFetched: null
+};
 
 const notificationsSlice = createSlice({
   name: 'notifications',
@@ -122,13 +121,27 @@ const notificationsSlice = createSlice({
         state.error = null
       })
       .addCase(fetchNotifications.fulfilled, (state, action) => {
-        state.loading = false
-        state.notifications = action.payload.data.notifications
-        state.total = action.payload.data.total
-        state.limit = action.payload.data.limit
-        state.offset = action.payload.data.offset
-        // Update unread count from fetched notifications
-        state.unreadCount = action.payload.data.notifications.filter(n => !n.isRead).length
+        state.loading = false;
+        console.log('[notificationsSlice] Raw API response:', action.payload);
+        
+        if (action.payload && action.payload.data) {
+          state.notifications = action.payload.data.notifications || [];
+          state.total = action.payload.data.total || 0;
+          state.limit = action.payload.data.limit || 10;
+          state.offset = action.payload.data.offset || 0;
+          // Update unread count from fetched notifications
+          state.unreadCount = state.notifications.filter(n => !n.isRead).length;
+        } else {
+          // Fallback for different response structure
+          state.notifications = action.payload || [];
+          state.unreadCount = state.notifications.filter(n => !n.isRead).length;
+        }
+        
+        console.log('[notificationsSlice] State updated:', {
+          notificationsCount: state.notifications.length,
+          unreadCount: state.unreadCount,
+          firstNotification: state.notifications[0]
+        });
       })
       .addCase(fetchNotifications.rejected, (state, action) => {
         state.loading = false

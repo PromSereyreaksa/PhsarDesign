@@ -1,5 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 import apiReducer from './slices/apiSlice';
+import applicationsReducer from './slices/applicationsSlice';
 import artistsReducer from './slices/artistsSlice';
 import authReducer from './slices/authSlice';
 import categoriesReducer from './slices/categoriesSlice';
@@ -16,6 +17,7 @@ export const store = configureStore({
     artists: artistsReducer,
     categories: categoriesReducer,
     notifications: notificationsReducer,
+    applications: applicationsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

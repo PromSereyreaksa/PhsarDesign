@@ -327,6 +327,7 @@ export default function LandingPage() {
                   Connect with talented digital artists, designers, and creative professionals. Bring your vision to
                   life with world-class creative services.
                 </p>
+                <p className="text-yellow-500">Reminder: We are still in testing / development, sorry in advance if something is broken or not working as expected.</p>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4">

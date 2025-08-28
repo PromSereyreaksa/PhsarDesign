@@ -131,11 +131,47 @@ export function MultiStepApplicationModal({
         return
       }
 
-       if (isJobApplication) {
+      console.log('🔥 Pre-submission debug:', {
+        currentUser: {
+          userId: user.userId,
+          role: user.role,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName
+        },
+        post: {
+          id: post.id,
+          jobId: post.jobId,
+          jobPostId: post.jobPostId,
+          clientId: post.clientId,
+          client: post.client,
+          userId: post.userId,
+          postType: post.postType
+        },
+        applicationType: applicationType,
+        isJobApplication
+      })
+
+      if (isJobApplication) {
+        // Artist applying to job - validate user is artist
+        if (!user.role || (user.role !== 'artist' && user.role !== 'freelancer')) {
+          showToast(`Only artists can apply to jobs. Your current role is: ${user.role || 'unknown'}`, 'error')
+          setIsSubmitting(false)
+          return
+        }
+
+        // Validate receiver (client) exists - use the client's user ID, not the clientId
+        const receiverId = post.client?.user?.userId || post.userId
+        if (!receiverId) {
+          showToast('Unable to identify the job poster. Please try again later.', 'error')
+          setIsSubmitting(false)
+          return
+        }
+
         // Artist applying to job
         const applicationData = {
           senderId: user.userId, // Current user (artist) applying
-          receiverId: post.clientId || post.client?.clientId || post.client?.user?.userId || post.userId, // Job poster (client)
+          receiverId: receiverId, // Job poster (client)
           jobId: post.jobId || post.jobPostId || post.id,
           subject: formData.subject.trim(),
           message: formData.message.trim(),
@@ -147,6 +183,21 @@ export function MultiStepApplicationModal({
           additionalNotes: formData.additionalNotes?.trim() || null,
           pastProjects: formData.pastProjects?.trim() || null
         }
+        
+        console.log('🔥 Job application data being sent:', {
+          ...applicationData,
+          currentUser: user,
+          currentUserRole: user.role,
+          post: post,
+          postClient: post.client,
+          receiverIdUsed: receiverId,
+          receiverIdOptions: {
+            'post.client?.user?.userId (USED)': post.client?.user?.userId,
+            'post.userId (fallback)': post.userId,
+            'post.clientId (NOT used)': post.clientId,
+            'post.client?.clientId (NOT used)': post.client?.clientId
+          }
+        })
         
         await applicationsAPI.applyToJob(applicationData)
       } else {
