@@ -1,77 +1,88 @@
-import { useEffect } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import { fetchNotifications, fetchUnreadCount } from '../store/slices/notificationsSlice'
+import { useEffect, useMemo, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchNotifications } from '../store/slices/notificationsSlice';
 
 /**
  * Custom hook for managing notifications
- * Provides easy access to notification state and actions
+ * Provides easy access to notification state and actions with real-time updates
  */
-export const useNotifications = (autoFetch = true) => {
-  const dispatch = useDispatch()
-  const {
-    notifications,
-    unreadCount,
-    loading,
+export const useNotifications = () => {
+  const dispatch = useDispatch();
+  const notifications = useSelector((state) => state.notifications.notifications) || [];
+  const loading = useSelector((state) => state.notifications.loading) || false;
+  const error = useSelector((state) => state.notifications.error);
+  const [lastNotificationCount, setLastNotificationCount] = useState(0);
+  const [isNewNotification, setIsNewNotification] = useState(false);
+
+  const unreadCount = useMemo(() => {
+    const count = notifications.filter(notification => !notification.isRead).length;
+    console.log('[useNotifications] Calculating unread count:', { 
+      notifications: notifications.length, 
+      unread: count,
+      notificationsArray: notifications 
+    });
+    return count;
+  }, [notifications]);
+
+  console.log('[useNotifications] Hook state:', { 
+    notifications: notifications.length, 
+    unreadCount, 
+    loading, 
     error,
-    total
-  } = useSelector((state) => state.notifications)
+    lastNotificationCount,
+    isNewNotification
+  });
 
-  // Auto-fetch notifications on mount if enabled
+  // Detect new notifications
   useEffect(() => {
-    if (autoFetch) {
-      console.log('[useNotifications] Auto-fetching notifications...')
-      dispatch(fetchNotifications())
-      dispatch(fetchUnreadCount())
+    if (unreadCount > lastNotificationCount && lastNotificationCount > 0) {
+      setIsNewNotification(true);
+      const timer = setTimeout(() => setIsNewNotification(false), 3000);
+      return () => clearTimeout(timer);
     }
-  }, [dispatch, autoFetch])
+    setLastNotificationCount(unreadCount);
+  }, [unreadCount, lastNotificationCount]);
 
-  // Helper functions
+  // Auto-refresh notifications
+  useEffect(() => {
+    const refreshNotifications = () => {
+      dispatch(fetchNotifications());
+    };
+
+    refreshNotifications(); // Initial fetch
+    const interval = setInterval(refreshNotifications, 30000); // Refresh every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [dispatch]);
+
   const refreshNotifications = () => {
-    dispatch(fetchNotifications())
-    dispatch(fetchUnreadCount())
-  }
-
-  const getUnreadNotifications = () => {
-    return notifications.filter(notification => !notification.isRead)
-  }
-
-  const getApplicationNotifications = () => {
-    return notifications.filter(notification => 
-      notification.type === 'application_received' || 
-      notification.type === 'application_accepted' ||
-      notification.type === 'application_rejected'
-    )
-  }
+    dispatch(fetchNotifications());
+  };
 
   return {
-    // State
     notifications,
     unreadCount,
     loading,
     error,
-    total,
-    
-    // Computed values
-    unreadNotifications: getUnreadNotifications(),
-    applicationNotifications: getApplicationNotifications(),
-    
-    // Actions
+    isNewNotification,
     refreshNotifications,
-    
-    // Dispatch actions (for more control)
     dispatch
-  }
-}
+  };
+};
 
 /**
  * Hook specifically for application-related notifications
  */
 export const useApplicationNotifications = () => {
-  const { applicationNotifications, refreshNotifications, dispatch } = useNotifications()
+  const { notifications, refreshNotifications, dispatch } = useNotifications();
+  
+  const applicationNotifications = notifications.filter(
+    notification => notification.type === 'application' || notification.type === 'project'
+  );
   
   return {
     applicationNotifications,
     refreshNotifications,
     dispatch
-  }
-}
+  };
+};

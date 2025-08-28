@@ -49,6 +49,21 @@ img::before, img::after {
   display: none !important;
 }
 
+/* Prevent notification badge from animating and flashing */
+.notification-badge {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Utility classes */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 /* Custom animations for floating button */
 @keyframes fade-in {
   from {

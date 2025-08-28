@@ -1,27 +1,130 @@
 "use client"
 
 import {
-    Bell,
-    Briefcase,
-    ChevronRight,
-    LayoutDashboard,
-    LogOut,
-    Plus,
-    Search,
-    Settings,
-    User,
-    Users,
+  Bell,
+  Briefcase,
+  ChevronRight,
+  FileText,
+  LayoutDashboard,
+  LogOut,
+  Plus,
+  Search,
+  Settings,
+  User,
+  Users,
 } from "lucide-react"
-import { useEffect, useRef, useState } from "react"
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { useLocation, useNavigate } from "react-router-dom"
 import { useNotifications } from "../../hooks/useNotifications"
+import { fetchIncomingApplications } from "../../store/slices/applicationsSlice"
 import { logout } from "../../store/slices/authSlice"
 import { markAllAsRead, markAsRead } from "../../store/slices/notificationsSlice"
 
 // Import from the correct slice - matching MarketplacePage
 import { setFilters } from "../../store/slices/marketplaceSlice"
 import { fetchAvailabilityPosts, fetchJobPosts, setActiveTab } from "../../store/slices/postsSlice"
+
+// Memoized notification badge component to prevent flashing
+const NotificationBadge = React.memo(({ unreadCount, isNewNotification }) => {
+  console.log('[NotificationBadge] Received props:', { unreadCount, isNewNotification, type: typeof unreadCount });
+  
+  // Safety check for unreadCount
+  const safeUnreadCount = unreadCount ?? 0;
+  console.log('[NotificationBadge] Safe unreadCount:', safeUnreadCount);
+  
+  if (safeUnreadCount <= 0) {
+    console.log('[NotificationBadge] No unread notifications, returning null');
+    return null;
+  }
+
+  return (
+    <span 
+      className={`absolute -top-1 -right-1 h-4 w-4 text-xs font-bold text-white bg-red-500 rounded-full flex items-center justify-center ${
+        isNewNotification ? 'animate-pulse' : ''
+      }`}
+    >
+      {safeUnreadCount.toString()}
+    </span>
+  );
+});
+
+// Application badge for pending applications count
+const ApplicationBadge = React.memo(({ pendingCount }) => {
+  const safePendingCount = pendingCount ?? 0;
+  
+  if (safePendingCount <= 0) {
+    return null;
+  }
+
+  return (
+    <span className="absolute -top-1 -right-1 h-4 w-4 text-xs font-bold text-white bg-[#A95BAB] rounded-full flex items-center justify-center">
+      {safePendingCount.toString()}
+    </span>
+  );
+});
+
+// Memoized notification item to prevent unnecessary re-renders
+const NotificationItem = ({ notification, onNotificationClick, onMarkAsRead }) => {
+  const handleClick = useCallback(() => {
+    onNotificationClick(notification)
+  }, [notification, onNotificationClick])
+
+  const handleMarkAsRead = useCallback((e) => {
+    e.stopPropagation()
+    console.log('[NotificationItem] Marking as read, notification object:', notification)
+    console.log('[NotificationItem] Notification ID:', notification?.id || notification?.notificationId || notification?.notification_id)
+    const notificationId = notification?.id || notification?.notificationId || notification?.notification_id
+    if (notificationId) {
+      onMarkAsRead(notificationId)
+    } else {
+      console.error('[NotificationItem] No valid notification ID found in:', notification)
+    }
+  }, [notification, onMarkAsRead])
+
+  return (
+    <div
+      key={notification.id}
+      className={`p-4 border-b border-gray-700/50 last:border-b-0 ${
+        !notification.isRead ? 'bg-[#A95BAB]/10' : ''
+      }`}
+    >
+      <div className="flex justify-between items-start gap-3">
+        <div 
+          className="flex-1 cursor-pointer"
+          onClick={handleClick}
+        >
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <p className={`text-sm ${!notification.isRead ? 'font-semibold text-white' : 'text-gray-300'}`}>
+                {notification.title}
+              </p>
+              <p className="text-sm text-gray-400 mt-1 line-clamp-2">
+                {notification.message}
+              </p>
+              <p className="text-xs text-gray-500 mt-2">
+                {new Date(notification.createdAt).toLocaleDateString()}
+              </p>
+            </div>
+            {!notification.isRead && (
+              <span className="w-2 h-2 bg-[#A95BAB] rounded-full ml-2 mt-1 flex-shrink-0"></span>
+            )}
+          </div>
+        </div>
+        
+        {/* Mark as read button */}
+        {!notification.isRead && (
+          <button
+            onClick={handleMarkAsRead}
+            className="text-xs text-[#A95BAB] hover:text-white transition-colors px-2 py-1 rounded border border-[#A95BAB]/30 hover:border-[#A95BAB]/60"
+          >
+            Mark read
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
 
 export default function AuthNavbar() {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false)
@@ -36,9 +139,69 @@ export default function AuthNavbar() {
   const { user } = useSelector((s) => s.auth)
   const { filters } = useSelector((s) => s.marketplace) // filters from marketplace slice
   const activeTab = useSelector((s) => s.posts?.activeTab) // activeTab from posts slice
+  
+  // Get applications for the mailbox badge
+  const { incoming } = useSelector((s) => s.applications)
 
-  // Notification system
-  const { notifications, unreadCount, loading } = useNotifications()
+  // Notification system with stable reference
+  const { notifications, unreadCount: rawUnreadCount, loading } = useNotifications()
+  
+  // Calculate pending applications count
+  const pendingApplicationsCount = useMemo(() => {
+    if (!Array.isArray(incoming)) return 0
+    return incoming.filter(app => app.status === 'pending').length
+  }, [incoming])
+  
+  // Ensure unreadCount is always a valid number
+  const unreadCount = useMemo(() => {
+    const safeCount = typeof rawUnreadCount === 'number' ? rawUnreadCount : 0;
+    console.log('[AuthNavbar] UnreadCount calculation:', { 
+      rawUnreadCount, 
+      type: typeof rawUnreadCount, 
+      safeCount,
+      notificationsLength: notifications?.length 
+    });
+    return safeCount;
+  }, [rawUnreadCount, notifications?.length])
+  
+  // Memoize handlers to prevent unnecessary re-renders
+  const handleNotificationClick = useCallback((notification) => {
+    console.log('[AuthNavbar] Notification clicked:', notification)
+    const notificationId = notification?.id || notification?.notificationId || notification?.notification_id
+    
+    if (!notification.isRead && notificationId) {
+      dispatch(markAsRead(notificationId))
+    }
+    
+    // Navigate to relevant page based on notification type
+    switch (notification.type) {
+      case 'application_received':
+      case 'application_accepted':
+      case 'application_rejected':
+      case 'application':
+        navigate('/dashboard/applications')
+        break
+      case 'project_created':
+        navigate('/dashboard/projects')
+        break
+      case 'message_received':
+        navigate('/dashboard/messages')
+        break
+      default:
+        // For other notifications, go to notifications page
+        navigate('/dashboard/notifications')
+        break
+    }
+    setIsNotificationDropdownOpen(false)
+  }, [dispatch, navigate])
+
+  const handleMarkAllAsRead = useCallback(() => {
+    dispatch(markAllAsRead())
+  }, [dispatch])
+
+  const handleMarkAsRead = useCallback((notificationId) => {
+    dispatch(markAsRead(notificationId))
+  }, [dispatch])
 
   // Which parent menu is visually active
   const [activeMenu, setActiveMenu] = useState(null) // "home" | "talents" | "works" | "community" | null
@@ -50,6 +213,18 @@ export default function AuthNavbar() {
     else if (activeTab === "jobs") setActiveMenu("works")
     else setActiveMenu(null)
   }, [activeTab, location.pathname])
+
+  // Fetch applications periodically for badge count
+  useEffect(() => {
+    const fetchAppsForBadge = () => {
+      dispatch(fetchIncomingApplications())
+    }
+
+    fetchAppsForBadge() // Initial fetch
+    const interval = setInterval(fetchAppsForBadge, 60000) // Refresh every minute
+
+    return () => clearInterval(interval)
+  }, [dispatch])
 
   // Close profile dropdown when clicking outside
   useEffect(() => {
@@ -113,8 +288,9 @@ export default function AuthNavbar() {
   // Profile menu items
   const profileMenuItems = [
     { label: "Profile", icon: User, href: "/profile" },
-    { label: "Settings", icon: Settings, href: "/settings" },
     { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+    { label: "Applications", icon: FileText, href: "/dashboard/applications" },
+    { label: "Settings", icon: Settings, href: "/settings" },
   ]
 
   // Dropdown menu data (each has tabType + href)
@@ -168,21 +344,6 @@ export default function AuthNavbar() {
     dispatch(logout())
     setIsProfileDropdownOpen(false)
     navigate('/')
-  }
-
-  const handleNotificationClick = (notification) => {
-    if (!notification.isRead) {
-      dispatch(markAsRead(notification.id))
-    }
-    // Navigate to relevant page based on notification type
-    if (notification.type === 'application') {
-      navigate('/dashboard/applications')
-    }
-    setIsNotificationDropdownOpen(false)
-  }
-
-  const handleMarkAllAsRead = () => {
-    dispatch(markAllAsRead())
   }
 
   // Reusable dropdown (parent clickable + children clickable)
@@ -304,6 +465,18 @@ export default function AuthNavbar() {
 
           {/* Right side */}
           <div className="flex items-center space-x-2">
+            {/* Applications Mailbox */}
+            <div className="relative">
+              <button
+                onClick={() => navigate('/dashboard/applications')}
+                className="relative p-2 text-white hover:text-[#A95BAB] transition-colors duration-500 ease-out"
+                title="View Applications"
+              >
+                <FileText className="h-6 w-6" />
+                <ApplicationBadge pendingCount={pendingApplicationsCount} />
+              </button>
+            </div>
+
             {/* Notification Bell */}
             <div className="relative" ref={notificationDropdownRef}>
               <button
@@ -311,11 +484,7 @@ export default function AuthNavbar() {
                 className="relative p-2 text-white hover:text-[#A95BAB] transition-colors duration-500 ease-out"
               >
                 <Bell className="h-6 w-6" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </span>
-                )}
+                <NotificationBadge unreadCount={unreadCount} />
               </button>
 
               {/* Notification Dropdown */}
@@ -345,30 +514,12 @@ export default function AuthNavbar() {
                     ) : (
                       <div className="divide-y divide-gray-700">
                         {notifications.map((notification) => (
-                          <div
+                          <NotificationItem
                             key={notification.id}
-                            onClick={() => handleNotificationClick(notification)}
-                            className={`p-4 cursor-pointer hover:bg-white/10 transition-colors ${
-                              !notification.isRead ? 'bg-[#A95BAB]/20' : ''
-                            }`}
-                          >
-                            <div className="flex justify-between items-start">
-                              <div className="flex-1">
-                                <p className={`text-sm ${!notification.isRead ? 'font-semibold text-white' : 'text-gray-300'}`}>
-                                  {notification.title}
-                                </p>
-                                <p className="text-sm text-gray-400 mt-1">
-                                  {notification.message}
-                                </p>
-                                <p className="text-xs text-gray-500 mt-2">
-                                  {new Date(notification.createdAt).toLocaleDateString()}
-                                </p>
-                              </div>
-                              {!notification.isRead && (
-                                <span className="w-2 h-2 bg-[#A95BAB] rounded-full ml-2 mt-1 flex-shrink-0"></span>
-                              )}
-                            </div>
-                          </div>
+                            notification={notification}
+                            onNotificationClick={handleNotificationClick}
+                            onMarkAsRead={handleMarkAsRead}
+                          />
                         ))}
                       </div>
                     )}
