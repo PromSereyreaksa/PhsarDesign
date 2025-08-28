@@ -1,6 +1,6 @@
 "use client"
 
-import { AlertCircle, Calendar, Edit, Eye, EyeOff, MapPin, MessageSquare, RefreshCw, Star } from "lucide-react"
+import { AlertCircle, Calendar, Edit, Eye, EyeOff, Heart, MapPin, MessageSquare, RefreshCw, Star } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { useSelector } from "react-redux"
 import { useNavigate, useParams } from "react-router-dom"
@@ -248,6 +248,17 @@ export default function ClientProfile() {
     // TODO: Save this preference to the backend
   }
 
+  const getImageUrls = (attachments) => {
+    if (!attachments || !Array.isArray(attachments)) return []
+    return attachments
+      .map((att) =>
+        typeof att === "string"
+          ? att
+          : att?.url || att?.src || att?.path || att?.link
+      )
+      .filter(Boolean)
+  }
+
   // Show loading state
   if (isLoading) {
     return (
@@ -416,7 +427,7 @@ export default function ClientProfile() {
 
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 py-10">
           {/* Debug info for development */}
-          {process.env.NODE_ENV === "development" && (
+          {import.meta.env.NODE_ENV === "development" && (
             <details className="mb-6 text-white">
               <summary className="cursor-pointer text-gray-400 text-sm mb-2">Debug Info</summary>
               <div className="bg-gray-800 p-4 rounded text-xs overflow-auto max-h-40">
@@ -557,69 +568,122 @@ export default function ClientProfile() {
                 </div>
 
                 {jobPosts.length > 0 ? (
-                  <div className="space-y-6">
+                  <div className="grid md:grid-cols-2 gap-6">
                     {jobPosts.map((jobPost) => (
-                      <Card
-                        key={jobPost.jobId || jobPost.id || jobPost.postId}
-                        className="bg-white/5 border-white/10 hover:bg-white/10 backdrop-blur-sm transition-all duration-300"
-                      >
-                        <CardContent className="p-8">
-                          <div className="flex items-start justify-between mb-6">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-3">
-                                <h3 className="text-xl font-semibold text-white">{jobPost.title || "Untitled"}</h3>
-                                <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(jobPost.isActive)}`}>
-                                  {jobPost.isActive ? "Active" : "Inactive"}
-                                </span>
-                              </div>
-                              <p
-                                style={{
-                                  color: "#d1d5db",
-                                  marginBottom: "1.5rem",
-                                  lineHeight: "1.625",
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                  display: "-webkit-box",
-                                  WebkitLineClamp: 2,
-                                  WebkitBoxOrient: "vertical",
-                                }}
-                              >
-                                {jobPost.description || "No description provided."}
-                              </p>
+                      // <Card
+                      //   key={jobPost.jobId || jobPost.id || jobPost.postId}
+                      //   className="bg-white/5 border-white/10 hover:bg-white/10 backdrop-blur-sm transition-all duration-300"
+                      // >
+                      //   <CardContent className="p-8">
+                      //     <div className="flex items-start justify-between mb-6">
+                      //       <div className="flex-1">
+                      //         <div className="flex items-center gap-3 mb-3">
+                      //           <h3 className="text-xl font-semibold text-white">{jobPost.title || "Untitled"}</h3>
+                      //           <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(jobPost.isActive)}`}>
+                      //             {jobPost.isActive ? "Active" : "Inactive"}
+                      //           </span>
+                      //         </div>
+                      //         <p
+                      //           style={{
+                      //             color: "#d1d5db",
+                      //             marginBottom: "1.5rem",
+                      //             lineHeight: "1.625",
+                      //             overflow: "hidden",
+                      //             textOverflow: "ellipsis",
+                      //             display: "-webkit-box",
+                      //             WebkitLineClamp: 2,
+                      //             WebkitBoxOrient: "vertical",
+                      //           }}
+                      //         >
+                      //           {jobPost.description || "No description provided."}
+                      //         </p>
 
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-sm">
-                                <div>
-                                  <span className="text-gray-400 block mb-1">Budget</span>
-                                  <div className="text-white font-medium">${jobPost.budget || "N/A"}</div>
-                                </div>
-                                <div>
-                                  <span className="text-gray-400 block mb-1">Deadline</span>
-                                  <div className="text-white font-medium">
-                                    {jobPost.deadline ? new Date(jobPost.deadline).toLocaleDateString() : "N/A"}
-                                  </div>
-                                </div>
-                                <div>
-                                  <span className="text-gray-400 block mb-1">Applicants</span>
-                                  <div className="text-white font-medium">{jobPost.applicationCount || 0}</div>
-                                </div>
-                                <div>
-                                  <span className="text-gray-400 block mb-1">Category</span>
-                                  <div className="text-[#A95BAB] font-medium">
-                                    {jobPost.category?.name || jobPost.categoryName || "N/A"}
-                                  </div>
-                                </div>
+                      //         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-sm">
+                      //           <div>
+                      //             <span className="text-gray-400 block mb-1">Budget</span>
+                      //             <div className="text-white font-medium">${jobPost.budget || "N/A"}</div>
+                      //           </div>
+                      //           <div>
+                      //             <span className="text-gray-400 block mb-1">Deadline</span>
+                      //             <div className="text-white font-medium">
+                      //               {jobPost.deadline ? new Date(jobPost.deadline).toLocaleDateString() : "N/A"}
+                      //             </div>
+                      //           </div>
+                      //           <div>
+                      //             <span className="text-gray-400 block mb-1">Applicants</span>
+                      //             <div className="text-white font-medium">{jobPost.applicationCount || 0}</div>
+                      //           </div>
+                      //           <div>
+                      //             <span className="text-gray-400 block mb-1">Category</span>
+                      //             <div className="text-[#A95BAB] font-medium">
+                      //               {jobPost.category?.name || jobPost.categoryName || "N/A"}
+                      //             </div>
+                      //           </div>
+                      //         </div>
+                      //       </div>
+
+                      //       {isOwner && (
+                      //         <Button
+                      //           size="sm"
+                      //           onClick={() => handleEditPost(jobPost.jobId || jobPost.id || jobPost.postId)}
+                      //           className="bg-white/10 hover:bg-white/20 border border-white/20 text-white ml-6"
+                      //         >
+                      //           <Edit className="w-4 h-4" />
+                      //         </Button>
+                      //       )}
+                      //     </div>
+                      //   </CardContent>
+                      // </Card>
+                      
+                      <Card
+                        key={jobPost.jobId || jobPost.id || jobPost._id}
+                        className="bg-white/5 border-white/10 hover:bg-white/10 rounded-2xl overflow-hidden group cursor-pointer transform hover:scale-[1.02] transition-all duration-300 ease-out"
+                        onClick={() => {
+                          navigate(`/marketplace/job/${jobPost.slug}`)
+                        }}
+                      >
+                        <div className="relative overflow-hidden">
+                          <img
+                            src={getImageUrls(jobPost.attachment)}
+                            alt={jobPost.title}
+                            className="w-full h-48 object-cover transition-transform duration-300 ease-out"
+                          />
+                          {isOwner && (
+                            <Button
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                console.log('ArtistProfile edit button clicked - jobPost:', jobPost)
+                                console.log('ArtistProfile edit button clicked - jobPost.postId:', jobPost.jobId)
+                                console.log('ArtistProfile edit button clicked - jobPost.id:', jobPost.id)
+                                const postId = jobPost.jobId || jobPost.id
+                                console.log('ArtistProfile edit button clicked - using postId:', postId)
+                                handleEditPost(postId)
+                              }}
+                              className="absolute top-3 right-3 bg-black/70 hover:bg-black/80 backdrop-blur-sm border border-white/20 z-10"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                        <CardContent className="p-8 space-y-5">
+                          <h3 className="font-semibold text-white text-lg leading-tight line-clamp-2 min-h-[3.5rem] flex items-start pt-2">
+                            {jobPost.title}
+                          </h3>
+                          <div className="flex items-center justify-between text-sm pt-3">
+                            <span className="px-3 py-1.5 bg-[#A95BAB]/20 rounded-full text-[#A95BAB] border border-[#A95BAB]/30 text-xs font-medium whitespace-nowrap">
+                              {jobPost.category.name}
+                            </span>
+                            <div className="flex items-center gap-4 text-gray-400 ml-3">
+                              <div className="flex items-center gap-1.5">
+                                <Heart className="w-4 h-4 flex-shrink-0" />
+                                <span className="text-sm">{jobPost.likes || 0}</span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <Eye className="w-4 h-4 flex-shrink-0" />
+                                <span className="text-sm">{jobPost.views || 0}</span>
                               </div>
                             </div>
-
-                            {isOwner && (
-                              <Button
-                                size="sm"
-                                onClick={() => handleEditPost(jobPost.jobId || jobPost.id || jobPost.postId)}
-                                className="bg-white/10 hover:bg-white/20 border border-white/20 text-white ml-6"
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                            )}
                           </div>
                         </CardContent>
                       </Card>
