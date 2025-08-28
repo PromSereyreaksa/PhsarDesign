@@ -10,15 +10,9 @@ import { MultiStepApplicationModal } from "../../components/ui/MultiStepApplicat
 import { showToast } from "../../components/ui/toast"
 import { useAppDispatch, useAppSelector } from "../../hooks/useRedux"
 import {
-  notifications,
-  clearCurrentPost,
-  fetchPostById,
-  fetchPostBySlug,
-  fetchPosts,
   clearCurrentPost,
   fetchPostBySlug,
-  fetchPosts,
-
+  fetchPosts
 } from "../../store/slices/marketplaceSlice"
 
 const PostDetailPage = () => {

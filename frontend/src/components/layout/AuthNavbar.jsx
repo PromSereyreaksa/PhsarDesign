@@ -1,23 +1,23 @@
 "use client"
 
 import {
-  Bell,
-  Briefcase,
-  ChevronRight,
-  LayoutDashboard,
-  LogOut,
-  Plus,
-  Search,
-  Settings,
-  User,
-  Users,
+    Bell,
+    Briefcase,
+    ChevronRight,
+    LayoutDashboard,
+    LogOut,
+    Plus,
+    Search,
+    Settings,
+    User,
+    Users,
 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { useLocation, useNavigate } from "react-router-dom"
-import { logout } from "../../store/slices/authSlice"
 import { useNotifications } from "../../hooks/useNotifications"
-import { markAsRead, markAllAsRead } from "../../store/slices/notificationsSlice"
+import { logout } from "../../store/slices/authSlice"
+import { markAllAsRead, markAsRead } from "../../store/slices/notificationsSlice"
 
 // Import from the correct slice - matching MarketplacePage
 import { setFilters } from "../../store/slices/marketplaceSlice"
