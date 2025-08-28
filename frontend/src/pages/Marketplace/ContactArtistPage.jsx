@@ -6,7 +6,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom"
 import AuthNavbar from "../../components/layout/AuthNavbar"
 import Loader from "../../components/ui/Loader"
 import { showToast } from "../../components/ui/toast"
-import { useAppDispatch, useAppSelector } from "../../hook/useRedux"
+import { useAppDispatch, useAppSelector } from "../../hooks/useRedux"
 import { applicationsAPI } from "../../lib/api"
 import { clearCurrentPost, fetchPostById, fetchPostBySlug } from "../../store/slices/marketplaceSlice"
 

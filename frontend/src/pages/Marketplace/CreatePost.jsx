@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom"
 import AuthNavbar from "../../components/layout/AuthNavbar"
 import CreateAvailabilityPostForm from "../../components/marketplace/CreateAvailabilityPostForm"
 import CreateJobPostForm from "../../components/marketplace/CreateJobPostForm"
-import { useAppDispatch, useAppSelector } from "../../hook/useRedux"
+import { useAppDispatch, useAppSelector } from "../../hooks/useRedux"
 import { createPost } from "../../store/slices/marketplaceSlice"
 
 const CreatePostPage = () => {

@@ -4,6 +4,7 @@ import artistsReducer from './slices/artistsSlice';
 import authReducer from './slices/authSlice';
 import categoriesReducer from './slices/categoriesSlice';
 import marketplaceReducer from './slices/marketplaceSlice';
+import notificationsReducer from './slices/notificationsSlice';
 import postsReducer from './slices/postsSlice';
 
 export const store = configureStore({
@@ -14,6 +15,7 @@ export const store = configureStore({
     marketplace: marketplaceReducer,
     artists: artistsReducer,
     categories: categoriesReducer,
+    notifications: notificationsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

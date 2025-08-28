@@ -5,7 +5,7 @@ import { useNavigate, useParams } from "react-router-dom"
 import AuthNavbar from "../../components/layout/AuthNavbar"
 import EditPostForm from "../../components/marketplace/EditPostForm"
 import Loader from "../../components/ui/Loader"
-import { useAppDispatch, useAppSelector } from "../../hook/useRedux"
+import { useAppDispatch, useAppSelector } from "../../hooks/useRedux"
 import { clearCurrentPost, fetchPostById, updatePost } from "../../store/slices/marketplaceSlice"
 
 const EditPostPage = () => {

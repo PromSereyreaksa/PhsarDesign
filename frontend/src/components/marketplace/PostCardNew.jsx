@@ -2,7 +2,7 @@
 import { Briefcase, MessageCircle } from "lucide-react"
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { useAppSelector } from "../../hook/useRedux"
+import { useAppSelector } from "../../hooks/useRedux"
 import { MultiStepApplicationModal } from "../ui/MultiStepApplicationModal"
 import { showToast } from "../ui/toast"
 

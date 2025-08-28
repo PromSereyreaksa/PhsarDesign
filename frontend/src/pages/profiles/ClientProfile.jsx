@@ -1,7 +1,7 @@
 "use client"
 
 import { AlertCircle, Calendar, Edit, Eye, EyeOff, MapPin, MessageSquare, RefreshCw, Star } from "lucide-react"
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useSelector } from "react-redux"
 import { useNavigate, useParams } from "react-router-dom"
 import AuthFooter from "../../components/layout/AuthFooter"
@@ -9,8 +9,8 @@ import AuthNavbar from "../../components/layout/AuthNavbar"
 import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar"
 import { Button } from "../../components/ui/button"
 import { Card, CardContent } from "../../components/ui/card"
+import { useAppDispatch, useAppSelector } from "../../hooks/useRedux"
 import { clientsAPI } from "../../lib/api"
-import { useAppDispatch, useAppSelector } from "../../hook/useRedux"
 // Import the marketplace action instead of creating a new one
 import { fetchMyJobPosts } from "../../store/slices/postsSlice"
 

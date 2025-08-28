@@ -16,6 +16,8 @@ import { useEffect, useRef, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { useLocation, useNavigate } from "react-router-dom"
 import { logout } from "../../store/slices/authSlice"
+import { useNotifications } from "../../hooks/useNotifications"
+import { markAsRead, markAllAsRead } from "../../store/slices/notificationsSlice"
 
 // Import from the correct slice - matching MarketplacePage
 import { setFilters } from "../../store/slices/marketplaceSlice"
@@ -23,7 +25,9 @@ import { fetchAvailabilityPosts, fetchJobPosts, setActiveTab } from "../../store
 
 export default function AuthNavbar() {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false)
+  const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false)
   const dropdownRef = useRef(null)
+  const notificationDropdownRef = useRef(null)
   const navigate = useNavigate()
   const location = useLocation()
   const dispatch = useDispatch()
@@ -32,6 +36,9 @@ export default function AuthNavbar() {
   const { user } = useSelector((s) => s.auth)
   const { filters } = useSelector((s) => s.marketplace) // filters from marketplace slice
   const activeTab = useSelector((s) => s.posts?.activeTab) // activeTab from posts slice
+
+  // Notification system
+  const { notifications, unreadCount, loading } = useNotifications()
 
   // Which parent menu is visually active
   const [activeMenu, setActiveMenu] = useState(null) // "home" | "talents" | "works" | "community" | null
@@ -46,13 +53,19 @@ export default function AuthNavbar() {
 
   // Close profile dropdown when clicking outside
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsProfileDropdownOpen(false)
       }
+      if (notificationDropdownRef.current && !notificationDropdownRef.current.contains(event.target)) {
+        setIsNotificationDropdownOpen(false)
+      }
     }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
   }, [])
 
   // Helpers
@@ -154,7 +167,22 @@ export default function AuthNavbar() {
   const handleLogout = () => {
     dispatch(logout())
     setIsProfileDropdownOpen(false)
-    navigate("/login")
+    navigate('/')
+  }
+
+  const handleNotificationClick = (notification) => {
+    if (!notification.isRead) {
+      dispatch(markAsRead(notification.id))
+    }
+    // Navigate to relevant page based on notification type
+    if (notification.type === 'application') {
+      navigate('/dashboard/applications')
+    }
+    setIsNotificationDropdownOpen(false)
+  }
+
+  const handleMarkAllAsRead = () => {
+    dispatch(markAllAsRead())
   }
 
   // Reusable dropdown (parent clickable + children clickable)
@@ -276,9 +304,90 @@ export default function AuthNavbar() {
 
           {/* Right side */}
           <div className="flex items-center space-x-2">
-            <button className="p-2 text-white hover:text-[#A95BAB] transition-colors duration-500 ease-out">
-              <Bell />
-            </button>
+            {/* Notification Bell */}
+            <div className="relative" ref={notificationDropdownRef}>
+              <button
+                onClick={() => setIsNotificationDropdownOpen(!isNotificationDropdownOpen)}
+                className="relative p-2 text-white hover:text-[#A95BAB] transition-colors duration-500 ease-out"
+              >
+                <Bell className="h-6 w-6" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Notification Dropdown */}
+              {isNotificationDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-80 bg-[#202020] border border-gray-700 rounded-lg shadow-lg z-50">
+                  <div className="p-4 border-b border-gray-700 flex justify-between items-center">
+                    <h3 className="font-semibold text-white">Notifications</h3>
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={handleMarkAllAsRead}
+                        className="text-sm text-[#A95BAB] hover:text-white transition-colors"
+                      >
+                        Mark all as read
+                      </button>
+                    )}
+                  </div>
+                  
+                  <div className="max-h-96 overflow-y-auto">
+                    {loading ? (
+                      <div className="p-4 text-center text-gray-400">
+                        Loading notifications...
+                      </div>
+                    ) : notifications.length === 0 ? (
+                      <div className="p-4 text-center text-gray-400">
+                        No notifications
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-gray-700">
+                        {notifications.map((notification) => (
+                          <div
+                            key={notification.id}
+                            onClick={() => handleNotificationClick(notification)}
+                            className={`p-4 cursor-pointer hover:bg-white/10 transition-colors ${
+                              !notification.isRead ? 'bg-[#A95BAB]/20' : ''
+                            }`}
+                          >
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <p className={`text-sm ${!notification.isRead ? 'font-semibold text-white' : 'text-gray-300'}`}>
+                                  {notification.title}
+                                </p>
+                                <p className="text-sm text-gray-400 mt-1">
+                                  {notification.message}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-2">
+                                  {new Date(notification.createdAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                              {!notification.isRead && (
+                                <span className="w-2 h-2 bg-[#A95BAB] rounded-full ml-2 mt-1 flex-shrink-0"></span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="p-2 border-t border-gray-700">
+                    <button
+                      onClick={() => {
+                        navigate('/dashboard/notifications')
+                        setIsNotificationDropdownOpen(false)
+                      }}
+                      className="w-full text-center text-sm text-[#A95BAB] hover:text-white py-2 transition-colors"
+                    >
+                      View all notifications
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Profile */}
             <div className="relative" ref={dropdownRef}>

@@ -1,6 +1,6 @@
 import { FileText, Home, Plus, Search, Sparkles } from "lucide-react"
 import { Link, useLocation } from "react-router-dom"
-import { useAppSelector } from "../../hook/useRedux"
+import { useAppSelector } from "../../hooks/useRedux"
 
 const MarketplaceNav = () => {
   const location = useLocation()
