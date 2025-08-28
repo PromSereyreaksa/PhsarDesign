@@ -103,17 +103,12 @@ const PostCard = ({ post }) => {
   // Navigate to details page
   const handleViewDetails = (e) => {
     e?.stopPropagation?.()
-    const slugified = (post.title || "post")
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "")
-
     // Use ID-based routing to ensure we can fetch the post reliably
-    const postId = post.jobId || post.id || post._id || post.postId
+    const postId = post.postId
     if (postId) {
-      navigate(`/marketplace/${slugified}-${postId}`)
+      navigate(`/marketplace/service/${post.slug}`)
     } else {
-      navigate(`/marketplace/${slugified}`)
+      navigate(`/marketplace/job/${post.slug}`)
     }
   }
 
