@@ -8,12 +8,12 @@ import SimplePostCard from "../../components/marketplace/SimplePostCard"
 import Loader from "../../components/ui/Loader"
 import { MultiStepApplicationModal } from "../../components/ui/MultiStepApplicationModal"
 import { showToast } from "../../components/ui/toast"
-import { useAppDispatch, useAppSelector } from "../../hook/useRedux"
+import { useAppDispatch, useAppSelector } from "../../hooks/useRedux"
 import {
-  clearCurrentPost,
-  fetchPostById,
-  fetchPostBySlug,
-  fetchPosts,
+    clearCurrentPost,
+    fetchPostById,
+    fetchPostBySlug,
+    fetchPosts,
 } from "../../store/slices/marketplaceSlice"
 
 const PostDetailPage = () => {

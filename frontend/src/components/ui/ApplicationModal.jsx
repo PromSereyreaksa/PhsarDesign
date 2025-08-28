@@ -1,10 +1,12 @@
+import { Check, X } from "lucide-react"
 import { useState } from "react"
-import { X, Check } from "lucide-react"
-import { Button } from "../ui/button"
+import { useDispatch } from "react-redux"
 import { applicationsAPI } from "../../lib/api"
+import { fetchNotifications, fetchUnreadCount } from "../../store/slices/notificationsSlice"
 import store from "../../store/store"
 import { JobApplicationForm } from "../marketplace/JobApplicationForm"
 import { ServiceContactForm } from "../marketplace/ServiceContactForm"
+import { Button } from "../ui/button"
 import { showToast } from "../ui/toast"
 
 /**
@@ -18,6 +20,7 @@ export function ApplicationModal({
   onSuccess, 
   applicationType = "artist_to_job" // or "client_to_service"
 }) {
+  const dispatch = useDispatch()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState(null)
   const [submitted, setSubmitted] = useState(false)
@@ -30,8 +33,7 @@ export function ApplicationModal({
     experience: "",
     portfolio: "",
     additionalNotes: "",
-    pastProjects: "",
-    applicationType: "standard" // for service contact form priority
+    pastProjects: ""
   })
 
   if (!isOpen || !post) return null
@@ -62,8 +64,9 @@ export function ApplicationModal({
       if (isJobApplication) {
         // Artist applying to job
         const applicationData = {
-          jobPostId: post.jobPostId || post.jobId || post.id,
-          receiverId: post.clientId || post.client?.clientId || post.userId,
+          senderId: user.userId, // Current user (artist) applying
+          receiverId: post.client.user.userId, // Job poster (client)
+          jobId: post.jobId,
           subject: formData.subject.trim(),
           message: formData.message.trim(),
           proposedBudget: parseFloat(formData.proposedBudget),
@@ -79,15 +82,18 @@ export function ApplicationModal({
       } else {
         // Client contacting artist for service
         const applicationData = {
-          availabilityPostId: post.availabilityPostId || post.postId || post.id,
-          receiverId: post.artistId || post.artist?.artistId || post.userId,
+          senderId: user.userId, // Current user (client) requesting service
+          receiverId: post.artistId || post.artist?.artistId || post.userId, // Service provider (artist)
+          availabilityPostId: post.availabilityPostId || post.postId || post.id, // Use availabilityPostId for service requests
           subject: formData.subject.trim(),
           message: formData.message.trim(),
           proposedBudget: parseFloat(formData.proposedBudget),
           proposedDeadline: formData.proposedDeadline || null,
           proposedStartDate: formData.proposedStartDate || null,
-          applicationType: formData.applicationType || "standard",
-          additionalNotes: formData.additionalNotes?.trim() || null
+          experience: formData.experience?.trim() || null,
+          portfolio: formData.portfolio?.trim() || null,
+          additionalNotes: formData.additionalNotes?.trim() || null,
+          pastProjects: formData.pastProjects?.trim() || null
         }
         
         await applicationsAPI.applyToService(applicationData)
@@ -98,6 +104,15 @@ export function ApplicationModal({
       
       // Show success toast
       showToast("Your application has been sent successfully!", "success")
+      
+      // Fetch updated notifications after successful application
+      try {
+        dispatch(fetchNotifications())
+        dispatch(fetchUnreadCount())
+      } catch (notificationError) {
+        console.warn('Failed to fetch updated notifications:', notificationError)
+        // Don't fail the entire flow if notification fetch fails
+      }
       
       // Auto-close after 3 seconds
       setTimeout(() => {
@@ -130,8 +145,7 @@ export function ApplicationModal({
         experience: "",
         portfolio: "",
         additionalNotes: "",
-        pastProjects: "",
-        applicationType: "standard"
+        pastProjects: ""
       })
     }, 100)
   }

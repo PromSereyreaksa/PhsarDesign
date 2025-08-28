@@ -1,11 +1,13 @@
+import { Check, ChevronLeft, ChevronRight, X } from "lucide-react"
 import { useState } from "react"
-import { X, ChevronLeft, ChevronRight, Check } from "lucide-react"
-import { Button } from "../ui/button"
+import { useDispatch } from "react-redux"
 import { applicationsAPI } from "../../lib/api"
+import { fetchNotifications, fetchUnreadCount } from "../../store/slices/notificationsSlice"
 import store from "../../store/store"
-import { showToast } from "../ui/toast"
 import { StepJobApplicationForm } from "../marketplace/StepJobApplicationForm"
 import { StepServiceContactForm } from "../marketplace/StepServiceContactForm"
+import { Button } from "../ui/button"
+import { showToast } from "../ui/toast"
 
 /**
  * Multi-step Application Modal Component
@@ -16,9 +18,9 @@ export function MultiStepApplicationModal({
   isOpen, 
   onClose, 
   post, 
-  onSuccess, 
-  applicationType = "artist_to_job" // or "client_to_service"
+  onSuccess
 }) {
+  const dispatch = useDispatch()
   const [currentStep, setCurrentStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState(null)
@@ -35,7 +37,6 @@ export function MultiStepApplicationModal({
     experience: "", // For job applications
     portfolio: "", // For job applications
     pastProjects: "", // For job applications
-    applicationType: "standard", // For service requests (priority)
     additionalNotes: "",
     
     // Step 3 is review only
@@ -43,6 +44,33 @@ export function MultiStepApplicationModal({
 
   if (!isOpen || !post) return null
 
+  // Determine application type based on post type or URL
+  const determineApplicationType = () => {
+    // Check if we're on jobs section or if post has job-related fields
+    const currentPath = window.location.pathname
+    
+    if (currentPath.includes('/jobs') || currentPath.includes('/marketplace/category/jobs')) {
+      return 'artist_to_job'
+    }
+    
+    if (currentPath.includes('/services') || currentPath.includes('/marketplace/category/services')) {
+      return 'client_to_service'
+    }
+    
+    // Fallback: check post properties
+    if (post.jobId || post.jobPostId || post.type === 'job' || post.section === 'jobs') {
+      return 'artist_to_job'
+    }
+    
+    if (post.availabilityPostId || post.postId || post.type === 'availability' || post.section === 'services') {
+      return 'client_to_service'
+    }
+    
+    // Default fallback based on post structure
+    return post.client ? 'artist_to_job' : 'client_to_service'
+  }
+
+  const applicationType = determineApplicationType()
   const isJobApplication = applicationType === "artist_to_job"
   const modalTitle = isJobApplication ? "Apply for Job" : "Contact Artist for Service"
   const totalSteps = 3
@@ -103,11 +131,12 @@ export function MultiStepApplicationModal({
         return
       }
 
-      if (isJobApplication) {
+       if (isJobApplication) {
         // Artist applying to job
         const applicationData = {
-          jobPostId: post.jobPostId || post.jobId || post.id,
-          receiverId: post.clientId || post.client?.clientId || post.userId,
+          senderId: user.userId, // Current user (artist) applying
+          receiverId: post.clientId || post.client?.clientId || post.client?.user?.userId || post.userId, // Job poster (client)
+          jobId: post.jobId || post.jobPostId || post.id,
           subject: formData.subject.trim(),
           message: formData.message.trim(),
           proposedBudget: parseFloat(formData.proposedBudget),
@@ -123,15 +152,18 @@ export function MultiStepApplicationModal({
       } else {
         // Client contacting artist for service
         const applicationData = {
-          availabilityPostId: post.availabilityPostId || post.postId || post.id,
-          receiverId: post.artistId || post.artist?.artistId || post.userId,
+          senderId: user.userId, // Current user (client) requesting service
+          receiverId: post.artistId || post.artist?.artistId || post.userId, // Service provider (artist)
+          postId: post.postId, // Use availabilityPostId for service requests
           subject: formData.subject.trim(),
           message: formData.message.trim(),
           proposedBudget: parseFloat(formData.proposedBudget),
           proposedDeadline: formData.proposedDeadline || null,
           proposedStartDate: formData.proposedStartDate || null,
-          applicationType: formData.applicationType || "standard",
-          additionalNotes: formData.additionalNotes?.trim() || null
+          experience: formData.experience?.trim() || null,
+          portfolio: formData.portfolio?.trim() || null,
+          additionalNotes: formData.additionalNotes?.trim() || null,
+          pastProjects: formData.pastProjects?.trim() || null
         }
         
         await applicationsAPI.applyToService(applicationData)
@@ -142,6 +174,17 @@ export function MultiStepApplicationModal({
       
       // Show success toast
       showToast("Your application has been sent successfully!", "success")
+      
+      // Fetch updated notifications after successful application
+      try {
+        console.log('[MultiStepApplicationModal] Dispatching notification fetch actions...')
+        await dispatch(fetchNotifications())
+        await dispatch(fetchUnreadCount())
+        console.log('[MultiStepApplicationModal] Notification fetch actions dispatched successfully')
+      } catch (notificationError) {
+        console.warn('Failed to fetch updated notifications:', notificationError)
+        // Don't fail the entire flow if notification fetch fails
+      }
       
       // Auto-close after 3 seconds
       setTimeout(() => {
@@ -175,8 +218,7 @@ export function MultiStepApplicationModal({
         experience: "",
         portfolio: "",
         additionalNotes: "",
-        pastProjects: "",
-        applicationType: "standard"
+        pastProjects: ""
       })
     }, 100)
   }

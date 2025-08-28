@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import MarketplaceNav from "../../components/marketplace/MarketplaceNav"
 import MyPostsDashboard from "../../components/marketplace/MyPostsDashboard"
-import { useAppDispatch, useAppSelector } from "../../hook/useRedux"
+import { useAppDispatch, useAppSelector } from "../../hooks/useRedux"
 import { deletePost, fetchUserPosts } from "../../store/slices/marketplaceSlice"
 
 const MyPostsPage = () => {

@@ -8,7 +8,7 @@ import LazyPostCard from "../../components/marketplace/LazyPostCard.jsx";
 import SearchBar from "../../components/marketplace/SearchBar";
 import PageSkeleton from "../../components/ui/PageSkeleton";
 import SearchSkeleton from "../../components/ui/SearchSkeleton";
-import { useAppDispatch, useAppSelector } from "../../hook/useRedux";
+import { useAppDispatch, useAppSelector } from "../../hooks/useRedux.js";
 
 // Import from marketplace slice (now includes categories)
 import {

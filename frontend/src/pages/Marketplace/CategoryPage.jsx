@@ -9,7 +9,7 @@ import SearchBar from "../../components/marketplace/SearchBar";
 import PageSkeleton from "../../components/ui/PageSkeleton";
 import PaginationComponent from "../../components/ui/PaginationComponent";
 import SearchSkeleton from "../../components/ui/SearchSkeleton";
-import { useAppDispatch, useAppSelector } from "../../hook/useRedux";
+import { useAppDispatch, useAppSelector } from "../../hooks/useRedux.js";
 
 // Import from posts slice AND marketplace slice for category-specific data
 import {

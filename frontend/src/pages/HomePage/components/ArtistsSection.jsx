@@ -4,7 +4,7 @@ import { useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import SectionHeader from "../../../components/common/SectionHeader"
 import Loader from '../../../components/ui/Loader'
-import { useAppDispatch, useAppSelector } from "../../../hook/useRedux"
+import { useAppDispatch, useAppSelector } from "../../../hooks/useRedux"
 import { fetchArtists } from "../../../store/slices/artistsSlice"
 
 export default function ArtistsSection({ customImages }) {
