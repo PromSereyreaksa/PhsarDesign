@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useCallback, useRef } from "react"
-import SEO from "../../components/seo/SEO.jsx"
+// import SEO from "../../components/seo/SEO.jsx"
 import FooterSection from "../../components/shared/AuthFooter"
 import AuthNavbar from "../../components/shared/AuthNavbar"
 import LazyComponent from "../../components/ui/LazyComponent"
@@ -53,23 +53,7 @@ export default function LandingPage() {
 
   return (
     <>
-      <SEO 
-        title="PhsarDesign - Creative Marketplace | Connect with Talented Artists & Designers"
-        description="Discover exceptional creative talent on PhsarDesign. Connect with professional artists, designers, and freelancers for your next project. Quality services, competitive prices."
-        type="website"
-        structuredData={{
-          "@context": "https://schema.org",
-          "@type": "WebSite",
-          "name": "PhsarDesign",
-          "description": "Creative marketplace connecting clients with talented artists and designers",
-          "url": typeof window !== 'undefined' ? window.location.href : 'https://phsardesign.com',
-          "potentialAction": {
-            "@type": "SearchAction",
-            "target": `${typeof window !== 'undefined' ? window.location.origin : 'https://phsardesign.com'}/marketplace?search={search_term}`,
-            "query-input": "required name=search_term"
-          }
-        }}
-      />
+      {/* SEO removed */}
       <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000] relative">
         {/* Fixed Navigation */}
         <AuthNavbar />

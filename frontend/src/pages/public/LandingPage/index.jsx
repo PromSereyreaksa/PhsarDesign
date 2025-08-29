@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from "react-redux"
 import { Link, useNavigate } from "react-router-dom"
 import SharedPublicFooter from "../../../components/layout/SharedPublicFooter"
 import SharedPublicNavbar from "../../../components/layout/SharedPublicNavbar"
-import { HomeSEO } from "../../../components/seo/SEO"
+// import { HomeSEO } from "../../../components/seo/SEO"
 import { Button } from "../../../components/ui/button"
 import { Card, CardContent } from "../../../components/ui/card"
 import { useDebounce, useIntersectionObserver } from "../../../hooks/usePerformance.jsx"
@@ -333,7 +333,7 @@ export default function LandingPage() {
 
   return (
     <>
-      <HomeSEO />
+      {/* SEO removed */}
       <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000] relative">
         {/* Shared Navigation */}
         <SharedPublicNavbar showScrollLinks={true} />

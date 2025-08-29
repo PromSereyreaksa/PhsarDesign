@@ -6,7 +6,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import AuthNavbar from "../../components/layout/AuthNavbar";
 import LazyPostCard from "../../components/marketplace/LazyPostCard.jsx";
 import SearchBar from "../../components/marketplace/SearchBar";
-import SEO from "../../components/seo/SEO";
+// import SEO from "../../components/seo/SEO";
 import PageSkeleton from "../../components/ui/PageSkeleton";
 import SearchSkeleton from "../../components/ui/SearchSkeleton";
 import { useAppDispatch, useAppSelector } from "../../hooks/useRedux.js";
@@ -395,19 +395,7 @@ const MarketplacePage = () => {
 
   return (
     <>
-      <SEO 
-        title="Marketplace - Find Creative Professionals | PhsarDesign"
-        description="Discover talented artists, designers, and creative professionals. Browse portfolios, connect with freelancers, and find the perfect creative partner for your projects."
-        type="website"
-        structuredData={{
-          "@context": "https://schema.org",
-          "@type": "Marketplace",
-          "name": "PhsarDesign Marketplace",
-          "description": "Creative marketplace connecting clients with talented artists and designers",
-          "url": typeof window !== 'undefined' ? window.location.href : 'https://phsardesign.com/marketplace',
-          "numberOfItems": postsToDisplay?.length || 0
-        }}
-      />
+      {/* SEO removed */}
       <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000]">
         <AuthNavbar />
 
