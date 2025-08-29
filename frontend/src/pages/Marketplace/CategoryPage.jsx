@@ -13,17 +13,17 @@ import { useAppDispatch, useAppSelector } from "../../hooks/useRedux.js";
 
 // Import from posts slice AND marketplace slice for category-specific data
 import {
-  setActiveTab
+    setActiveTab
 } from '../../store/slices/postsSlice';
 
 // Import from marketplace slice for categories and category-specific posts
 import {
-  clearCategoryPosts,
-  fetchAvailabilityPostsByCategory,
-  fetchCategories,
-  fetchJobPostsByCategory,
-  setCategoryPostsPage,
-  setFilters
+    clearCategoryPosts,
+    fetchAvailabilityPostsByCategory,
+    fetchCategories,
+    fetchJobPostsByCategory,
+    setCategoryPostsPage,
+    setFilters
 } from "../../store/slices/marketplaceSlice";
 
 const CategoryPage = () => {
@@ -705,7 +705,7 @@ const CategoryPage = () => {
         <div className="fixed bottom-6 right-6 z-50 animate-fade-in">
           <button
             onClick={handleCreatePost}
-            className="group relative w-16 h-16 bg-gradient-to-r from-[#A95BAB] to-[#A95BAB]/80 hover:from-[#A95BAB]/90 hover:to-[#A95BAB]/70 text-white rounded-full shadow-2xl hover:shadow-[#A95BAB]/40 transition-all duration-300 transform hover:scale-110 active:scale-95 animate-pulse-subtle"
+            className="group relative w-16 h-16 bg-gradient-to-r from-[#A95BAB] to-[#A95BAB]/80 hover:from-[#A95BAB]/90 hover:to-[#A95BAB]/70 text-white rounded-full shadow-2xl hover:shadow-[#A95BAB]/40 transition-all duration-300 transform hover:scale-110 active:scale-95"
             title={createButtonInfo.text}
           >
             <Plus className="w-7 h-7 mx-auto transition-transform duration-300 group-hover:rotate-90" />

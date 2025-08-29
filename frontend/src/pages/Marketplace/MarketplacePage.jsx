@@ -6,6 +6,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import AuthNavbar from "../../components/layout/AuthNavbar";
 import LazyPostCard from "../../components/marketplace/LazyPostCard.jsx";
 import SearchBar from "../../components/marketplace/SearchBar";
+import SEO from "../../components/seo/SEO";
 import PageSkeleton from "../../components/ui/PageSkeleton";
 import SearchSkeleton from "../../components/ui/SearchSkeleton";
 import { useAppDispatch, useAppSelector } from "../../hooks/useRedux.js";
@@ -54,7 +55,7 @@ const MarketplacePage = () => {
     categoriesError 
   } = useAppSelector((state) => state.marketplace);
   
-  // Get posts data from posts slice
+  // Get posts data from posts slice - ALL HOOKS MUST BE AT TOP LEVEL
   const availabilityPosts = useAppSelector(selectAvailabilityPosts);
   const jobPosts = useAppSelector(selectJobPosts);
   const activeTab = useAppSelector(selectActiveTab);
@@ -393,26 +394,38 @@ const MarketplacePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000]">
-      <AuthNavbar />
+    <>
+      <SEO 
+        title="Marketplace - Find Creative Professionals | PhsarDesign"
+        description="Discover talented artists, designers, and creative professionals. Browse portfolios, connect with freelancers, and find the perfect creative partner for your projects."
+        type="website"
+        structuredData={{
+          "@context": "https://schema.org",
+          "@type": "Marketplace",
+          "name": "PhsarDesign Marketplace",
+          "description": "Creative marketplace connecting clients with talented artists and designers",
+          "url": typeof window !== 'undefined' ? window.location.href : 'https://phsardesign.com/marketplace',
+          "numberOfItems": postsToDisplay?.length || 0
+        }}
+      />
+      <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000]">
+        <AuthNavbar />
 
-      {/* Hero Section */}
-      <div className="pt-24 pb-8">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                Marketplace
-              </span>
-            </h1>
-            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              Discover talented artists and quality services
-            </p>
+        {/* Hero Section */}
+        <div className="pt-24 pb-8">
+          <div className="max-w-6xl mx-auto px-6">
+            <div className="text-center mb-8">
+              <h1 className="text-4xl md:text-5xl font-bold mb-4">
+                <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                  Marketplace
+                </span>
+              </h1>
+              <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+                Discover talented artists and quality services
+              </p>
+            </div>
           </div>
-        </div>
-      </div>
-
-      {/* Back Button */}
+        </div>      {/* Back Button */}
       <div className="max-w-6xl mx-auto px-6 mb-6">
         <button
           onClick={() => navigate("/home")}
@@ -625,12 +638,12 @@ const MarketplacePage = () => {
       {/* Featured Artists Section */}
       <FeaturedArtists />
 
-      {/* Floating Action Button - appears when scrolled */}
-      {createButtonInfo && isScrolled && (
+      {/* Floating Action Button */}
+      {createButtonInfo && (
         <div className="fixed bottom-6 right-6 z-50 animate-fade-in">
           <button
             onClick={handleCreatePost}
-            className="group relative w-16 h-16 bg-gradient-to-r from-[#A95BAB] to-[#A95BAB]/80 hover:from-[#A95BAB]/90 hover:to-[#A95BAB]/70 text-white rounded-full shadow-2xl hover:shadow-[#A95BAB]/40 transition-all duration-300 transform hover:scale-110 active:scale-95 animate-pulse-subtle"
+            className="group relative w-16 h-16 bg-gradient-to-r from-[#A95BAB] to-[#A95BAB]/80 hover:from-[#A95BAB]/90 hover:to-[#A95BAB]/70 text-white rounded-full shadow-2xl hover:shadow-[#A95BAB]/40 transition-all duration-300 transform hover:scale-110 active:scale-95"
             title={createButtonInfo.text}
           >
             <Plus className="w-7 h-7 mx-auto transition-transform duration-300 group-hover:rotate-90" />
@@ -646,7 +659,8 @@ const MarketplacePage = () => {
           </button>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 

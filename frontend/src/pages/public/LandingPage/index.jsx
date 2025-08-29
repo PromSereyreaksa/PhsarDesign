@@ -1,13 +1,15 @@
 "use client"
 
 import { ArrowRight, DollarSign, MessageSquare, Palette, Search, Shield, Sparkles, Star } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { Link, useNavigate } from "react-router-dom"
 import SharedPublicFooter from "../../../components/layout/SharedPublicFooter"
 import SharedPublicNavbar from "../../../components/layout/SharedPublicNavbar"
+import { HomeSEO } from "../../../components/seo/SEO"
 import { Button } from "../../../components/ui/button"
 import { Card, CardContent } from "../../../components/ui/card"
+import { useDebounce, useIntersectionObserver } from "../../../hooks/usePerformance.jsx"
 import { fetchArtists } from "../../../store/slices/artistsSlice"
 import { fetchCategories } from "../../../store/slices/categoriesSlice"
 import { fetchPosts } from "../../../store/slices/marketplaceSlice"
@@ -27,13 +29,46 @@ export default function LandingPage() {
   const { availabilityPosts: servicePosts, loading: servicesLoading } = useSelector((state) => state.posts)
   const { categories: apiCategories, loading: categoriesLoading } = useSelector((state) => state.categories)
 
-  // Fetch data on component mount
-  useEffect(() => {
-    dispatch(fetchPosts({ limit: 6, isActive: true })) // Fetch marketplace posts
-    dispatch(fetchArtists()) // Fetch artists
-    dispatch(fetchAvailabilityPosts()) // Fetch availability posts for services
-    dispatch(fetchCategories()) // Fetch categories from categoryAPI
+  // Memoize frequently used data
+  const memoizedCategories = useMemo(() => apiCategories || [], [apiCategories])
+  const memoizedArtists = useMemo(() => artists || [], [artists])
+  const memoizedServicePosts = useMemo(() => servicePosts || [], [servicePosts])
+
+  // Debounced email input for newsletter
+  const debouncedEmailChange = useDebounce((value) => {
+    setEmail(value)
+  }, 300)
+
+  // Intersection observers for lazy loading sections
+  const [setHeroRef, isHeroInView] = useIntersectionObserver({ threshold: 0.1 })
+  const [setFeaturesRef, isFeaturesInView] = useIntersectionObserver({ threshold: 0.1 })
+  const [setCategoriesRef, isCategoriesInView] = useIntersectionObserver({ threshold: 0.1 })
+  const [setArtistsRef, isArtistsInView] = useIntersectionObserver({ threshold: 0.1 })
+
+  // Optimized data fetching
+  const fetchInitialData = useCallback(() => {
+    dispatch(fetchPosts({ limit: 6, isActive: true }))
+    dispatch(fetchCategories())
   }, [dispatch])
+
+  const fetchAdditionalData = useCallback(() => {
+    if (isArtistsInView && !artistsLoading && memoizedArtists.length === 0) {
+      dispatch(fetchArtists())
+    }
+    if (isCategoriesInView && !servicesLoading && memoizedServicePosts.length === 0) {
+      dispatch(fetchAvailabilityPosts())
+    }
+  }, [dispatch, isArtistsInView, isCategoriesInView, artistsLoading, servicesLoading, memoizedArtists.length, memoizedServicePosts.length])
+
+  // Fetch critical data on component mount
+  useEffect(() => {
+    fetchInitialData()
+  }, [fetchInitialData])
+
+  // Fetch additional data when sections come into view
+  useEffect(() => {
+    fetchAdditionalData()
+  }, [fetchAdditionalData])
 
   // Debug logging to understand data structures
   useEffect(() => {
@@ -297,21 +332,23 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000] relative">
-      {/* Shared Navigation */}
-      <SharedPublicNavbar showScrollLinks={true} />
+    <>
+      <HomeSEO />
+      <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000] relative">
+        {/* Shared Navigation */}
+        <SharedPublicNavbar showScrollLinks={true} />
 
-      {/* Main Content with top padding for fixed navbar */}
-      <div className="pt-20">
+        {/* Main Content with top padding for fixed navbar */}
+        <main className="pt-20">
 
-      {/* Hero Section */}
-      <section className="relative py-20 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Left Content */}
-            <div className="space-y-8">
-              <div className="space-y-6">
-                <h1 className="text-5xl md:text-7xl font-bold leading-tight">
+        {/* Hero Section */}
+        <section ref={setHeroRef} className="relative py-20 overflow-hidden" role="banner">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              {/* Left Content */}
+              <div className="space-y-8">
+                <div className="space-y-6">
+                  <h1 className="text-5xl md:text-7xl font-bold leading-tight">
                   <span className="bg-gradient-to-r from-white to-[#A95BAB] bg-clip-text text-transparent">
                     Creative
                   </span>
@@ -327,7 +364,7 @@ export default function LandingPage() {
                   Connect with talented digital artists, designers, and creative professionals. Bring your vision to
                   life with world-class creative services.
                 </p>
-                <p className="text-yellow-500">Reminder: We are still in testing / development, sorry in advance if something is broken or not working as expected.</p>
+                <p className="text-yellow-500">Reminder: We are still in testing / development, sorry in advance if something is broken or not working as expected. Mobiles responsiveness isn't perfect either, please be patient as we improve this experience.</p>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4">
@@ -431,7 +468,7 @@ export default function LandingPage() {
                 style={{ animationDelay: "1s" }}
               />
               <div
-                className="absolute top-1/2 -left-8 w-16 h-16 bg-white/10 rounded-full blur-lg animate-pulse"
+                className="absolute top-1/2 -left-8 w-16 h-16 bg-white/10 rounded-full blur-lg"
                 style={{ animationDelay: "2s" }}
               />
             </div>
@@ -496,7 +533,7 @@ export default function LandingPage() {
               Array.from({ length: 6 }).map((_, index) => (
                 <Card
                   key={`skeleton-${index}`}
-                  className="bg-white/5 border-white/10 rounded-2xl animate-pulse"
+                  className="bg-white/5 border-white/10 rounded-2xl"
                 >
                   <CardContent className="p-6 text-center">
                     <div className="w-12 h-12 bg-gray-600/50 rounded-full mx-auto mb-4"></div>
@@ -718,10 +755,10 @@ export default function LandingPage() {
           <div className="mt-16 text-center">
             <div className="inline-flex items-center space-x-4 bg-white/5 rounded-full px-8 py-4 border border-white/10">
               <div className="flex space-x-2">
-                <div className="w-3 h-3 bg-yellow-400 rounded-full animate-pulse"></div>
-                <div className="w-3 h-3 bg-blue-400 rounded-full animate-pulse" style={{animationDelay: "0.5s"}}></div>
-                <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse" style={{animationDelay: "1s"}}></div>
-                <div className="w-3 h-3 bg-purple-400 rounded-full animate-pulse" style={{animationDelay: "1.5s"}}></div>
+                <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
+                <div className="w-3 h-3 bg-blue-400 rounded-full"></div>
+                <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+                <div className="w-3 h-3 bg-purple-400 rounded-full"></div>
               </div>
               <span className="text-gray-300 font-medium">Your creative journey starts here</span>
             </div>
@@ -750,7 +787,8 @@ export default function LandingPage() {
 
       {/* Shared Footer */}
       <SharedPublicFooter />
+      </main>
       </div>
-    </div>
+    </>
   )
 }

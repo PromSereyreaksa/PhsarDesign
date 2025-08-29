@@ -3,13 +3,13 @@ const PageSkeleton = ({ categoryName }) => (
     <div className="pt-24 pb-8">
       <div className="max-w-6xl mx-auto px-6">
         {/* Back button skeleton */}
-        <div className="h-6 bg-gray-700/30 rounded w-40 mb-8 animate-pulse"></div>
+        <div className="h-6 bg-gray-700/30 rounded w-40 mb-8"></div>
         
         <div className="text-center mb-8">
           {/* Title skeleton */}
-          <div className="h-12 bg-gray-700/30 rounded w-80 mx-auto mb-4 animate-pulse"></div>
+          <div className="h-12 bg-gray-700/30 rounded w-80 mx-auto mb-4"></div>
           {/* Subtitle skeleton */}
-          <div className="h-6 bg-gray-700/30 rounded w-96 mx-auto animate-pulse"></div>
+          <div className="h-6 bg-gray-700/30 rounded w-96 mx-auto"></div>
         </div>
       </div>
     </div>
@@ -19,13 +19,13 @@ const PageSkeleton = ({ categoryName }) => (
       <div className="max-w-6xl mx-auto px-6">
         <div className="flex flex-col md:flex-row gap-4">
           {/* Search Bar skeleton */}
-          <div className="flex-1 h-12 bg-gray-700/30 rounded-xl animate-pulse"></div>
+          <div className="flex-1 h-12 bg-gray-700/30 rounded-xl"></div>
           
           {/* Tab Switch skeleton */}
-          <div className="w-48 h-12 bg-gray-700/30 rounded-xl animate-pulse"></div>
+          <div className="w-48 h-12 bg-gray-700/30 rounded-xl"></div>
           
           {/* Sort Filter skeleton */}
-          <div className="w-40 h-12 bg-gray-700/30 rounded-xl animate-pulse"></div>
+          <div className="w-40 h-12 bg-gray-700/30 rounded-xl"></div>
         </div>
       </div>
     </div>
@@ -35,16 +35,16 @@ const PageSkeleton = ({ categoryName }) => (
       {/* Header skeleton */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <div className="h-8 bg-gray-700/30 rounded w-64 mb-2 animate-pulse"></div>
-          <div className="h-4 bg-gray-700/30 rounded w-48 animate-pulse"></div>
+          <div className="h-8 bg-gray-700/30 rounded w-64 mb-2"></div>
+          <div className="h-4 bg-gray-700/30 rounded w-48"></div>
         </div>
-        <div className="h-10 bg-gray-700/30 rounded w-32 animate-pulse"></div>
+        <div className="h-10 bg-gray-700/30 rounded w-32"></div>
       </div>
 
       {/* Grid skeleton */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {Array.from({ length: 8 }).map((_, index) => (
-          <div key={index} className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-700/50 rounded-xl overflow-hidden animate-pulse">
+          <div key={index} className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 rounded-xl overflow-hidden">
             {/* Image skeleton */}
             <div className="h-40 bg-gray-700/30"></div>
             

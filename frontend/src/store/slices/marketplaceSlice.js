@@ -70,22 +70,22 @@ export const fetchPostById = createAsyncThunk("marketplace/fetchPostById", async
 })
 
 export const fetchPostBySlug = createAsyncThunk("marketplace/fetchPostBySlug", async (slug) => {
-  // Try to find in both job posts and availability posts
+  // Try to find in both availability posts (services) first, then job posts
   try {
-    console.log('Trying job post API with slug:', slug)
-    const response = await marketplaceAPI.getJobPostBySlug(slug)
-    console.log('Job post API success:', response.data)
-    return { ...response.data, postType: "job" }
-  } catch (jobError) {
-    console.log('Job post API failed:', jobError.message)
+    console.log('Trying availability post API with slug:', slug)
+    const response = await marketplaceAPI.getAvailabilityPostBySlug(slug)
+    console.log('Availability post API success:', response.data)
+    return { ...response.data, postType: "availability" }
+  } catch (availabilityError) {
+    console.log('Availability post API failed:', availabilityError.message)
     try {
-      console.log('Trying availability post API with slug:', slug)
-      const response = await marketplaceAPI.getAvailabilityPostBySlug(slug)
-      console.log('Availability post API success:', response.data)
-      return { ...response.data, postType: "availability" }
-    } catch (availabilityError) {
-      console.log('Availability post API also failed:', availabilityError.message)
-      throw jobError // Return the first error
+      console.log('Trying job post API with slug:', slug)
+      const response = await marketplaceAPI.getJobPostBySlug(slug)
+      console.log('Job post API success:', response.data)
+      return { ...response.data, postType: "job" }
+    } catch (jobError) {
+      console.log('Job post API also failed:', jobError.message)
+      throw availabilityError // Return the first error
     }
   }
 })

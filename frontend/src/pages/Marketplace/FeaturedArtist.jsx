@@ -145,7 +145,7 @@ const FeaturedArtists = () => {
             {[1, 2, 3].map((item) => (
               <div
                 key={item}
-                className="relative group overflow-hidden rounded-xl bg-gray-800/20 backdrop-blur border border-gray-700/50 animate-pulse"
+                className="relative group overflow-hidden rounded-xl bg-gray-800/20 border border-gray-700/50"
               >
                 <div className="aspect-video bg-gray-700"></div>
                 <div className="p-4">
