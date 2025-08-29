@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import AuthNavbar from "../../components/layout/AuthNavbar"
 import SimplePostCard from "../../components/marketplace/SimplePostCard"
-import SEO from "../../components/seo/SEO.jsx"
+// import SEO from "../../components/seo/SEO.jsx"
 import Loader from "../../components/ui/Loader"
 import { MultiStepApplicationModal } from "../../components/ui/MultiStepApplicationModal"
 import { showToast } from "../../components/ui/toast"
@@ -161,27 +161,7 @@ const PostDetailPage = () => {
 
   return (
     <>
-      <SEO 
-        title={`${currentPost?.title || 'Service'} - ${artistName} | PhsarDesign`}
-        description={currentPost?.description?.substring(0, 160) || 'Professional creative services on PhsarDesign marketplace'}
-        image={imageUrls[0]}
-        type="article"
-        structuredData={{
-          "@context": "https://schema.org",
-          "@type": "Service",
-          "name": currentPost?.title,
-          "description": currentPost?.description,
-          "provider": {
-            "@type": "Person",
-            "name": artistName
-          },
-          "offers": {
-            "@type": "Offer",
-            "price": currentPost?.budget || 0,
-            "priceCurrency": "USD"
-          }
-        }}
-      />
+      {/* SEO removed */}
       <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000]">
         <AuthNavbar />
 
