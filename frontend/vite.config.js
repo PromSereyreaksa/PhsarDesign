@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
     react({
       // Enable React Fast Refresh and optimizations
@@ -12,20 +12,8 @@ export default defineConfig({
     tailwindcss()
   ],
   build: {
-    // Add CommonJS configuration for TailwindCSS v4
-    commonjsOptions: {
-      include: [/node_modules/],
-      exclude: ['tailwindcss', '@tailwindcss/vite']
-    },
     // Enable code splitting and chunk optimization
     rollupOptions: {
-      // External TailwindCSS internals to prevent resolution issues
-      external: (id) => {
-        if (id.includes('tailwindcss/lib/') || id.includes('tailwindcss/version.js')) {
-          return true
-        }
-        return false
-      },
       output: {
         // Create separate chunks for better caching
         manualChunks: {
@@ -75,7 +63,9 @@ export default defineConfig({
   resolve: {
     alias: {
       // Fix TailwindCSS v4 CommonJS resolution issue
-      'tailwindcss/package.json': 'tailwindcss/package.json'
+      'tailwindcss/package.json': 'tailwindcss/package.json',
+      // Fix for flowbite-react compatibility with TailwindCSS v4  
+      'tailwindcss/version.js': 'tailwindcss/package.json'
     }
   },
   // Enable server-side optimizations
@@ -88,6 +78,6 @@ export default defineConfig({
   // Performance optimizations
   esbuild: {
     // Drop console and debugger statements in production
-    drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : []
+    drop: mode === 'production' ? ['console', 'debugger'] : []
   }
-})
+}))
