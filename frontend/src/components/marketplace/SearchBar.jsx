@@ -1,5 +1,5 @@
-import { Search, X, User, Briefcase, Wrench } from "lucide-react";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Briefcase, Search, User, Wrench, X } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export default function SearchBar({ type = "all", filters, onFilterChange }) {
   const [query, setQuery] = useState(filters?.search || "");
@@ -183,7 +183,7 @@ export default function SearchBar({ type = "all", filters, onFilterChange }) {
           onChange={(e) => setQuery(e.target.value)}
           onKeyPress={handleKeyPress}
           placeholder="Search posts by title..."
-          className="w-full pl-10 pr-12 py-3 bg-gray-800/30 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:border-[#A95BAB]/50 focus:ring-1 focus:ring-[#A95BAB]/50 transition-all focus:outline-none cursor-pointer"
+          className="w-full pl-10 pr-12 py-3 bg-gray-800/30 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:border-[#A95BAB]/50 focus:ring-1 focus:ring-[#A95BAB]/50 transition-all focus:outline-none cursor-pointer text-base md:text-sm"
         />
         {query && (
           <button
@@ -209,16 +209,16 @@ export default function SearchBar({ type = "all", filters, onFilterChange }) {
             return (
               <div
                 key={`${result.category}-${result.id}`}
-                className="flex items-center gap-3 px-4 py-3 hover:bg-gray-700/50 cursor-pointer border-b border-gray-700/30 last:border-b-0"
+                className="flex items-center gap-3 px-4 py-3 hover:bg-gray-700/50 cursor-pointer border-b border-gray-700/30 last:border-b-0 min-h-[48px] md:min-h-0"
                 onClick={() => {
                   // Handle result selection here
                   setQuery(result.displayTitle);
                   setShowSuggestions(false);
                 }}
               >
-                <CategoryIcon className="w-4 h-4 text-gray-400" />
-                <div className="flex-1">
-                  <div className="text-white text-sm">{result.displayTitle}</div>
+                <CategoryIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-white text-sm truncate">{result.displayTitle}</div>
                   <div className="text-gray-400 text-xs capitalize">{result.category}</div>
                 </div>
               </div>

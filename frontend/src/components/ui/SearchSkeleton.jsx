@@ -1,7 +1,7 @@
 const SearchSkeleton = () => (
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
     {Array.from({ length: 8 }).map((_, index) => (
-      <div key={index} className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-700/50 rounded-xl overflow-hidden animate-pulse">
+      <div key={index} className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 rounded-xl overflow-hidden">
         {/* Image skeleton */}
         <div className="h-40 bg-gray-700/30"></div>
         

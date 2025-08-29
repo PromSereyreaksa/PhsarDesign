@@ -1,31 +1,58 @@
+import { lazy, Suspense } from "react"
 import { Route, Routes } from "react-router-dom"
+import Loader from "../components/ui/Loader"
+import PerformanceMonitor from "../components/ui/PerformanceMonitor"
 import ProtectedRoute from "../guards/ProtectedRoute.jsx"
-import ChangePasswordPage from "../pages/auth/ChangePasswordPage"
-import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage"
-import LoginPage from "../pages/auth/LoginPage/index.jsx"
-import OTPVerificationPage from "../pages/auth/OTPVerificationPage"
-import RegisterPage from "../pages/auth/RegisterPage"
-import ApplicationDetailPage from "../pages/dashboard/ApplicationDetailPage.jsx"
-import ApplicationsPage from "../pages/dashboard/ApplicationsPage.jsx"
-import ArtistDashboard from "../pages/Dashboard/ArtistDashboard.jsx"
-import MyPostsPage from "../pages/Dashboard/MyPostsPage"
-import NotificationsPage from "../pages/dashboard/NotificationsPage"
-import HomePage from "../pages/HomePage/index.jsx"
-import CategoryPage from "../pages/Marketplace/CategoryPage"
-import ContactArtistPage from "../pages/Marketplace/ContactArtistPage"
-import CreatePostPage from "../pages/Marketplace/CreatePost"
-import EditPostPage from "../pages/Marketplace/EditPostPage"
-import JobDetailPage from "../pages/Marketplace/JobDetailPage.jsx"
-import MarketplacePage from "../pages/Marketplace/MarketplacePage"
-import PostDetailPage from "../pages/Marketplace/PostDetailPage"
-import ArtistProfile from "../pages/profiles/ArtistProfile.jsx"
-import ClientProfile from "../pages/profiles/ClientProfile.jsx"
-import EditProfile from "../pages/profiles/EditProfile.jsx"
-import ProfileRouter from "../pages/profiles/ProfileRouter.jsx"
-import AboutPage from "../pages/public/AboutPage/index.jsx"
-import LandingPage from "../pages/public/LandingPage/index.jsx"
-import PublicArtistProfile from "../pages/public/PublicArtistProfile.jsx"
 import "./App.css"
+
+// Lazy load components for better performance
+// Critical pages (loaded immediately)
+import LoginPage from "../pages/auth/LoginPage/index.jsx"
+import RegisterPage from "../pages/auth/RegisterPage"
+import LandingPage from "../pages/public/LandingPage/index.jsx"
+
+// Non-critical pages (lazy loaded)
+const AboutPage = lazy(() => import("../pages/public/AboutPage/index.jsx"))
+const PostDetailPage = lazy(() => import("../pages/Marketplace/PostDetailPage"))
+const JobDetailPage = lazy(() => import("../pages/Marketplace/JobDetailPage.jsx"))
+const ContactArtistPage = lazy(() => import("../pages/Marketplace/ContactArtistPage"))
+const HomePage = lazy(() => import("../pages/HomePage/index.jsx"))
+const CreatePostPage = lazy(() => import("../pages/Marketplace/CreatePost"))
+const EditPostPage = lazy(() => import("../pages/Marketplace/EditPostPage"))
+const ArtistDashboard = lazy(() => import("../pages/Dashboard/ArtistDashboard.jsx"))
+const MyPostsPage = lazy(() => import("../pages/Dashboard/MyPostsPage"))
+const ApplicationsPage = lazy(() => import("../pages/dashboard/ApplicationsPage.jsx"))
+const ApplicationDetailPage = lazy(() => import("../pages/dashboard/ApplicationDetailPage.jsx"))
+const NotificationsPage = lazy(() => import("../pages/dashboard/NotificationsPage"))
+const ArtistProfile = lazy(() => import("../pages/profiles/ArtistProfile.jsx"))
+const ClientProfile = lazy(() => import("../pages/profiles/ClientProfile.jsx"))
+const EditProfile = lazy(() => import("../pages/profiles/EditProfile.jsx"))
+const ProfileRouter = lazy(() => import("../pages/profiles/ProfileRouter.jsx"))
+const PublicArtistProfile = lazy(() => import("../pages/public/PublicArtistProfile.jsx"))
+const ForgotPasswordPage = lazy(() => import("../pages/auth/ForgotPasswordPage"))
+const ChangePasswordPage = lazy(() => import("../pages/auth/ChangePasswordPage"))
+const OTPVerificationPage = lazy(() => import("../pages/auth/OTPVerificationPage"))
+
+// Pages with pagination - load directly for better performance
+import CategoryPage from "../pages/Marketplace/CategoryPage"
+import MarketplacePage from "../pages/Marketplace/MarketplacePage"
+
+// Enhanced loading component with better UX
+const PageLoader = () => (
+  <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000] flex items-center justify-center">
+    <div className="text-center">
+      <Loader />
+      <p className="text-gray-400 mt-4 text-lg">Loading...</p>
+    </div>
+  </div>
+)
+
+// Lazy route wrapper with error boundary
+const LazyRoute = ({ children }) => (
+  <Suspense fallback={<PageLoader />}>
+    {children}
+  </Suspense>
+)
 
 function App() {
   return (
@@ -34,19 +61,37 @@ function App() {
       style={{ fontFamily: "Poppins, sans-serif" }}
     >
       <Routes>
-        {/* Public routes */}
+        {/* Critical routes (no lazy loading) */}
         <Route path="/" element={<LandingPage />} />
-        <Route path="/about" element={<AboutPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+
+        {/* Public routes (lazy loaded) */}
+        <Route path="/about" element={
+          <LazyRoute>
+            <AboutPage />
+          </LazyRoute>
+        } />
 
         <Route path="/marketplace" element={<MarketplacePage />} />
         <Route path="/marketplace/category/:categoryName" element={<CategoryPage />} />
-        <Route path="/marketplace/service/:slug" element={<PostDetailPage />} />
-        <Route path="/marketplace/job/:slug" element={<JobDetailPage />} />
+        <Route path="/marketplace/service/:slug" element={
+          <LazyRoute>
+            <PostDetailPage />
+          </LazyRoute>
+        } />
+        <Route path="/marketplace/job/:slug" element={
+          <LazyRoute>
+            <JobDetailPage />
+          </LazyRoute>
+        } />
         <Route 
           path="/marketplace/:slug/contact" 
           element={
             <ProtectedRoute>
-              <ContactArtistPage />
+              <LazyRoute>
+                <ContactArtistPage />
+              </LazyRoute>
             </ProtectedRoute>
           } 
         />
@@ -56,7 +101,9 @@ function App() {
           path="/home"
           element={
             <ProtectedRoute>
-              <HomePage />
+              <LazyRoute>
+                <HomePage />
+              </LazyRoute>
             </ProtectedRoute>
           }
         />
@@ -65,17 +112,20 @@ function App() {
           path="/marketplace/create"
           element={
             <ProtectedRoute>
-              <CreatePostPage />
+              <LazyRoute>
+                <CreatePostPage />
+              </LazyRoute>
             </ProtectedRoute>
           }
         />
-        {/* Route removed: /marketplace/create-job now redirects to /marketplace/create?type=jobs */}
 
         <Route
           path="/marketplace/edit/:postId"
           element={
             <ProtectedRoute>
-              <EditPostPage />
+              <LazyRoute>
+                <EditPostPage />
+              </LazyRoute>
             </ProtectedRoute>
           }
         />
@@ -84,7 +134,9 @@ function App() {
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <ArtistDashboard />
+              <LazyRoute>
+                <ArtistDashboard />
+              </LazyRoute>
             </ProtectedRoute>
           }
         />
@@ -93,7 +145,9 @@ function App() {
           path="/dashboard/my-posts"
           element={
             <ProtectedRoute>
-              <MyPostsPage />
+              <LazyRoute>
+                <MyPostsPage />
+              </LazyRoute>
             </ProtectedRoute>
           }
         />
@@ -102,7 +156,9 @@ function App() {
           path="/dashboard/applications"
           element={
             <ProtectedRoute>
-              <ApplicationsPage />
+              <LazyRoute>
+                <ApplicationsPage />
+              </LazyRoute>
             </ProtectedRoute>
           }
         />
@@ -111,7 +167,9 @@ function App() {
           path="/dashboard/applications/:applicationId"
           element={
             <ProtectedRoute>
-              <ApplicationDetailPage />
+              <LazyRoute>
+                <ApplicationDetailPage />
+              </LazyRoute>
             </ProtectedRoute>
           }
         />
@@ -120,7 +178,9 @@ function App() {
           path="/dashboard/notifications"
           element={
             <ProtectedRoute>
-              <NotificationsPage />
+              <LazyRoute>
+                <NotificationsPage />
+              </LazyRoute>
             </ProtectedRoute>
           }
         />
@@ -130,7 +190,9 @@ function App() {
           path="/profile"
           element={
             <ProtectedRoute>
-              <ProfileRouter />
+              <LazyRoute>
+                <ProfileRouter />
+              </LazyRoute>
             </ProtectedRoute>
           }
         />
@@ -138,7 +200,9 @@ function App() {
           path="/profile/artist/:userId"
           element={
             <ProtectedRoute>
-              <ArtistProfile />
+              <LazyRoute>
+                <ArtistProfile />
+              </LazyRoute>
             </ProtectedRoute>
           }
         />
@@ -146,7 +210,9 @@ function App() {
           path="/profile/client/:userId"
           element={
             <ProtectedRoute>
-              <ClientProfile />
+              <LazyRoute>
+                <ClientProfile />
+              </LazyRoute>
             </ProtectedRoute>
           }
         />
@@ -156,21 +222,43 @@ function App() {
           path="/profile/edit"
           element={
             <ProtectedRoute>
-              <EditProfile />
+              <LazyRoute>
+                <EditProfile />
+              </LazyRoute>
             </ProtectedRoute>
           }
         />
 
+        {/* Public profile routes */}
+        <Route path="/artist/:slug" element={
+          <LazyRoute>
+            <PublicArtistProfile />
+          </LazyRoute>
+        } />
+
         {/* Auth routes */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/verify-otp" element={<OTPVerificationPage />} />
-        <Route path="/change-password" element={<ChangePasswordPage />} />
+        <Route path="/forgot-password" element={
+          <LazyRoute>
+            <ForgotPasswordPage />
+          </LazyRoute>
+        } />
+        <Route path="/verify-otp" element={
+          <LazyRoute>
+            <OTPVerificationPage />
+          </LazyRoute>
+        } />
+        <Route path="/change-password" element={
+          <LazyRoute>
+            <ChangePasswordPage />
+          </LazyRoute>
+        } />
 
         {/* Public Artist Profile Routes (GitHub-style) - Must be last due to catch-all nature */}
         <Route path="/:slug" element={<PublicArtistProfile />} />
       </Routes>
+      
+      {/* Performance Monitor - Only shows in development */}
+      <PerformanceMonitor />
     </div>
   )
 }

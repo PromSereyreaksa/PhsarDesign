@@ -3,7 +3,7 @@ import useIntersectionObserver from '../../hooks/useIntersectionObserver';
 import PostCard from './PostCard';
 
 const PostCardSkeleton = () => (
-  <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-700/50 rounded-xl overflow-hidden animate-pulse">
+  <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 rounded-xl overflow-hidden">
     {/* Image skeleton - better size for wider cards */}
     <div className="h-40 bg-gray-700/30"></div>
     

@@ -1,17 +1,20 @@
 "use client"
 
 import {
-  Bell,
-  Briefcase,
-  ChevronRight,
-  FileText,
-  LayoutDashboard,
-  LogOut,
-  Plus,
-  Search,
-  Settings,
-  User,
-  Users,
+    Bell,
+    Briefcase,
+    ChevronDown,
+    ChevronRight,
+    FileText,
+    LayoutDashboard,
+    LogOut,
+    Menu,
+    Plus,
+    Search,
+    Settings,
+    User,
+    Users,
+    X,
 } from "lucide-react"
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
@@ -41,7 +44,7 @@ const NotificationBadge = React.memo(({ unreadCount, isNewNotification }) => {
   return (
     <span 
       className={`absolute -top-1 -right-1 h-4 w-4 text-xs font-bold text-white bg-red-500 rounded-full flex items-center justify-center ${
-        isNewNotification ? 'animate-pulse' : ''
+        isNewNotification ? '' : ''
       }`}
     >
       {safeUnreadCount.toString()}
@@ -129,6 +132,8 @@ const NotificationItem = ({ notification, onNotificationClick, onMarkAsRead }) =
 export default function AuthNavbar() {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false)
   const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [activeMobileDropdown, setActiveMobileDropdown] = useState(null)
   const dropdownRef = useRef(null)
   const notificationDropdownRef = useRef(null)
   const navigate = useNavigate()
@@ -226,7 +231,7 @@ export default function AuthNavbar() {
     return () => clearInterval(interval)
   }, [dispatch])
 
-  // Close profile dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -242,6 +247,12 @@ export default function AuthNavbar() {
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [])
+
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setIsMobileMenuOpen(false)
+    setActiveMobileDropdown(null)
+  }, [location.pathname])
 
   // Helpers
   const getUserInitials = () => {
@@ -419,8 +430,8 @@ export default function AuthNavbar() {
             </button>
           </div>
 
-          {/* Center nav */}
-          <div className="flex items-center justify-center flex-1">
+          {/* Center nav - Desktop */}
+          <div className="hidden md:flex items-center justify-center flex-1">
             <div className="flex items-center space-x-6 md:space-x-8">
               {/* Home */}
               <DropdownItem
@@ -463,8 +474,8 @@ export default function AuthNavbar() {
             </div>
           </div>
 
-          {/* Right side */}
-          <div className="flex items-center space-x-2">
+          {/* Right side - Desktop */}
+          <div className="hidden md:flex items-center space-x-2">
             {/* Applications Mailbox */}
             <div className="relative">
               <button
@@ -616,7 +627,356 @@ export default function AuthNavbar() {
               )}
             </div>
           </div>
+
+          {/* Mobile right side - Icons only */}
+          <div className="flex md:hidden items-center space-x-2">
+            {/* Mobile Applications Icon */}
+            <div className="relative">
+              <button
+                onClick={() => navigate('/dashboard/applications')}
+                className="relative p-2 text-white hover:text-[#A95BAB] transition-colors duration-500 ease-out"
+                title="View Applications"
+              >
+                <FileText className="h-5 w-5" />
+                <ApplicationBadge pendingCount={pendingApplicationsCount} />
+              </button>
+            </div>
+
+            {/* Mobile Notification Bell */}
+            <div className="relative" ref={notificationDropdownRef}>
+              <button
+                onClick={() => setIsNotificationDropdownOpen(!isNotificationDropdownOpen)}
+                className="relative p-2 text-white hover:text-[#A95BAB] transition-colors duration-500 ease-out"
+              >
+                <Bell className="h-5 w-5" />
+                <NotificationBadge unreadCount={unreadCount} />
+              </button>
+
+              {/* Mobile Notification Dropdown */}
+              {isNotificationDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-80 bg-[#202020] border border-gray-700 rounded-lg shadow-lg z-50">
+                  <div className="p-4 border-b border-gray-700 flex justify-between items-center">
+                    <h3 className="font-semibold text-white">Notifications</h3>
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={handleMarkAllAsRead}
+                        className="text-sm text-[#A95BAB] hover:text-white transition-colors"
+                      >
+                        Mark all as read
+                      </button>
+                    )}
+                  </div>
+                  
+                  <div className="max-h-96 overflow-y-auto">
+                    {loading ? (
+                      <div className="p-4 text-center text-gray-400">
+                        Loading notifications...
+                      </div>
+                    ) : notifications.length === 0 ? (
+                      <div className="p-4 text-center text-gray-400">
+                        No notifications
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-gray-700">
+                        {notifications.map((notification) => (
+                          <NotificationItem
+                            key={notification.id}
+                            notification={notification}
+                            onNotificationClick={handleNotificationClick}
+                            onMarkAsRead={handleMarkAsRead}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="p-2 border-t border-gray-700">
+                    <button
+                      onClick={() => {
+                        navigate('/dashboard/notifications')
+                        setIsNotificationDropdownOpen(false)
+                      }}
+                      className="w-full text-center text-sm text-[#A95BAB] hover:text-white py-2 transition-colors"
+                    >
+                      View all notifications
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Mobile Profile */}
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                className="flex items-center p-2 rounded-lg hover:bg-white/10 transition-colors duration-300"
+              >
+                <div className="w-7 h-7 bg-[#A95BAB] rounded-full flex items-center justify-center">
+                  {user?.avatarURL ? (
+                    <img
+                      src={user.avatarURL || "/placeholder.svg"}
+                      alt={user.firstName}
+                      className="w-7 h-7 rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-white text-xs font-bold">{getUserInitials()}</span>
+                  )}
+                </div>
+              </button>
+
+              {isProfileDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-64 bg-[#202020] border border-gray-700 rounded-lg shadow-lg z-50">
+                  <div className="p-4 border-b border-gray-700">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-[#A95BAB] rounded-full flex items-center justify-center">
+                        {user?.avatarURL ? (
+                          <img
+                            src={user.avatarURL || "/placeholder.svg"}
+                            alt={user.firstName}
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-white text-sm font-bold">{getUserInitials()}</span>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-white font-bold">
+                          {user?.firstName && user?.lastName
+                            ? `${user.firstName} ${user.lastName}`
+                            : user?.email || "User"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="py-2">
+                    {profileMenuItems.map((item, i) => {
+                      const IconComponent = item.icon
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => handleProfileMenuClick(item.href)}
+                          className="w-full flex items-center justify-between px-4 py-3 text-gray-300 hover:bg-white/5 hover:text-white transition-colors duration-200"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <IconComponent size={16} className="text-gray-400" />
+                            <span>{item.label}</span>
+                          </div>
+                          <ChevronRight size={14} className="text-gray-400" />
+                        </button>
+                      )
+                    })}
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center justify-between px-4 py-3 text-gray-300 hover:bg-red-500/10 hover:text-red-400 transition-colors duration-200"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <LogOut size={16} className="text-gray-400" />
+                        <span>Log out</span>
+                      </div>
+                      <ChevronRight size={14} className="text-gray-400" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Mobile menu button */}
+          <div className="md:hidden">
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="ml-2 text-white hover:text-[#A95BAB] transition-colors duration-300"
+            >
+              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+          </div>
         </div>
+
+        {/* Mobile Navigation Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden bg-[#202020]/95 backdrop-blur-sm border-t border-gray-700/50">
+            <div className="px-4 py-4 space-y-3">
+              {/* Home */}
+              <button
+                onClick={() => {
+                  setActiveMenu("home")
+                  navigate("/home")
+                  setIsMobileMenuOpen(false)
+                }}
+                className={`block w-full text-left px-3 py-2 rounded-lg transition-colors duration-300 ${
+                  activeMenu === "home" 
+                    ? "text-[#A95BAB] bg-[#A95BAB]/10" 
+                    : "text-white hover:text-[#A95BAB] hover:bg-white/5"
+                }`}
+              >
+                Home
+              </button>
+
+              {/* Find Talents - Expandable */}
+              <div>
+                <button
+                  onClick={() => {
+                    if (activeMobileDropdown === "talents") {
+                      setActiveMobileDropdown(null)
+                    } else {
+                      setActiveMobileDropdown("talents")
+                    }
+                  }}
+                  className={`flex items-center justify-between w-full text-left px-3 py-2 rounded-lg transition-colors duration-300 ${
+                    activeMenu === "talents" 
+                      ? "text-[#A95BAB] bg-[#A95BAB]/10" 
+                      : "text-white hover:text-[#A95BAB] hover:bg-white/5"
+                  }`}
+                >
+                  <span>Find Talents</span>
+                  <ChevronDown 
+                    className={`w-4 h-4 transition-transform duration-300 ${
+                      activeMobileDropdown === "talents" ? "rotate-180" : "rotate-0"
+                    }`}
+                  />
+                </button>
+                
+                {activeMobileDropdown === "talents" && (
+                  <div className="mt-2 ml-4 space-y-2">
+                    {findTalentsItems.map((item, index) => {
+                      const IconComponent = item.icon
+                      return (
+                        <button
+                          key={index}
+                          onClick={() => {
+                            item.action()
+                            setIsMobileMenuOpen(false)
+                            setActiveMobileDropdown(null)
+                          }}
+                          className="flex items-center space-x-3 w-full text-left px-3 py-2 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors duration-300"
+                        >
+                          <IconComponent className="w-4 h-4" />
+                          <span className="text-sm">{item.title}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Find Works - Expandable */}
+              <div>
+                <button
+                  onClick={() => {
+                    if (activeMobileDropdown === "works") {
+                      setActiveMobileDropdown(null)
+                    } else {
+                      setActiveMobileDropdown("works")
+                    }
+                  }}
+                  className={`flex items-center justify-between w-full text-left px-3 py-2 rounded-lg transition-colors duration-300 ${
+                    activeMenu === "works" 
+                      ? "text-[#A95BAB] bg-[#A95BAB]/10" 
+                      : "text-white hover:text-[#A95BAB] hover:bg-white/5"
+                  }`}
+                >
+                  <span>Find Works</span>
+                  <ChevronDown 
+                    className={`w-4 h-4 transition-transform duration-300 ${
+                      activeMobileDropdown === "works" ? "rotate-180" : "rotate-0"
+                    }`}
+                  />
+                </button>
+                
+                {activeMobileDropdown === "works" && (
+                  <div className="mt-2 ml-4 space-y-2">
+                    {findWorksItems.map((item, index) => {
+                      const IconComponent = item.icon
+                      return (
+                        <button
+                          key={index}
+                          onClick={() => {
+                            item.action()
+                            setIsMobileMenuOpen(false)
+                            setActiveMobileDropdown(null)
+                          }}
+                          className="flex items-center space-x-3 w-full text-left px-3 py-2 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors duration-300"
+                        >
+                          <IconComponent className="w-4 h-4" />
+                          <span className="text-sm">{item.title}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Community */}
+              <button
+                onClick={() => {
+                  setActiveMenu("community")
+                  navigate("/community")
+                  setIsMobileMenuOpen(false)
+                }}
+                className={`block w-full text-left px-3 py-2 rounded-lg transition-colors duration-300 ${
+                  activeMenu === "community" 
+                    ? "text-[#A95BAB] bg-[#A95BAB]/10" 
+                    : "text-white hover:text-[#A95BAB] hover:bg-white/5"
+                }`}
+              >
+                Community
+              </button>
+
+              {/* Mobile Profile Quick Actions */}
+              <div className="pt-4 border-t border-gray-700/50">
+                <div className="flex items-center space-x-3 px-3 py-2 mb-3">
+                  <div className="w-8 h-8 bg-[#A95BAB] rounded-full flex items-center justify-center">
+                    {user?.avatarURL ? (
+                      <img
+                        src={user.avatarURL || "/placeholder.svg"}
+                        alt={user.firstName}
+                        className="w-8 h-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-white text-xs font-bold">{getUserInitials()}</span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-white font-medium text-sm">
+                      {user?.firstName && user?.lastName
+                        ? `${user.firstName} ${user.lastName}`
+                        : user?.email || "User"}
+                    </p>
+                  </div>
+                </div>
+
+                {profileMenuItems.map((item, i) => {
+                  const IconComponent = item.icon
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        handleProfileMenuClick(item.href)
+                        setIsMobileMenuOpen(false)
+                      }}
+                      className="flex items-center space-x-3 w-full text-left px-3 py-2 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors duration-300"
+                    >
+                      <IconComponent size={16} className="text-gray-400" />
+                      <span className="text-sm">{item.label}</span>
+                    </button>
+                  )
+                })}
+                
+                <button
+                  onClick={() => {
+                    handleLogout()
+                    setIsMobileMenuOpen(false)
+                  }}
+                  className="flex items-center space-x-3 w-full text-left px-3 py-2 text-gray-300 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors duration-300"
+                >
+                  <LogOut size={16} className="text-gray-400" />
+                  <span className="text-sm">Log out</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </nav>
   )

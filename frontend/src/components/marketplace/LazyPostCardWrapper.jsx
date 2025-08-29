@@ -4,7 +4,7 @@ import { lazy, Suspense } from "react";
 const LazyPostCard = lazy(() => import("./PostCard"));
 
 const PostCardSkeleton = () => (
-  <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-4 animate-pulse">
+  <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 rounded-2xl p-4">
     {/* Image skeleton */}
     <div className="aspect-[4/3] bg-gray-700/30 rounded-xl mb-4"></div>
     

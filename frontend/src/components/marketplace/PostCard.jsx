@@ -13,34 +13,29 @@ const PostImage = ({ src, alt, fallbackIcon }) => {
 
   const handleImageLoad = () => {
     setImageLoading(false)
+    setImageError(false)
   }
 
   const handleImageError = () => {
-    console.log('PostImage: Image load failed for URL:', fullImageUrl)
+    console.log('PostImage: Image load failed for URL:', src)
     setImageError(true)
     setImageLoading(false)
   }
 
   // Helper function to build full image URL
   const getImageUrl = (imageSrc) => {
-    console.log('🔍 PostImage getImageUrl input:', imageSrc);
-    
     if (!imageSrc) {
-      console.log('❌ No image source provided');
       return null;
     }
     
     // If it's already a full URL (http/https), return as is
     if (imageSrc.startsWith('http://') || imageSrc.startsWith('https://')) {
-      console.log('✅ Full URL detected:', imageSrc);
       return imageSrc;
     }
     
-    // Handle cloudinary URLs
+    // Handle cloudinary URLs without protocol
     if (imageSrc.includes('cloudinary.com')) {
-      const cloudinaryUrl = imageSrc.startsWith('//') ? `https:${imageSrc}` : imageSrc;
-      console.log('☁️ Cloudinary URL processed:', cloudinaryUrl);
-      return cloudinaryUrl;
+      return imageSrc.startsWith('//') ? `https:${imageSrc}` : imageSrc;
     }
     
     // If it's a relative path, build the full URL
@@ -48,19 +43,10 @@ const PostImage = ({ src, alt, fallbackIcon }) => {
     const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl
     const cleanImageSrc = imageSrc.startsWith('/') ? imageSrc : `/${imageSrc}`
     
-    const fullUrl = `${cleanBaseUrl}${cleanImageSrc}`
-    console.log('🔧 Built URL:', { original: imageSrc, baseUrl, fullUrl })
-    return fullUrl
+    return `${cleanBaseUrl}${cleanImageSrc}`
   }
 
   const fullImageUrl = getImageUrl(src)
-
-  console.log('PostImage Debug:', {
-    originalSrc: src,
-    fullImageUrl: fullImageUrl,
-    imageError: imageError,
-    imageLoading: imageLoading
-  });
 
   if (!fullImageUrl || imageError) {
     return (
@@ -81,12 +67,6 @@ const PostImage = ({ src, alt, fallbackIcon }) => {
         src={fullImageUrl}
         alt={alt}
         className="w-full h-full object-cover"
-        style={{ 
-          outline: 'none !important',
-          border: 'none !important',
-          boxShadow: 'none !important',
-          background: 'none !important'
-        }}
         loading="lazy"
         onLoad={handleImageLoad}
         onError={handleImageError}

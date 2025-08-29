@@ -94,7 +94,7 @@ export default function PopularServicesSection({ customImages }) {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {[1, 2, 3, 4, 5, 6, 7, 8].map((index) => (
             <div key={index} className="relative rounded-xl overflow-hidden">
-              <div className="w-full h-48 bg-gray-700/50 animate-pulse flex items-center justify-center">
+              <div className="w-full h-48 bg-gray-700/50 flex items-center justify-center">
                 <Loader />
               </div>
             </div>
