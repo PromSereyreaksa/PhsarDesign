@@ -32,6 +32,7 @@ const PublicArtistProfile = lazy(() => import("../pages/public/PublicArtistProfi
 const ForgotPasswordPage = lazy(() => import("../pages/auth/ForgotPasswordPage"))
 const ChangePasswordPage = lazy(() => import("../pages/auth/ChangePasswordPage"))
 const OTPVerificationPage = lazy(() => import("../pages/auth/OTPVerificationPage"))
+const Settings = lazy(() => import("../pages/Settings"))
 
 // Pages with pagination - load directly for better performance
 import CategoryPage from "../pages/Marketplace/CategoryPage"

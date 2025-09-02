@@ -134,7 +134,8 @@ export default function AuthNavbar() {
   const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [activeMobileDropdown, setActiveMobileDropdown] = useState(null)
-  const dropdownRef = useRef(null)
+  const desktopProfileDropdownRef = useRef(null)
+  const mobileProfileDropdownRef = useRef(null)
   const notificationDropdownRef = useRef(null)
   const navigate = useNavigate()
   const location = useLocation()
@@ -234,9 +235,12 @@ export default function AuthNavbar() {
   // Close dropdowns when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      // Check desktop profile dropdown
+      if (desktopProfileDropdownRef.current && !desktopProfileDropdownRef.current.contains(event.target) &&
+          mobileProfileDropdownRef.current && !mobileProfileDropdownRef.current.contains(event.target)) {
         setIsProfileDropdownOpen(false)
       }
+      // Check notification dropdown
       if (notificationDropdownRef.current && !notificationDropdownRef.current.contains(event.target)) {
         setIsNotificationDropdownOpen(false)
       }
@@ -347,6 +351,13 @@ export default function AuthNavbar() {
 
   const handleProfileMenuClick = (href) => {
     setIsProfileDropdownOpen(false)
+    
+    // Handle settings with maintenance message
+    if (href === '/settings') {
+      alert('Settings page is under maintenance. Please check back later!')
+      return
+    }
+    
     navigate(href)
     setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 100)
   }
@@ -552,7 +563,7 @@ export default function AuthNavbar() {
             </div>
 
             {/* Profile */}
-            <div className="relative" ref={dropdownRef}>
+            <div className="relative" ref={desktopProfileDropdownRef}>
               <button
                 onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
                 className="flex items-center space-x-2 p-2 rounded-lg hover:bg-white/10 transition-colors duration-300"
@@ -706,7 +717,7 @@ export default function AuthNavbar() {
             </div>
 
             {/* Mobile Profile */}
-            <div className="relative" ref={dropdownRef}>
+            <div className="relative" ref={mobileProfileDropdownRef}>
               <button
                 onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
                 className="flex items-center p-2 rounded-lg hover:bg-white/10 transition-colors duration-300"

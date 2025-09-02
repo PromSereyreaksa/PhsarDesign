@@ -12,20 +12,10 @@ export default defineConfig({
     tailwindcss()
   ],
   build: {
-    // Add CommonJS configuration for TailwindCSS v4
-    commonjsOptions: {
-      include: [/node_modules/],
-      exclude: ['tailwindcss', '@tailwindcss/vite']
-    },
     // Enable code splitting and chunk optimization
     rollupOptions: {
-      // External TailwindCSS internals to prevent resolution issues
-      external: (id) => {
-        if (id.includes('tailwindcss/lib/') || id.includes('tailwindcss/version.js')) {
-          return true
-        }
-        return false
-      },
+      // Remove the external function that was causing the issue
+      // TailwindCSS should be bundled, not externalized
       output: {
         // Create separate chunks for better caching
         manualChunks: {
@@ -67,16 +57,8 @@ export default defineConfig({
       'react-redux',
       'axios',
       'lucide-react'
-    ],
-    // Force exclude TailwindCSS from pre-bundling to avoid CommonJS issues
-    exclude: ['tailwindcss', '@tailwindcss/vite']
-  },
-  // Add resolve alias to fix TailwindCSS v4 module resolution
-  resolve: {
-    alias: {
-      // Fix TailwindCSS v4 CommonJS resolution issue
-      'tailwindcss/package.json': 'tailwindcss/package.json'
-    }
+    ]
+    // Removed the exclude for TailwindCSS - let Vite handle it normally
   },
   // Enable server-side optimizations
   server: {
