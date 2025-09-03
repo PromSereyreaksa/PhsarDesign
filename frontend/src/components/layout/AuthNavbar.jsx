@@ -424,7 +424,7 @@ export default function AuthNavbar() {
               onClick={() => navigate("/home")}
               className="cursor-pointer"
             >
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-[#A95BAB] bg-clip-text text-transparent">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-white to-[#A95BAB] bg-clip-text text-transparent">
                 PhsarDesign
               </h1>
             </button>
@@ -628,16 +628,16 @@ export default function AuthNavbar() {
             </div>
           </div>
 
-          {/* Mobile right side - Icons only */}
-          <div className="flex md:hidden items-center space-x-2">
+          {/* Mobile right side - All icons and menu grouped together */}
+          <div className="flex md:hidden items-center space-x-1 sm:space-x-2">
             {/* Mobile Applications Icon */}
             <div className="relative">
               <button
                 onClick={() => navigate('/dashboard/applications')}
-                className="relative p-2 text-white hover:text-[#A95BAB] transition-colors duration-500 ease-out"
+                className="relative p-1.5 sm:p-2 text-white hover:text-[#A95BAB] transition-colors duration-500 ease-out"
                 title="View Applications"
               >
-                <FileText className="h-5 w-5" />
+                <FileText className="h-4 w-4 sm:h-5 sm:w-5" />
                 <ApplicationBadge pendingCount={pendingApplicationsCount} />
               </button>
             </div>
@@ -646,21 +646,21 @@ export default function AuthNavbar() {
             <div className="relative" ref={notificationDropdownRef}>
               <button
                 onClick={() => setIsNotificationDropdownOpen(!isNotificationDropdownOpen)}
-                className="relative p-2 text-white hover:text-[#A95BAB] transition-colors duration-500 ease-out"
+                className="relative p-1.5 sm:p-2 text-white hover:text-[#A95BAB] transition-colors duration-500 ease-out"
               >
-                <Bell className="h-5 w-5" />
+                <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
                 <NotificationBadge unreadCount={unreadCount} />
               </button>
 
               {/* Mobile Notification Dropdown */}
               {isNotificationDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-[#202020] border border-gray-700 rounded-lg shadow-lg z-50">
-                  <div className="p-4 border-b border-gray-700 flex justify-between items-center">
-                    <h3 className="font-semibold text-white">Notifications</h3>
+                <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-[#202020] border border-gray-700 rounded-lg shadow-lg z-50">
+                  <div className="p-3 sm:p-4 border-b border-gray-700 flex justify-between items-center">
+                    <h3 className="font-semibold text-white text-sm sm:text-base">Notifications</h3>
                     {unreadCount > 0 && (
                       <button
                         onClick={handleMarkAllAsRead}
-                        className="text-sm text-[#A95BAB] hover:text-white transition-colors"
+                        className="text-xs sm:text-sm text-[#A95BAB] hover:text-white transition-colors"
                       >
                         Mark all as read
                       </button>
@@ -709,14 +709,14 @@ export default function AuthNavbar() {
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-                className="flex items-center p-2 rounded-lg hover:bg-white/10 transition-colors duration-300"
+                className="flex items-center p-1 sm:p-1.5 rounded-lg hover:bg-white/10 transition-colors duration-300"
               >
-                <div className="w-7 h-7 bg-[#A95BAB] rounded-full flex items-center justify-center">
+                <div className="w-6 h-6 sm:w-7 sm:h-7 bg-[#A95BAB] rounded-full flex items-center justify-center">
                   {user?.avatarURL ? (
                     <img
                       src={user.avatarURL || "/placeholder.svg"}
                       alt={user.firstName}
-                      className="w-7 h-7 rounded-full object-cover"
+                      className="w-6 h-6 sm:w-7 sm:h-7 rounded-full object-cover"
                     />
                   ) : (
                     <span className="text-white text-xs font-bold">{getUserInitials()}</span>
@@ -725,22 +725,22 @@ export default function AuthNavbar() {
               </button>
 
               {isProfileDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-64 bg-[#202020] border border-gray-700 rounded-lg shadow-lg z-50">
-                  <div className="p-4 border-b border-gray-700">
+                <div className="absolute right-0 mt-2 w-56 sm:w-64 bg-[#202020] border border-gray-700 rounded-lg shadow-lg z-50">
+                  <div className="p-3 sm:p-4 border-b border-gray-700">
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-[#A95BAB] rounded-full flex items-center justify-center">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#A95BAB] rounded-full flex items-center justify-center">
                         {user?.avatarURL ? (
                           <img
                             src={user.avatarURL || "/placeholder.svg"}
                             alt={user.firstName}
-                            className="w-10 h-10 rounded-full object-cover"
+                            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover"
                           />
                         ) : (
                           <span className="text-white text-sm font-bold">{getUserInitials()}</span>
                         )}
                       </div>
                       <div>
-                        <p className="text-white font-bold">
+                        <p className="text-white font-bold text-sm sm:text-base">
                           {user?.firstName && user?.lastName
                             ? `${user.firstName} ${user.lastName}`
                             : user?.email || "User"}
@@ -756,40 +756,40 @@ export default function AuthNavbar() {
                         <button
                           key={i}
                           onClick={() => handleProfileMenuClick(item.href)}
-                          className="w-full flex items-center justify-between px-4 py-3 text-gray-300 hover:bg-white/5 hover:text-white transition-colors duration-200"
+                          className="w-full flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3 text-gray-300 hover:bg-white/5 hover:text-white transition-colors duration-200"
                         >
                           <div className="flex items-center space-x-3">
-                            <IconComponent size={16} className="text-gray-400" />
-                            <span>{item.label}</span>
+                            <IconComponent size={14} className="text-gray-400 sm:w-4 sm:h-4" />
+                            <span className="text-sm">{item.label}</span>
                           </div>
-                          <ChevronRight size={14} className="text-gray-400" />
+                          <ChevronRight size={12} className="text-gray-400 sm:w-3.5 sm:h-3.5" />
                         </button>
                       )
                     })}
                     <button
                       onClick={handleLogout}
-                      className="w-full flex items-center justify-between px-4 py-3 text-gray-300 hover:bg-red-500/10 hover:text-red-400 transition-colors duration-200"
+                      className="w-full flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3 text-gray-300 hover:bg-red-500/10 hover:text-red-400 transition-colors duration-200"
                     >
                       <div className="flex items-center space-x-3">
-                        <LogOut size={16} className="text-gray-400" />
-                        <span>Log out</span>
+                        <LogOut size={14} className="text-gray-400 sm:w-4 sm:h-4" />
+                        <span className="text-sm">Log out</span>
                       </div>
-                      <ChevronRight size={14} className="text-gray-400" />
+                      <ChevronRight size={12} className="text-gray-400 sm:w-3.5 sm:h-3.5" />
                     </button>
                   </div>
                 </div>
               )}
             </div>
-          </div>
 
-          {/* Mobile menu button */}
-          <div className="md:hidden">
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="ml-2 text-white hover:text-[#A95BAB] transition-colors duration-300"
-            >
-              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
+            {/* Mobile menu button - grouped with other icons */}
+            <div className="border-l border-gray-600 pl-1 sm:pl-2 ml-1 sm:ml-2">
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="p-1.5 sm:p-2 text-white hover:text-[#A95BAB] transition-colors duration-300"
+              >
+                {isMobileMenuOpen ? <X className="h-4 w-4 sm:h-5 sm:w-5" /> : <Menu className="h-4 w-4 sm:h-5 sm:w-5" />}
+              </button>
+            </div>
           </div>
         </div>
 

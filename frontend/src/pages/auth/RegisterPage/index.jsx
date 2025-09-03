@@ -239,13 +239,13 @@ export default function RegisterPage() {
                     placeholder="Create a strong password"
                     value={formData.password}
                     onChange={(e) => handleInputChange("password", e.target.value)}
-                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 rounded-xl pr-12 h-11 focus:ring-2 focus:ring-[#A95BAB]/50 focus:border-[#A95BAB]/50 transition-all duration-200"
+                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 rounded-xl pr-10 h-11 focus:ring-2 focus:ring-[#A95BAB]/50 focus:border-[#A95BAB]/50 transition-all duration-200"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#A95BAB] transition-colors duration-200"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#A95BAB] transition-colors duration-200 p-1"
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -264,13 +264,13 @@ export default function RegisterPage() {
                     placeholder="Confirm your password"
                     value={formData.confirmPassword}
                     onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
-                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 rounded-xl pr-12 h-11 focus:ring-2 focus:ring-[#A95BAB]/50 focus:border-[#A95BAB]/50 transition-all duration-200"
+                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 rounded-xl pr-10 h-11 focus:ring-2 focus:ring-[#A95BAB]/50 focus:border-[#A95BAB]/50 transition-all duration-200"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#A95BAB] transition-colors duration-200"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#A95BAB] transition-colors duration-200 p-1"
                   >
                     {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>

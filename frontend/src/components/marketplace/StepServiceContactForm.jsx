@@ -223,10 +223,13 @@ export function StepServiceContactForm({ currentStep, formData, onInputChange, p
                 value={formData.proposedDeadline || ''}
                 onChange={(e) => handleInputChange('proposedDeadline', e.target.value)}
                 min={new Date().toISOString().split('T')[0]}
-                className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
-                style={{ colorScheme: 'dark' }}
+                className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:top-1/2 [&::-webkit-calendar-picker-indicator]:transform [&::-webkit-calendar-picker-indicator]:-translate-y-1/2 [&::-webkit-calendar-picker-indicator]:w-4 [&::-webkit-calendar-picker-indicator]:h-4 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:z-10"
+                style={{
+                  colorScheme: 'dark',
+                  transform: 'translateX(0)'
+                }}
               />
-              <Calendar className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+              <Calendar className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none z-0" />
             </div>
             {errors.proposedDeadline && (
               <p className="text-red-400 text-xs mt-1">{errors.proposedDeadline}</p>
@@ -247,10 +250,13 @@ export function StepServiceContactForm({ currentStep, formData, onInputChange, p
                 value={formData.proposedStartDate || ''}
                 onChange={(e) => handleInputChange('proposedStartDate', e.target.value)}
                 min={new Date().toISOString().split('T')[0]}
-                className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
-                style={{ colorScheme: 'dark' }}
+                className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:top-1/2 [&::-webkit-calendar-picker-indicator]:transform [&::-webkit-calendar-picker-indicator]:-translate-y-1/2 [&::-webkit-calendar-picker-indicator]:w-4 [&::-webkit-calendar-picker-indicator]:h-4 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:z-10"
+                style={{
+                  colorScheme: 'dark',
+                  transform: 'translateX(0)'
+                }}
               />
-              <Calendar className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+              <Calendar className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none z-0" />
             </div>
             <p className="text-gray-400 text-xs mt-1">
               When you'd like to start

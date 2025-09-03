@@ -49,6 +49,38 @@ img::before, img::after {
   display: none !important;
 }
 
+/* Profile picture specific styles - ensure always circular */
+.profile-avatar {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  flex-shrink: 0 !important;
+}
+
+/* Ensure profile picture containers maintain aspect ratio */
+.profile-avatar-container {
+  border-radius: 50% !important;
+  overflow: hidden !important;
+  flex-shrink: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Prevent navbar layout shifts during responsive transitions */
+.navbar-container {
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+}
+
+/* Smooth transitions for responsive elements */
+.responsive-transition {
+  transition: all 0.3s ease-in-out;
+}
+
 /* Prevent notification badge from animating and flashing */
 .notification-badge {
   transition: none !important;
@@ -91,4 +123,171 @@ img::before, img::after {
 
 .animate-pulse-subtle {
   animation: pulse-subtle 3s ease-in-out infinite;
+}
+
+/* Creative circle animations */
+@keyframes smooth-wave-jump {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0px);
+  }
+  40% {
+    transform: translateY(-12px);
+  }
+  60% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes float-gentle {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-8px) scale(1.1);
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.6), 0 0 30px rgba(255, 255, 255, 0.4);
+  }
+}
+
+@keyframes color-shift {
+  0% { filter: hue-rotate(0deg) brightness(1); }
+  25% { filter: hue-rotate(90deg) brightness(1.2); }
+  50% { filter: hue-rotate(180deg) brightness(0.9); }
+  75% { filter: hue-rotate(270deg) brightness(1.1); }
+  100% { filter: hue-rotate(360deg) brightness(1); }
+}
+
+@keyframes orbit-dance {
+  0% { transform: rotate(0deg) translateX(8px) rotate(0deg); }
+  100% { transform: rotate(360deg) translateX(8px) rotate(-360deg); }
+}
+
+@keyframes breathing {
+  0%, 100% { 
+    transform: scale(1); 
+    opacity: 0.8;
+  }
+  50% { 
+    transform: scale(1.3); 
+    opacity: 1;
+  }
+}
+
+@keyframes rainbow-glow {
+  0% { 
+    box-shadow: 0 0 10px #ff6b6b, 0 0 20px #ff6b6b, 0 0 30px #ff6b6b;
+  }
+  25% { 
+    box-shadow: 0 0 10px #4ecdc4, 0 0 20px #4ecdc4, 0 0 30px #4ecdc4;
+  }
+  50% { 
+    box-shadow: 0 0 10px #45b7d1, 0 0 20px #45b7d1, 0 0 30px #45b7d1;
+  }
+  75% { 
+    box-shadow: 0 0 10px #a95bab, 0 0 20px #a95bab, 0 0 30px #a95bab;
+  }
+  100% { 
+    box-shadow: 0 0 10px #ff6b6b, 0 0 20px #ff6b6b, 0 0 30px #ff6b6b;
+  }
+}
+
+.animate-smooth-wave-jump {
+  animation: smooth-wave-jump 2s ease-in-out infinite;
+}
+
+.animate-float-gentle {
+  animation: float-gentle 3s ease-in-out infinite;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+.animate-color-shift {
+  animation: color-shift 4s ease-in-out infinite;
+}
+
+.animate-orbit-dance {
+  animation: orbit-dance 8s linear infinite;
+}
+
+.animate-breathing {
+  animation: breathing 3s ease-in-out infinite;
+}
+
+.animate-rainbow-glow {
+  animation: rainbow-glow 3s ease-in-out infinite;
+}
+
+/* Mobile-first responsive utilities */
+@media (max-width: 480px) {
+  .text-responsive-xs {
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+  
+  .text-responsive-sm {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+  
+  .text-responsive-base {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+  
+  .text-responsive-lg {
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+  }
+  
+  .text-responsive-xl {
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+  }
+  
+  .text-responsive-2xl {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+  
+  .text-responsive-3xl {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
+  }
+  
+  .text-responsive-4xl {
+    font-size: 2.25rem;
+    line-height: 2.5rem;
+  }
+}
+
+/* Touch-friendly interactions for mobile */
+@media (hover: none) and (pointer: coarse) {
+  .hover\:scale-105:hover {
+    transform: scale(1.02);
+  }
+  
+  .hover\:scale-110:hover {
+    transform: scale(1.05);
+  }
+  
+  .group-hover\:scale-110:hover {
+    transform: scale(1.05);
+  }
+  
+  .hover\:-translate-y-2:hover {
+    transform: translateY(-0.25rem);
+  }
+  
+  .group-hover\:-translate-y-2:hover {
+    transform: translateY(-0.25rem);
+  }
 }
