@@ -124,15 +124,15 @@ export default function RegisterPage() {
       
       
       // Step 1: Register user (send to /register)
-      await authAPI.register(requestData);
+      const response = await authAPI.register(requestData);
       
-      // Navigate to OTP verification page
-      // Note: OTP is automatically sent by the /register endpoint
-      navigate("/verify-otp", { 
+      // Registration now sends magic link instead of OTP
+      // Show success message and navigate to check email page
+      navigate("/check-email", { 
         state: { 
           email: formData.email, 
           type: "registration",
-          fromRegister: true
+          message: response.data?.message || "Magic link sent to your email. Please check your inbox and click the link to complete registration."
         } 
       });
     } catch (error) {

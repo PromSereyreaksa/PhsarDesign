@@ -29,24 +29,17 @@ export default function ForgotPassword() {
     setLoading(true)
 
     try {
-      // Call specific forgot password endpoint
-      await authAPI.requestForgotPasswordOtp({ 
+      // Call magic link password reset endpoint
+      await authAPI.requestPasswordResetMagicLink({ 
         email
       })
       
       setSuccess(true)
       
-      // Navigate to OTP verification after successful request
-      setTimeout(() => {
-        navigate("/verify-otp", { 
-          state: { 
-            email, 
-            type: "password-reset" 
-          } 
-        })
-      }, 2000)
+      // Show success message - user needs to check email for magic link
+      // No automatic navigation since magic link is in email
     } catch (error) {
-      const errorMessage = error.response?.data?.message || "Failed to send reset code. Please try again."
+      const errorMessage = error.response?.data?.message || "Failed to send reset link. Please try again."
       setError(errorMessage)
     } finally {
       setLoading(false)
@@ -66,7 +59,7 @@ export default function ForgotPassword() {
                 Check Your Email
               </CardTitle>
               <p className="text-gray-300 text-sm mt-2">
-                We've sent a password reset code to
+                We've sent a password reset link to
               </p>
               <p className="text-[#A95BAB] font-medium">{email}</p>
             </CardHeader>
@@ -74,13 +67,13 @@ export default function ForgotPassword() {
             <CardContent>
               <div className="text-center">
                 <p className="text-gray-400 text-sm mb-4">
-                  Redirecting to reset page...
+                  Click the link in your email to reset your password. The link will expire in 24 hours.
                 </p>
                 <Button 
-                  onClick={() => navigate("/verify-otp", { state: { email, type: "password-reset" } })}
+                  onClick={() => navigate("/login")}
                   className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-xl"
                 >
-                  Continue to Reset
+                  Back to Login
                 </Button>
               </div>
             </CardContent>
