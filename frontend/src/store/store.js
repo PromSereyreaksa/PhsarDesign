@@ -7,6 +7,7 @@ import categoriesReducer from './slices/categoriesSlice';
 import marketplaceReducer from './slices/marketplaceSlice';
 import notificationsReducer from './slices/notificationsSlice';
 import postsReducer from './slices/postsSlice';
+import projectsReducer from './slices/projectSlice';
 
 export const store = configureStore({
   reducer: {
@@ -18,6 +19,7 @@ export const store = configureStore({
     categories: categoriesReducer,
     notifications: notificationsReducer,
     applications: applicationsReducer,
+    projects: projectsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

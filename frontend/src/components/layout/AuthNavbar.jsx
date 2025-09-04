@@ -6,6 +6,7 @@ import {
     ChevronDown,
     ChevronRight,
     FileText,
+    FolderKanban,
     LayoutDashboard,
     LogOut,
     Menu,
@@ -304,6 +305,7 @@ export default function AuthNavbar() {
   const profileMenuItems = [
     { label: "Profile", icon: User, href: "/profile" },
     { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+    { label: "Projects", icon: FolderKanban, href: "/projects" },
     { label: "Applications", icon: FileText, href: "/dashboard/applications" },
     { label: "Settings", icon: Settings, href: "/settings" },
   ]
