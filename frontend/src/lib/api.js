@@ -82,11 +82,9 @@ export const authAPI = {
   register: (userData) => api.post('/api/auth/register', userData),
   refresh: () => api.post('/api/auth/refresh'),
   logout: () => api.post('/api/auth/logout'),
-  requestOtp: (data) => api.post('/api/auth/request-otp', data),
-  verifyOtp: (data) => api.post('/api/auth/verifyOTP', data),
+  verifyMagicLink: (data) => api.post('/api/auth/verify-magic-link', data),
   changePassword: (data) => api.post('/api/auth/change-password', data),
-  requestForgotPasswordOtp: (data) => api.post('/api/auth/request-forgot-password-otp', data),
-  verifyForgotPasswordOtp: (data) => api.post('/api/auth/verify-forgot-password-otp', data),
+  requestPasswordResetMagicLink: (data) => api.post('/api/auth/request-password-reset-magic-link', data),
 };
 
 // Users API

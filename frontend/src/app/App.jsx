@@ -31,8 +31,12 @@ const EditProfile = lazy(() => import("../pages/profiles/EditProfile.jsx"))
 const ProfileRouter = lazy(() => import("../pages/profiles/ProfileRouter.jsx"))
 const PublicArtistProfile = lazy(() => import("../pages/public/PublicArtistProfile.jsx"))
 const ForgotPasswordPage = lazy(() => import("../pages/auth/ForgotPasswordPage"))
+const RegisterVerificationPage = lazy(() => import("../pages/auth/RegisterVerificationPage"))
+const ForgotPasswordVerificationPage = lazy(() => import("../pages/auth/ForgotPasswordVerificationPage"))
 const ChangePasswordPage = lazy(() => import("../pages/auth/ChangePasswordPage"))
 const OTPVerificationPage = lazy(() => import("../pages/auth/OTPVerificationPage"))
+const CheckEmailPage = lazy(() => import("../pages/auth/CheckEmailPage"))
+const MagicLinkVerificationPage = lazy(() => import("../pages/auth/MagicLinkVerificationPage"))
 const Settings = lazy(() => import("../pages/Settings"))
 const Projects = lazy(() => import("../pages/Projects"))
 const NotFoundPage = lazy(() => import("../pages/NotFoundPage"))
@@ -276,9 +280,46 @@ function App() {
             <ForgotPasswordPage />
           </LazyRoute>
         } />
+        <Route path="/auth/forgot-password" element={
+          <LazyRoute>
+            <ForgotPasswordPage />
+          </LazyRoute>
+        } />
+        
+        {/* Registration verification route */}
+        <Route path="/auth/verify-registration" element={
+          <LazyRoute>
+            <RegisterVerificationPage />
+          </LazyRoute>
+        } />
+        
+        {/* Password reset verification route */}
+        <Route path="/auth/verify-forgot-password" element={
+          <LazyRoute>
+            <ForgotPasswordVerificationPage />
+          </LazyRoute>
+        } />
+        
+        {/* Legacy magic link routes (keep for backward compatibility) */}
+        <Route path="/verify-magic-link" element={
+          <LazyRoute>
+            <MagicLinkVerificationPage />
+          </LazyRoute>
+        } />
+        <Route path="/auth/verify-magic-link" element={
+          <LazyRoute>
+            <MagicLinkVerificationPage />
+          </LazyRoute>
+        } />
+        
         <Route path="/verify-otp" element={
           <LazyRoute>
             <OTPVerificationPage />
+          </LazyRoute>
+        } />
+        <Route path="/check-email" element={
+          <LazyRoute>
+            <CheckEmailPage />
           </LazyRoute>
         } />
         <Route path="/change-password" element={
