@@ -72,7 +72,6 @@ const ConvertApplicationToProject = ({
         throw new Error(response.data.message || 'Failed to fetch application');
       }
     } catch (err) {
-      console.error('Error fetching application:', err);
       setError(err.response?.data?.message || err.message || 'Failed to load application');
       onError?.(err);
     } finally {
@@ -103,7 +102,6 @@ const ConvertApplicationToProject = ({
         throw new Error(response.data.error || 'Failed to convert application');
       }
     } catch (err) {
-      console.error('Error converting application:', err);
       const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || 'Failed to convert application';
       setError(errorMessage);
       toast.error(errorMessage);

@@ -13,6 +13,7 @@ import LandingPage from "../pages/public/LandingPage/index.jsx"
 
 // Non-critical pages (lazy loaded)
 const AboutPage = lazy(() => import("../pages/public/AboutPage/index.jsx"))
+const CommunityPage = lazy(() => import("../pages/Community"))
 const PostDetailPage = lazy(() => import("../pages/Marketplace/PostDetailPage"))
 const JobDetailPage = lazy(() => import("../pages/Marketplace/JobDetailPage.jsx"))
 const ContactArtistPage = lazy(() => import("../pages/Marketplace/ContactArtistPage"))
@@ -34,6 +35,7 @@ const ChangePasswordPage = lazy(() => import("../pages/auth/ChangePasswordPage")
 const OTPVerificationPage = lazy(() => import("../pages/auth/OTPVerificationPage"))
 const Settings = lazy(() => import("../pages/Settings"))
 const Projects = lazy(() => import("../pages/Projects"))
+const NotFoundPage = lazy(() => import("../pages/NotFoundPage"))
 
 // Pages with pagination - load directly for better performance
 import CategoryPage from "../pages/Marketplace/CategoryPage"
@@ -72,6 +74,12 @@ function App() {
         <Route path="/about" element={
           <LazyRoute>
             <AboutPage />
+          </LazyRoute>
+        } />
+
+        <Route path="/community" element={
+          <LazyRoute>
+            <CommunityPage />
           </LazyRoute>
         } />
 
@@ -280,7 +288,18 @@ function App() {
         } />
 
         {/* Public Artist Profile Routes (GitHub-style) - Must be last due to catch-all nature */}
-        <Route path="/:slug" element={<PublicArtistProfile />} />
+        <Route path="/:slug" element={
+          <LazyRoute>
+            <PublicArtistProfile />
+          </LazyRoute>
+        } />
+
+        {/* Catch-all route for 404 errors */}
+        <Route path="*" element={
+          <LazyRoute>
+            <NotFoundPage />
+          </LazyRoute>
+        } />
       </Routes>
       
       {/* Performance Monitor - Only shows in development */}

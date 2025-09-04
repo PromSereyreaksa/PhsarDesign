@@ -15,6 +15,7 @@ import { Button } from '../../components/ui/button'
 import { Card, CardContent } from '../../components/ui/card'
 import { fetchArtistBySlug } from '../../store/slices/artistsSlice'
 import { fetchPostsByArtistId } from '../../store/slices/postsSlice'
+import NotFoundPage from '../NotFoundPage/NotFoundPage'
 
 const PublicArtistProfile = () => {
   const { slug } = useParams()
@@ -66,16 +67,17 @@ const PublicArtistProfile = () => {
           });
       }
     }
-  }, [dispatch, currentArtist?.artistId, currentArtist?.userId])
+  }, [dispatch, currentArtist])
 
 
 
   // Add error boundary for the entire component
   if (!slug) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000] flex items-center justify-center">
-        <div className="text-white">Invalid artist URL</div>
-      </div>
+      <NotFoundPage 
+        title="Not Found"
+        message="The page you're looking for doesn't exist."
+      />
     )
   }
 
@@ -87,12 +89,32 @@ const PublicArtistProfile = () => {
     )
   }
 
+  // Check for specific error types that should show 404 page
   if (error) {
+    const errorString = typeof error === 'string' ? error : error?.message || ''
+    const isNotFoundError = 
+      errorString.includes('404') || 
+      errorString.includes('Artist not found') ||
+      errorString.includes('User not found') ||
+      errorString.includes('500') ||
+      errorString.includes('Internal Server Error') ||
+      errorString.includes('Network Error')
+
+    if (isNotFoundError) {
+      return (
+        <NotFoundPage 
+          title="Not Found"
+          message="The page you're looking for doesn't exist."
+        />
+      )
+    }
+
+    // For other errors, show generic error message
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000] flex items-center justify-center">
         <div className="text-center">
           <div className="text-white mb-4">Error loading artist profile</div>
-          <div className="text-red-400 text-sm">{error}</div>
+          <div className="text-red-400 text-sm">{errorString}</div>
           <Button 
             onClick={() => window.location.reload()} 
             className="mt-4 bg-[#A95BAB] hover:bg-[#A95BAB]/80"
@@ -104,11 +126,13 @@ const PublicArtistProfile = () => {
     )
   }
 
-  if (!currentArtist) {
+  // If no artist found but no explicit error, show not found
+  if (!loading && !currentArtist) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000] flex items-center justify-center">
-        <div className="text-white">Artist not found</div>
-      </div>
+      <NotFoundPage 
+        title="Not Found"
+        message="The page you're looking for doesn't exist."
+      />
     )
   }
 
