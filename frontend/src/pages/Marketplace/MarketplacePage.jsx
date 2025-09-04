@@ -13,9 +13,12 @@ import { useAppDispatch, useAppSelector } from "../../hooks/useRedux.js";
 
 // Import from marketplace slice (now includes categories)
 import {
-    fetchCategories,
-    setFilters
+    setFilters,
+    clearCategoryPosts
 } from "../../store/slices/marketplaceSlice";
+
+// Import categories from the dedicated categories slice
+import { fetchCategories } from "../../store/slices/categoriesSlice";
 
 // Import from posts slice
 import {
@@ -47,13 +50,17 @@ const MarketplacePage = () => {
   // Get user for RBAC checks
   const { user } = useAppSelector((state) => state.auth);
 
-  // Get data from marketplace slice (including categories)
+  // Get data from marketplace slice
   const { 
-    filters, 
-    categories, 
-    categoriesLoading, 
-    categoriesError 
+    filters
   } = useAppSelector((state) => state.marketplace);
+  
+  // Get categories from the dedicated categories slice
+  const { 
+    categories, 
+    loading: categoriesLoading, 
+    error: categoriesError 
+  } = useAppSelector((state) => state.categories);
   
   // Get posts data from posts slice - ALL HOOKS MUST BE AT TOP LEVEL
   const availabilityPosts = useAppSelector(selectAvailabilityPosts);
@@ -74,19 +81,33 @@ const MarketplacePage = () => {
     ? useAppSelector(selectAvailabilityPosts)
     : useAppSelector(selectJobPosts);
 
-  // Group posts by category (limit to 6 posts per category)
+  // Enhanced groupedPosts calculation with better error handling
   const groupedPosts = useMemo(() => {
-    if (!Array.isArray(postsToDisplay) || postsToDisplay.length === 0) return {};
+    if (!Array.isArray(postsToDisplay) || postsToDisplay.length === 0) {
+      console.log("📊 No posts to display, returning empty grouped object");
+      return {};
+    }
+    
+    console.log("📊 Grouping posts:", {
+      totalPosts: postsToDisplay.length,
+      samplePosts: postsToDisplay.slice(0, 2).map(post => ({
+        id: post.id || post.jobId,
+        category: post.category,
+        title: post.title
+      }))
+    });
     
     const grouped = {};
-    const categoryCounts = {}; // Track original counts before limiting
-    const MAX_POSTS_PER_CATEGORY = 6; // Limit posts per category to 6
+    const categoryCounts = {};
+    const MAX_POSTS_PER_CATEGORY = 6;
     
     // First pass: count all posts per category
     postsToDisplay.forEach(post => {
       const categoryName = post.category?.name || post.category || 'Uncategorized';
       categoryCounts[categoryName] = (categoryCounts[categoryName] || 0) + 1;
     });
+    
+    console.log("📊 Category counts:", categoryCounts);
     
     // Second pass: add posts with limit of 6 per category
     postsToDisplay.forEach(post => {
@@ -100,11 +121,16 @@ const MarketplacePage = () => {
         };
       }
       
-      // Only add to category if we haven't reached the limit of 6 per category
       if (grouped[categoryName].posts.length < MAX_POSTS_PER_CATEGORY) {
         grouped[categoryName].posts.push(post);
       }
     });
+    
+    console.log("📊 Final grouped posts:", Object.keys(grouped).map(key => ({
+      category: key,
+      postsCount: grouped[key].posts.length,
+      totalCount: grouped[key].totalCount
+    })));
     
     return grouped;
   }, [postsToDisplay]);
@@ -162,29 +188,39 @@ const MarketplacePage = () => {
   const currentError = activeTab === 'availability' ? availabilityPostsError : jobPostsError;
   const currentPagination = activeTab === 'availability' ? availabilityPostsPagination : jobPostsPagination;
 
-  // Fetch categories on component mount
+  // Fetch categories only if not already loaded (lazy loading pattern)
   useEffect(() => {
-    if (categories.length === 0 && !categoriesLoading && !categoriesError) {
-      console.log("📂 Fetching categories...");
+    // Only fetch if we don't have categories or if there was an error
+    if (!categoriesLoading && (categories.length === 0 || categoriesError)) {
+      console.log("📂 MarketplacePage - Fetching categories (lazy load):", {
+        categoriesLength: categories.length,
+        categoriesLoading,
+        categoriesError,
+        shouldFetch: categories.length === 0 || categoriesError
+      });
+      
       dispatch(fetchCategories());
+    } else {
+      console.log("📂 MarketplacePage - Categories already loaded, skipping fetch:", {
+        categoriesLength: categories.length,
+        categoriesLoading
+      });
     }
   }, [dispatch, categories.length, categoriesLoading, categoriesError]);
 
-  // Handle scroll for floating button
+  // Reset and cleanup when returning to marketplace from category pages
   useEffect(() => {
-    const handleScroll = () => {
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      // Add a small delay before showing the button to avoid flickering
-      if (scrollTop > 300) {
-        setTimeout(() => setIsScrolled(true), 100);
-      } else {
-        setIsScrolled(false);
-      }
+    console.log("🔄 MarketplacePage mounted - ensuring fresh state");
+    
+    // Only clear category-specific posts, not marketplace posts
+    dispatch(clearCategoryPosts());
+    
+    // No need to reset pagination here as it's handled by URL params
+    
+    return () => {
+      console.log("🧹 MarketplacePage unmounting - cleanup");
     };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, []); // Empty dependency array - only run on mount/unmount
 
   // Check URL params for category filtering, post type, and pagination
   useEffect(() => {
@@ -218,10 +254,10 @@ const MarketplacePage = () => {
       dispatch(setActiveTab('availability'));
       dispatch(setAvailabilityPostsPage(page));
     } else {
-      // default to jobs (freelancing opportunities first as per homepage)
-      newFilters.section = 'jobs';
-      dispatch(setActiveTab('jobs'));
-      dispatch(setJobPostsPage(page));
+      // default to services (availability posts) instead of jobs
+      newFilters.section = 'services';
+      dispatch(setActiveTab('availability'));
+      dispatch(setAvailabilityPostsPage(page));
     }
 
     dispatch(setFilters(newFilters));
@@ -434,6 +470,7 @@ const MarketplacePage = () => {
                 type="marketplace"
                 filters={filters}
                 onFilterChange={handleFilterChange}
+                activeTab={activeTab}
               />
             </div>
 

@@ -112,7 +112,7 @@ const ProjectList = () => {
         <AuthNavbar />
         <div className="pt-28 pb-12">
           <div className="max-w-7xl mx-auto px-6">
-            <div className="animate-pulse">
+            <div>
               <div className="h-8 bg-gray-700/30 rounded w-1/3 mb-8"></div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {Array.from({ length: 6 }).map((_, index) => (
@@ -152,44 +152,86 @@ const ProjectList = () => {
             </div>
           </div>
 
-          {/* Stats Summary */}
+          {/* Stats Summary - Clickable Filter Cards */}
           <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
-            <Card className="bg-gray-900/50 backdrop-blur-sm border-gray-700/50">
+            <Card 
+              className={`cursor-pointer transition-all duration-200 hover:scale-105 ${
+                statusFilter === 'all' 
+                  ? 'bg-gray-700/70 backdrop-blur-sm border-gray-500/50 ring-2 ring-gray-400' 
+                  : 'bg-gray-900/50 backdrop-blur-sm border-gray-700/50 hover:bg-gray-800/60'
+              }`}
+              onClick={() => setStatusFilter('all')}
+            >
               <CardContent className="p-4 text-center">
                 <div className="text-2xl font-bold text-white mb-1">{statusCounts.all}</div>
                 <div className="text-sm text-gray-400">Total</div>
               </CardContent>
             </Card>
 
-            <Card className="bg-yellow-500/10 backdrop-blur-sm border-yellow-500/20">
+            <Card 
+              className={`cursor-pointer transition-all duration-200 hover:scale-105 ${
+                statusFilter === 'open' 
+                  ? 'bg-yellow-500/30 backdrop-blur-sm border-yellow-400/50 ring-2 ring-yellow-400' 
+                  : 'bg-yellow-500/10 backdrop-blur-sm border-yellow-500/20 hover:bg-yellow-500/20'
+              }`}
+              onClick={() => setStatusFilter('open')}
+            >
               <CardContent className="p-4 text-center">
                 <div className="text-2xl font-bold text-yellow-400 mb-1">{statusCounts.open}</div>
                 <div className="text-sm text-gray-400">Open</div>
               </CardContent>
             </Card>
 
-            <Card className="bg-blue-500/10 backdrop-blur-sm border-blue-500/20">
+            <Card 
+              className={`cursor-pointer transition-all duration-200 hover:scale-105 ${
+                statusFilter === 'in_progress' 
+                  ? 'bg-blue-500/30 backdrop-blur-sm border-blue-400/50 ring-2 ring-blue-400' 
+                  : 'bg-blue-500/10 backdrop-blur-sm border-blue-500/20 hover:bg-blue-500/20'
+              }`}
+              onClick={() => setStatusFilter('in_progress')}
+            >
               <CardContent className="p-4 text-center">
                 <div className="text-2xl font-bold text-blue-400 mb-1">{statusCounts.in_progress}</div>
                 <div className="text-sm text-gray-400">In Progress</div>
               </CardContent>
             </Card>
 
-            <Card className="bg-green-500/10 backdrop-blur-sm border-green-500/20">
+            <Card 
+              className={`cursor-pointer transition-all duration-200 hover:scale-105 ${
+                statusFilter === 'completed' 
+                  ? 'bg-green-500/30 backdrop-blur-sm border-green-400/50 ring-2 ring-green-400' 
+                  : 'bg-green-500/10 backdrop-blur-sm border-green-500/20 hover:bg-green-500/20'
+              }`}
+              onClick={() => setStatusFilter('completed')}
+            >
               <CardContent className="p-4 text-center">
                 <div className="text-2xl font-bold text-green-400 mb-1">{statusCounts.completed}</div>
                 <div className="text-sm text-gray-400">Completed</div>
               </CardContent>
             </Card>
 
-            <Card className="bg-red-500/10 backdrop-blur-sm border-red-500/20">
+            <Card 
+              className={`cursor-pointer transition-all duration-200 hover:scale-105 ${
+                statusFilter === 'cancelled' 
+                  ? 'bg-red-500/30 backdrop-blur-sm border-red-400/50 ring-2 ring-red-400' 
+                  : 'bg-red-500/10 backdrop-blur-sm border-red-500/20 hover:bg-red-500/20'
+              }`}
+              onClick={() => setStatusFilter('cancelled')}
+            >
               <CardContent className="p-4 text-center">
                 <div className="text-2xl font-bold text-red-400 mb-1">{statusCounts.cancelled}</div>
                 <div className="text-sm text-gray-400">Cancelled</div>
               </CardContent>
             </Card>
 
-            <Card className="bg-purple-500/10 backdrop-blur-sm border-purple-500/20">
+            <Card 
+              className={`cursor-pointer transition-all duration-200 hover:scale-105 ${
+                statusFilter === 'paid' 
+                  ? 'bg-purple-500/30 backdrop-blur-sm border-purple-400/50 ring-2 ring-purple-400' 
+                  : 'bg-purple-500/10 backdrop-blur-sm border-purple-500/20 hover:bg-purple-500/20'
+              }`}
+              onClick={() => setStatusFilter('paid')}
+            >
               <CardContent className="p-4 text-center">
                 <div className="text-2xl font-bold text-purple-400 mb-1">{statusCounts.paid}</div>
                 <div className="text-sm text-gray-400">Paid</div>
@@ -197,33 +239,19 @@ const ProjectList = () => {
             </Card>
           </div>
 
-          {/* Filters */}
+          {/* Filters - Search and Sort only */}
           <Card className="border-none mb-8">
             <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
                     placeholder="Search projects..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 bg-gray-900/50 backdrop-blur-sm border border-gray-700/50 text-white placeholder-gray-400 focus:border-[#A95BAB]/50 focus:ring-1 focus:ring-[#A95BAB]/50 transition-all"
+                    className="pl-10 bg-gray-900/50 border border-gray-700/50 text-white placeholder-gray-400 focus:border-[#A95BAB]/50 focus:ring-1 focus:ring-[#A95BAB]/50 transition-all"
                   />
                 </div>
-
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="bg-gray-900/50 backdrop-blur-sm border border-gray-700/50 text-white focus:border-[#A95BAB]/50 focus:ring-1 focus:ring-[#A95BAB]/50 transition-all">
-                    <SelectValue placeholder="Filter by status" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-900/95 backdrop-blur-sm border-gray-700/50">
-                    <SelectItem value="all">All Projects ({statusCounts.all})</SelectItem>
-                    <SelectItem value="open">Open ({statusCounts.open})</SelectItem>
-                    <SelectItem value="in_progress">In Progress ({statusCounts.in_progress})</SelectItem>
-                    <SelectItem value="completed">Completed ({statusCounts.completed})</SelectItem>
-                    <SelectItem value="cancelled">Cancelled ({statusCounts.cancelled})</SelectItem>
-                    <SelectItem value="paid">Paid ({statusCounts.paid})</SelectItem>
-                  </SelectContent>
-                </Select>
 
                 <Select value={sortBy} onValueChange={setSortBy}>
                   <SelectTrigger className="bg-gray-900/50 backdrop-blur-sm border border-gray-700/50 text-white focus:border-[#A95BAB]/50 focus:ring-1 focus:ring-[#A95BAB]/50 transition-all">
@@ -238,6 +266,23 @@ const ProjectList = () => {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Active Filter Indicator */}
+              {statusFilter !== 'all' && (
+                <div className="mt-4 flex items-center gap-2">
+                  <span className="text-sm text-gray-400">Filtered by status:</span>
+                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-[#A95BAB]/20 text-[#A95BAB] border border-[#A95BAB]/30">
+                    {statusFilter === 'in_progress' ? 'In Progress' : 
+                     statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}
+                  </span>
+                  <button
+                    onClick={() => setStatusFilter('all')}
+                    className="text-xs text-gray-400 hover:text-white transition-colors ml-2"
+                  >
+                    Clear filter
+                  </button>
+                </div>
+              )}
             </CardContent>
           </Card>
 

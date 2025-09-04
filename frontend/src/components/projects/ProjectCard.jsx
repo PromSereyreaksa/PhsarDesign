@@ -85,7 +85,7 @@ const ProjectCard = ({ project, onViewDetails, userRole }) => {
 
           {/* Project participants */}
           <div className="flex items-center gap-3 text-sm">
-            {project.client && (
+            {project.client && project.client.user && (
               <div className="flex items-center gap-2">
                 <Avatar className="h-6 w-6">
                   <AvatarImage src={project.client.user.avatarURL} />
@@ -104,7 +104,7 @@ const ProjectCard = ({ project, onViewDetails, userRole }) => {
               </div>
             )}
 
-            {project.artist && (
+            {project.artist && project.artist.user && (
               <div className="flex items-center gap-2">
                 <Avatar className="h-6 w-6">
                   <AvatarImage src={project.artist.user.avatarURL} />

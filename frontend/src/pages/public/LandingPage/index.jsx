@@ -95,6 +95,15 @@ export default function LandingPage() {
     navigate(path)
   }
 
+  // Handle conditional navigation based on authentication status
+  const handleGetStarted = () => {
+    if (isAuthenticated) {
+      navigate("/home")
+    } else {
+      navigate("/register")
+    }
+  }
+
   // Mock artwork data for masonry grid - enhanced with real data
   const getArtworkData = () => {
     if (marketplacePosts && marketplacePosts.length > 0) {
@@ -782,11 +791,12 @@ export default function LandingPage() {
 
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center max-w-xs sm:max-w-md mx-auto">
             
-            <Link to="/register" className="w-full sm:w-auto">
-              <Button className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-lg px-6 sm:px-8 py-3 sm:py-4 w-full whitespace-nowrap transform hover:scale-105 transition-all duration-500 ease-out text-sm sm:text-base font-medium">
-                Get Started
-              </Button>
-            </Link>
+            <Button 
+              className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-lg px-6 sm:px-8 py-3 sm:py-4 w-full whitespace-nowrap transform hover:scale-105 transition-all duration-500 ease-out text-sm sm:text-base font-medium"
+              onClick={handleGetStarted}
+            >
+              Get Started
+            </Button>
           </div>
         </div>
       </section>

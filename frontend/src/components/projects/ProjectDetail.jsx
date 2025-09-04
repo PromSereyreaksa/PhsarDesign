@@ -177,7 +177,7 @@ const ProjectDetail = () => {
         <AuthNavbar />
         <div className="pt-28 pb-12">
           <div className="max-w-6xl mx-auto px-6">
-            <div className="animate-pulse">
+            <div>
               <div className="h-8 bg-gray-700/30 rounded w-1/3 mb-8"></div>
               <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700/50 rounded-xl p-8">
                 <div className="h-6 bg-gray-700/30 rounded w-1/2 mb-4"></div>

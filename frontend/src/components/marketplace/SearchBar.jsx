@@ -1,131 +1,173 @@
 import { Briefcase, Search, User, Wrench, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import Autosuggest from 'react-autosuggest';
+import { useNavigate } from "react-router-dom";
+import categoryAPI from "../../store/api/categoryAPI";
 
-export default function SearchBar({ type = "all", filters, onFilterChange }) {
+// CSS for react-autosuggest
+const autosuggestStyles = `
+  .marketplace-autosuggest .react-autosuggest__container {
+    position: relative;
+    width: 100%;
+  }
+
+  .marketplace-autosuggest .react-autosuggest__input {
+    width: 100%;
+    padding-left: 40px;
+    padding-right: 48px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    background: rgba(31, 41, 55, 0.3);
+    border: 1px solid rgba(75, 85, 99, 0.5);
+    border-radius: 12px;
+    color: white;
+    font-size: 16px;
+    transition: all 0.3s ease-out;
+  }
+
+  .marketplace-autosuggest .react-autosuggest__input:focus {
+    outline: none;
+    border-color: rgba(169, 91, 171, 0.5);
+    box-shadow: 0 0 0 1px rgba(169, 91, 171, 0.5);
+  }
+
+  .marketplace-autosuggest .react-autosuggest__input::placeholder {
+    color: rgba(156, 163, 175, 1);
+  }
+
+  .marketplace-autosuggest .react-autosuggest__suggestions-container {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    margin-top: 8px;
+  }
+
+  .marketplace-autosuggest .react-autosuggest__suggestions-container--open {
+    display: block;
+  }
+
+  .marketplace-autosuggest .react-autosuggest__suggestions-list {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+    background: rgba(31, 41, 55, 0.95);
+    border: 1px solid rgba(75, 85, 99, 0.5);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .marketplace-autosuggest .react-autosuggest__suggestion {
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(75, 85, 99, 0.3);
+    transition: background-color 0.2s ease;
+  }
+
+  .marketplace-autosuggest .react-autosuggest__suggestion:last-child {
+    border-bottom: none;
+  }
+
+  .marketplace-autosuggest .react-autosuggest__suggestion--highlighted {
+    background: rgba(169, 91, 171, 0.2);
+  }
+
+  .marketplace-autosuggest .react-autosuggest__suggestion:hover {
+    background: rgba(169, 91, 171, 0.1);
+  }
+
+  @media (max-width: 768px) {
+    .marketplace-autosuggest .react-autosuggest__input {
+      font-size: 14px;
+    }
+  }
+`;
+
+export default function SearchBar({ type = "all", filters, onFilterChange, activeTab = "availability" }) {
   const [query, setQuery] = useState(filters?.search || "");
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [results, setResults] = useState([]);
+  const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(false);
   const debounceTimer = useRef(null);
+  const styleElement = useRef(null);
+  const navigate = useNavigate();
   const DEBOUNCE_DELAY = 300;
 
-  // Sync query with search filter from URL
+  // Add styles to document head
   useEffect(() => {
-    if (filters?.search && filters.search !== query) {
+    if (!styleElement.current) {
+      styleElement.current = document.createElement('style');
+      styleElement.current.textContent = autosuggestStyles;
+      document.head.appendChild(styleElement.current);
+    }
+
+    return () => {
+      if (styleElement.current && document.head.contains(styleElement.current)) {
+        document.head.removeChild(styleElement.current);
+        styleElement.current = null;
+      }
+    };
+  }, []);
+
+  // Sync query with search filter from URL only on mount or when filters change externally
+  useEffect(() => {
+    // Only update query if it's different and not currently being typed
+    if (filters?.search !== undefined && filters.search !== query) {
       setQuery(filters.search);
     }
-  }, [filters?.search]);
+  }, [filters?.search]); // Removed query dependency to prevent loops
 
-  const categories = [
-    { id: "all", label: "All", icon: Search },
-    { id: "users", label: "Users", icon: User },
-    { id: "jobs", label: "Jobs", icon: Briefcase },
-    { id: "services", label: "Services", icon: Wrench }
-  ];
-
-  const fetchData = async (searchQuery, category = selectedCategory) => {
-    if (!searchQuery.trim()) {
-      setResults([]);
-      setShowSuggestions(false);
+  // Get category suggestions based on active tab - only from API
+  const fetchSuggestions = useCallback(async (searchQuery) => {
+    if (!searchQuery || searchQuery.length < 1) {
+      setSuggestions([]);
       return;
     }
 
     setLoading(true);
     try {
-      let allResults = [];
+      // Fetch all categories from API and filter them
+      const categoriesResponse = await categoryAPI.getAllCategories();
+      console.log("SearchBar - Categories response:", categoriesResponse); // Debug log
+      
+      const categories = categoriesResponse.categories || categoriesResponse.data || categoriesResponse || [];
+      console.log("SearchBar - Extracted categories:", categories); // Debug log
+      
+      const categoryMatches = categories
+        .filter(cat => 
+          cat.name?.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+        .map(cat => {
+          // Try different possible ID fields
+          const categoryId = cat.categoryId || cat.id || cat._id;
+          console.log("SearchBar - Category mapping:", { name: cat.name, categoryId, originalCat: cat });
+          
+          return {
+            id: `category-${categoryId || 'unknown'}`,
+            title: cat.name,
+            type: 'category',
+            category: activeTab === 'jobs' ? 'Job Category' : 'Service Category',
+            categoryId: categoryId,
+            data: cat
+          };
+        })
+        .filter(cat => cat.categoryId); // Only include categories with valid IDs
 
-      if (category === "all") {
-        // Search in all categories
-        const [usersRes, jobsRes, servicesRes] = await Promise.allSettled([
-          usersAPI.search ? usersAPI.search({ q: searchQuery }) : usersAPI.getAll(),
-          jobPostsAPI.search({ q: searchQuery }),
-          availabilityPostsAPI.search({ q: searchQuery })
-        ]);
+      console.log("SearchBar - Category matches:", categoryMatches); // Debug log
+      
+      // Limit total suggestions
+      setSuggestions(categoryMatches.slice(0, 8));
 
-        // Process users
-        if (usersRes.status === 'fulfilled') {
-          const users = usersRes.value.data.users || usersRes.value.data || [];
-          const filteredUsers = users.filter(user => 
-            user.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            user.firstName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            user.lastName?.toLowerCase().includes(searchQuery.toLowerCase())
-          );
-          allResults.push(...filteredUsers.map(user => ({
-            ...user,
-            category: 'users',
-            displayTitle: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username,
-            id: user.userId || user.id
-          })));
-        }
-
-        // Process jobs
-        if (jobsRes.status === 'fulfilled') {
-          const jobs = jobsRes.value.data.jobPosts || [];
-          allResults.push(...jobs.map(job => ({
-            ...job,
-            category: 'jobs',
-            displayTitle: job.title,
-            id: job.jobId
-          })));
-        }
-
-        // Process services
-        if (servicesRes.status === 'fulfilled') {
-          const services = servicesRes.value.data.posts || [];
-          allResults.push(...services.map(service => ({
-            ...service,
-            category: 'services',
-            displayTitle: service.title,
-            id: service.postId
-          })));
-        }
-      } else {
-        // Search in specific category
-        let response;
-        if (category === "users") {
-          response = await (usersAPI.search ? usersAPI.search({ q: searchQuery }) : usersAPI.getAll());
-          const users = response.data.users || response.data || [];
-          const filteredUsers = users.filter(user => 
-            user.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            user.firstName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            user.lastName?.toLowerCase().includes(searchQuery.toLowerCase())
-          );
-          allResults = filteredUsers.map(user => ({
-            ...user,
-            category: 'users',
-            displayTitle: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username,
-            id: user.userId || user.id
-          }));
-        } else if (category === "jobs") {
-          response = await jobPostsAPI.search({ q: searchQuery });
-          allResults = (response.data.jobPosts || []).map(job => ({
-            ...job,
-            category: 'jobs',
-            displayTitle: job.title,
-            id: job.jobId
-          }));
-        } else if (category === "services") {
-          response = await availabilityPostsAPI.search({ q: searchQuery });
-          allResults = (response.data.posts || []).map(service => ({
-            ...service,
-            category: 'services',
-            displayTitle: service.title,
-            id: service.postId
-          }));
-        }
-      }
-
-      setResults(allResults);
-      setShowSuggestions(allResults.length > 0);
     } catch (error) {
-      console.error('Search error:', error);
-      setResults([]);
-      setShowSuggestions(false);
+      console.error("Error fetching suggestions:", error);
+      setSuggestions([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab]);
 
   // Memoize the filter change handler to avoid infinite re-renders
   const handleFilterUpdate = useCallback((searchValue) => {
@@ -134,16 +176,18 @@ export default function SearchBar({ type = "all", filters, onFilterChange }) {
     }
   }, [onFilterChange, filters?.search]);
 
-  // Debounced search effect
+  // Debounced search effect - only fetch suggestions, don't navigate
   useEffect(() => {
     if (debounceTimer.current) {
       clearTimeout(debounceTimer.current);
     }
 
     debounceTimer.current = setTimeout(() => {
-      handleFilterUpdate(query.trim());
+      // Only fetch suggestions, don't update filters automatically
       if (query.trim()) {
-        fetchData(query.trim());
+        fetchSuggestions(query.trim());
+      } else {
+        setSuggestions([]);
       }
     }, DEBOUNCE_DELAY);
 
@@ -152,80 +196,137 @@ export default function SearchBar({ type = "all", filters, onFilterChange }) {
         clearTimeout(debounceTimer.current);
       }
     };
-  }, [query, handleFilterUpdate]);
+  }, [query, fetchSuggestions]); // Removed handleFilterUpdate dependency
+
+  // Autosuggest configuration
+  const getSuggestionValue = (suggestion) => suggestion.title;
+
+  const renderSuggestion = (suggestion) => (
+    <div className="flex items-center gap-3 min-h-[48px] md:min-h-0">
+      <div className="flex-1 min-w-0">
+        <div className="text-white text-sm truncate">{suggestion.title}</div>
+        <div className="flex items-center gap-2">
+          <span className="text-[#A95BAB] text-xs capitalize">{suggestion.type}</span>
+          {suggestion.category && (
+            <>
+              <span className="text-gray-500">•</span>
+              <span className="text-gray-400 text-xs">{suggestion.category}</span>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  const onSuggestionSelected = (event, { suggestion }) => {
+    // Clear suggestions immediately
+    setSuggestions([]);
+    
+    if (suggestion.type === 'category') {
+      // Navigate to category page with proper URL structure
+      const categoryName = suggestion.title;
+      const categoryId = suggestion.categoryId;
+      
+      // Create URL-friendly category name
+      const urlCategoryName = categoryName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      
+      // Determine the type based on active tab
+      const postType = activeTab === 'jobs' ? 'jobs' : 'services';
+      
+      if (categoryId && categoryId !== 'unknown') {
+        // Navigate to specific category page: /marketplace/category/{categoryName}?type={services/jobs}&categoryId={id}
+        navigate(`/marketplace/category/${urlCategoryName}?type=${postType}&categoryId=${categoryId}`);
+      } else {
+        // Fallback to marketplace with category search if no valid ID
+        console.warn("No valid categoryId found, falling back to search by category name");
+        navigate(`/marketplace?category=${encodeURIComponent(categoryName)}&type=${postType}`);
+      }
+    } else {
+      // For keyword searches, set the query and update filter
+      setQuery(suggestion.title);
+      handleFilterUpdate(suggestion.title);
+    }
+  };
+
+  const onSuggestionsFetchRequested = ({ value: inputValue }) => {
+    // Suggestions are already handled by useEffect
+  };
+
+  const onSuggestionsClearRequested = () => {
+    setSuggestions([]);
+  };
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
+      e.preventDefault(); // Prevent form submission
       if (debounceTimer.current) {
         clearTimeout(debounceTimer.current);
       }
-      handleFilterUpdate(query.trim());
+      
+      // Clear suggestions
+      setSuggestions([]);
+      
+      // Only update filters/search when user presses Enter
       if (query.trim()) {
-        fetchData(query.trim());
+        handleFilterUpdate(query.trim());
+      } else {
+        handleFilterUpdate("");
       }
     }
   };
 
   const handleClear = () => {
     setQuery("");
-    setResults([]);
-    setShowSuggestions(false);
+    setSuggestions([]);
+    // Only clear filters when user explicitly clears the search
     handleFilterUpdate("");
   };
 
+  const inputProps = {
+    placeholder: `Search ${activeTab === 'jobs' ? 'job posts' : 'services'} by title...`,
+    value: query,
+    onChange: (e, { newValue }) => {
+      setQuery(newValue);
+    },
+    onKeyPress: handleKeyPress,
+    className: "react-autosuggest__input",
+  };
+
   return (
-    <div className="relative w-full">
+    <div className="relative w-full marketplace-autosuggest">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder="Search posts by title..."
-          className="w-full pl-10 pr-12 py-3 bg-gray-800/30 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:border-[#A95BAB]/50 focus:ring-1 focus:ring-[#A95BAB]/50 transition-all focus:outline-none cursor-pointer text-base md:text-sm"
-        />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 z-10" />
+        
+        {/* Loading indicator */}
+        {loading && (
+          <div className="absolute right-12 top-1/2 transform -translate-y-1/2 pointer-events-none z-10">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#A95BAB]"></div>
+          </div>
+        )}
+
+        {/* Clear button */}
         {query && (
           <button
             onClick={handleClear}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors cursor-pointer"
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors cursor-pointer z-10"
             type="button"
           >
             <X className="w-5 h-5" />
           </button>
         )}
-      </div>
 
-      {/* Search Results Dropdown */}
-      {showSuggestions && results.length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-gray-800 border border-gray-700/50 rounded-xl shadow-lg max-h-96 overflow-y-auto z-50">
-          {loading && (
-            <div className="flex items-center justify-center py-4">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#A95BAB]"></div>
-            </div>
-          )}
-          {!loading && results.map((result) => {
-            const CategoryIcon = categories.find(cat => cat.id === result.category)?.icon || Search;
-            return (
-              <div
-                key={`${result.category}-${result.id}`}
-                className="flex items-center gap-3 px-4 py-3 hover:bg-gray-700/50 cursor-pointer border-b border-gray-700/30 last:border-b-0 min-h-[48px] md:min-h-0"
-                onClick={() => {
-                  // Handle result selection here
-                  setQuery(result.displayTitle);
-                  setShowSuggestions(false);
-                }}
-              >
-                <CategoryIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <div className="text-white text-sm truncate">{result.displayTitle}</div>
-                  <div className="text-gray-400 text-xs capitalize">{result.category}</div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+        {/* Autosuggest component */}
+        <Autosuggest
+          suggestions={suggestions}
+          onSuggestionsFetchRequested={onSuggestionsFetchRequested}
+          onSuggestionsClearRequested={onSuggestionsClearRequested}
+          getSuggestionValue={getSuggestionValue}
+          renderSuggestion={renderSuggestion}
+          onSuggestionSelected={onSuggestionSelected}
+          inputProps={inputProps}
+          focusInputOnSuggestionClick={false}
+        />
+      </div>
     </div>
   );
 }

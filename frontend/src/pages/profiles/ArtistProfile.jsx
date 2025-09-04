@@ -503,7 +503,7 @@ console.log("My post:", myAvailabilityPosts);
                             .toLowerCase()
                             .replace(/[^a-z0-9]+/g, "-")
                             .replace(/(^-|-$)/g, "")
-                          navigate(`/marketplace//service/${slug}`)
+                          navigate(`/marketplace/service/${slug}`)
                         }}
                       >
                         <div className="relative overflow-hidden">
