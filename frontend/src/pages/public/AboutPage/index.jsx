@@ -115,17 +115,6 @@ export default function AboutPage() {
     ]
   },
   {
-    name: "Kosal Sophanith",
-    role: "Frontend Developer",
-    image: "/Sophanith.jpg",
-    description: "Frontend engineer with an eye for detail and commitment to excellent UX.",
-    contacts: [
-      { platform: "email", url: "mailto:sophanithkosal9@gmail.com" },
-      { platform: "telegram", url: "https://t.me/nithkidd" },
-      { platform: "linkedin", url: "" }
-    ]
-  },
-  {
     name: "Chheang Sovanpanha",
     role: "Backend Developer",
     image: "/Sovanpanha.jpg",
@@ -158,7 +147,17 @@ export default function AboutPage() {
       { platform: "linkedin", url: "https://www.linkedin.com/in/phay-someth" }
     ]
   },
-  
+  {
+    name: "Kosal Sophanith",
+    role: "Frontend Developer",
+    image: "/Sophanith.jpg",
+    description: "Frontend engineer with an eye for detail and commitment to excellent UX.",
+    contacts: [
+      { platform: "email", url: "mailto:sophanithkosal9@gmail.com" },
+      { platform: "telegram", url: "https://t.me/nithkidd" },
+      { platform: "linkedin", url: "" }
+    ]
+  },
 ]
 
     
