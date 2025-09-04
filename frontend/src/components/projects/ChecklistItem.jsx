@@ -101,7 +101,7 @@ const ChecklistItem = ({ checklist, onUpdate, onDelete, canEdit }) => {
                   onClick={handleCancel}
                   size="sm"
                   variant="outline"
-                  className="border-white/30 text-white hover:bg-white/10"
+                  className="border-gray-600 text-gray-300 hover:bg-gray-700"
                 >
                   <X className="h-4 w-4" />
                 </Button>

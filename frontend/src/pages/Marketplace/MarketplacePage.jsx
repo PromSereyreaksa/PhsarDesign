@@ -437,18 +437,8 @@ const MarketplacePage = () => {
               />
             </div>
 
-            {/* Tab Switch - Jobs left, Services right */}
+            {/* Tab Switch - Services left, Jobs right */}
             <div className="flex bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-xl p-1">
-              <button
-                onClick={() => handleTabChange("jobs")}
-                className={`px-6 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
-                  activeTab === "jobs"
-                    ? "bg-[#A95BAB]/20 text-[#A95BAB] border border-[#A95BAB]/30"
-                    : "text-gray-400 hover:text-white"
-                }`}
-              >
-                Jobs
-              </button>
               <button
                 onClick={() => handleTabChange("availability")}
                 className={`px-6 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
@@ -458,6 +448,16 @@ const MarketplacePage = () => {
                 }`}
               >
                 Services
+              </button>
+              <button
+                onClick={() => handleTabChange("jobs")}
+                className={`px-6 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
+                  activeTab === "jobs"
+                    ? "bg-[#A95BAB]/20 text-[#A95BAB] border border-[#A95BAB]/30"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                Jobs
               </button>
             </div>
 

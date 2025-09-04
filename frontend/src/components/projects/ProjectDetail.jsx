@@ -96,16 +96,16 @@ const ProjectDetail = () => {
 
       await dispatch(updateProject({ projectId, projectData: updateData })).unwrap();
       setIsEditing(false);
-    } catch (error) {
-      console.error('Failed to update project:', error);
+    } catch {
+      // Handle error appropriately - could show a toast or error message
     }
   };
 
   const handleStatusChange = async (newStatus) => {
     try {
       await dispatch(updateProjectStatus({ projectId, status: newStatus })).unwrap();
-    } catch (error) {
-      console.error('Failed to update project status:', error);
+    } catch {
+      // Handle error appropriately - could show a toast or error message
     }
   };
 
@@ -114,8 +114,8 @@ const ProjectDetail = () => {
       try {
         await dispatch(deleteProject(projectId)).unwrap();
         navigate('/projects');
-      } catch (error) {
-        console.error('Failed to delete project:', error);
+      } catch {
+        // Handle error appropriately - could show a toast or error message
       }
     }
   };
@@ -136,8 +136,8 @@ const ProjectDetail = () => {
       setNewChecklistTitle('');
       setNewChecklistDescription('');
       setShowAddChecklist(false);
-    } catch (error) {
-      console.error('Failed to create checklist:', error);
+    } catch {
+      // Handle error appropriately - could show a toast or error message
     }
   };
 
@@ -179,7 +179,7 @@ const ProjectDetail = () => {
           <div className="max-w-6xl mx-auto px-6">
             <div className="animate-pulse">
               <div className="h-8 bg-gray-700/30 rounded w-1/3 mb-8"></div>
-              <div className="bg-gray-800 rounded-xl p-8">
+              <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700/50 rounded-xl p-8">
                 <div className="h-6 bg-gray-700/30 rounded w-1/2 mb-4"></div>
                 <div className="space-y-3">
                   <div className="h-4 bg-gray-700/30 rounded w-full"></div>
@@ -225,7 +225,7 @@ const ProjectDetail = () => {
         <AuthNavbar />
         <div className="pt-28 pb-12">
           <div className="max-w-6xl mx-auto px-6">
-            <Card className="bg-white/5 border-white/10">
+            <Card className="bg-gray-900/50 backdrop-blur-sm border-gray-700/50">
               <CardContent className="text-center py-12">
                 <AlertCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-xl font-semibold text-white mb-2">Project Not Found</h3>
@@ -257,7 +257,7 @@ const ProjectDetail = () => {
                 onClick={() => navigate('/projects')}
                 variant="outline"
                 size="sm"
-                className="border-white/30 text-white hover:bg-white/10"
+                className="border-gray-600 text-white hover:bg-gray-700"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Projects
@@ -281,7 +281,7 @@ const ProjectDetail = () => {
                   <Button
                     onClick={handleEdit}
                     variant="outline"
-                    className="border-white/30 text-white hover:bg-white/10"
+                    className="border-gray-600 text-gray-300 hover:bg-gray-700"
                   >
                     <Edit className="h-4 w-4 mr-2" />
                     Edit
@@ -291,7 +291,7 @@ const ProjectDetail = () => {
                     <Button
                       onClick={handleCancelEdit}
                       variant="outline"
-                      className="border-white/30 text-white hover:bg-white/10"
+                      className="border-gray-600 text-gray-300 hover:bg-gray-700"
                     >
                       Cancel
                     </Button>
@@ -320,7 +320,7 @@ const ProjectDetail = () => {
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-6">
               {/* Project Details */}
-              <Card className="bg-gray-800 border-gray-700">
+              <Card className="bg-gray-900/50 backdrop-blur-sm border-gray-700/50">
                 <CardHeader>
                   <CardTitle className="text-white">Project Information</CardTitle>
                 </CardHeader>
@@ -332,7 +332,7 @@ const ProjectDetail = () => {
                         <Input
                           value={editData.title}
                           onChange={(e) => setEditData(prev => ({ ...prev, title: e.target.value }))}
-                          className="bg-gray-900 border-gray-600 text-white"
+                          className="bg-gray-900/50 backdrop-blur-sm border border-gray-700/50 text-white focus:border-[#A95BAB]/50 focus:ring-1 focus:ring-[#A95BAB]/50 transition-all"
                         />
                       </div>
                       <div>
@@ -340,7 +340,7 @@ const ProjectDetail = () => {
                         <Textarea
                           value={editData.description}
                           onChange={(e) => setEditData(prev => ({ ...prev, description: e.target.value }))}
-                          className="bg-gray-900 border-gray-600 text-white"
+                          className="bg-gray-900/50 backdrop-blur-sm border border-gray-700/50 text-white focus:border-[#A95BAB]/50 focus:ring-1 focus:ring-[#A95BAB]/50 transition-all"
                           rows={4}
                         />
                       </div>
@@ -351,7 +351,7 @@ const ProjectDetail = () => {
                             type="number"
                             value={editData.budget}
                             onChange={(e) => setEditData(prev => ({ ...prev, budget: e.target.value }))}
-                            className="bg-gray-900 border-gray-600 text-white"
+                            className="bg-gray-900/50 backdrop-blur-sm border border-gray-700/50 text-white focus:border-[#A95BAB]/50 focus:ring-1 focus:ring-[#A95BAB]/50 transition-all"
                           />
                         </div>
                         <div>
@@ -360,7 +360,7 @@ const ProjectDetail = () => {
                             type="datetime-local"
                             value={editData.deadline}
                             onChange={(e) => setEditData(prev => ({ ...prev, deadline: e.target.value }))}
-                            className="bg-gray-900 border-gray-600 text-white"
+                            className="bg-gray-900/50 backdrop-blur-sm border border-gray-700/50 text-white focus:border-[#A95BAB]/50 focus:ring-1 focus:ring-[#A95BAB]/50 transition-all"
                           />
                         </div>
                       </div>
@@ -421,7 +421,7 @@ const ProjectDetail = () => {
               </Card>
 
               {/* Checklist Section */}
-              <Card className="bg-gray-800 border-gray-700">
+              <Card className="bg-gray-900/50 backdrop-blur-sm border-gray-700/50">
                 <CardHeader>
                   <div className="flex justify-between items-center">
                     <CardTitle className="text-white">Project Checklist</CardTitle>
@@ -438,20 +438,20 @@ const ProjectDetail = () => {
                 <CardContent className="space-y-3">
                   {/* Add New Checklist Item */}
                   {showAddChecklist && (
-                    <Card className="bg-gray-700 border-gray-600">
+                    <Card className="bg-gray-900/30 backdrop-blur-sm border border-gray-700/50">
                       <CardContent className="p-4">
                         <div className="space-y-3">
                           <Input
                             placeholder="Checklist item title..."
                             value={newChecklistTitle}
                             onChange={(e) => setNewChecklistTitle(e.target.value)}
-                            className="bg-gray-800 border-gray-600 text-white"
+                            className="bg-gray-900/50 backdrop-blur-sm border border-gray-700/50 text-white focus:border-[#A95BAB]/50 focus:ring-1 focus:ring-[#A95BAB]/50 transition-all"
                           />
                           <Textarea
                             placeholder="Description (optional)..."
                             value={newChecklistDescription}
                             onChange={(e) => setNewChecklistDescription(e.target.value)}
-                            className="bg-gray-800 border-gray-600 text-white"
+                            className="bg-gray-900/50 backdrop-blur-sm border border-gray-700/50 text-white focus:border-[#A95BAB]/50 focus:ring-1 focus:ring-[#A95BAB]/50 transition-all"
                             rows={2}
                           />
                           <div className="flex gap-2">
@@ -471,7 +471,7 @@ const ProjectDetail = () => {
                               }}
                               size="sm"
                               variant="outline"
-                              className="border-white/30 text-white hover:bg-white/10"
+                              className="border-gray-600 text-gray-300 hover:bg-gray-700"
                             >
                               Cancel
                             </Button>
@@ -508,7 +508,7 @@ const ProjectDetail = () => {
             {/* Sidebar */}
             <div className="space-y-6">
               {/* Project Team */}
-              <Card className="bg-gray-800 border-gray-700">
+              <Card className="bg-gray-900/50 backdrop-blur-sm border-gray-700/50">
                 <CardHeader>
                   <CardTitle className="text-white">Project Team</CardTitle>
                 </CardHeader>
@@ -556,7 +556,7 @@ const ProjectDetail = () => {
 
               {/* Status Management */}
               {canEdit && (
-                <Card className="bg-gray-800 border-gray-700">
+                <Card className="bg-gray-900/50 backdrop-blur-sm border-gray-700/50">
                   <CardHeader>
                     <CardTitle className="text-white">Status Management</CardTitle>
                   </CardHeader>
@@ -565,10 +565,10 @@ const ProjectDetail = () => {
                       value={currentProject.status}
                       onValueChange={handleStatusChange}
                     >
-                      <SelectTrigger className="bg-gray-900 border-gray-600 text-white">
+                      <SelectTrigger className="bg-gray-900/50 backdrop-blur-sm border border-gray-700/50 text-white focus:border-[#A95BAB]/50 focus:ring-1 focus:ring-[#A95BAB]/50 transition-all">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="bg-gray-800 border-gray-700">
+                      <SelectContent className="bg-gray-900/95 backdrop-blur-sm border-gray-700/50">
                         <SelectItem value="open">Open</SelectItem>
                         <SelectItem value="in_progress">In Progress</SelectItem>
                         <SelectItem value="completed">Completed</SelectItem>
@@ -581,7 +581,7 @@ const ProjectDetail = () => {
               )}
 
               {/* Project Stats */}
-              <Card className="bg-gray-800 border-gray-700">
+              <Card className="bg-gray-900/50 backdrop-blur-sm border-gray-700/50">
                 <CardHeader>
                   <CardTitle className="text-white">Progress</CardTitle>
                 </CardHeader>

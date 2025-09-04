@@ -2,19 +2,14 @@
 
 import {
     Bell,
-    Briefcase,
-    ChevronDown,
     ChevronRight,
     FileText,
     FolderKanban,
     LayoutDashboard,
     LogOut,
     Menu,
-    Plus,
-    Search,
     Settings,
     User,
-    Users,
     X,
 } from "lucide-react"
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
@@ -134,7 +129,6 @@ export default function AuthNavbar() {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false)
   const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [activeMobileDropdown, setActiveMobileDropdown] = useState(null)
   const desktopProfileDropdownRef = useRef(null)
   const mobileProfileDropdownRef = useRef(null)
   const notificationDropdownRef = useRef(null)
@@ -215,10 +209,22 @@ export default function AuthNavbar() {
 
   // keep menu highlight in sync with Redux activeTab and current location
   useEffect(() => {
-    if (location.pathname === "/home") setActiveMenu("home")
-    else if (activeTab === "availability") setActiveMenu("talents")
-    else if (activeTab === "jobs") setActiveMenu("works")
-    else setActiveMenu(null)
+    if (location.pathname === "/home") {
+      setActiveMenu("home")
+    } else if (location.pathname === "/community") {
+      setActiveMenu("community")
+    } else if (location.pathname.startsWith("/marketplace")) {
+      // For marketplace, check the active tab
+      if (activeTab === "availability" || activeTab === "services") {
+        setActiveMenu("talents")
+      } else if (activeTab === "jobs") {
+        setActiveMenu("works")
+      } else {
+        setActiveMenu(null)
+      }
+    } else {
+      setActiveMenu(null)
+    }
   }, [activeTab, location.pathname])
 
   // Fetch applications periodically for badge count
@@ -256,7 +262,6 @@ export default function AuthNavbar() {
   // Close mobile menu when route changes
   useEffect(() => {
     setIsMobileMenuOpen(false)
-    setActiveMobileDropdown(null)
   }, [location.pathname])
 
   // Helpers
@@ -310,45 +315,12 @@ export default function AuthNavbar() {
     { label: "Settings", icon: Settings, href: "/settings" },
   ]
 
-  // Dropdown menu data (each has tabType + href)
-  const findTalentsItems = [
-    {
-      title: "Post a Recruitment",
-      icon: Plus,
-      tabType: "jobs",
-      href: "/marketplace/create?type=jobs",
-      action: () => {
-        // For create pages, just navigate without tab switching
-        navigate("/marketplace/create?type=jobs")
-      },
-    },
-    {
-      title: "Browse Available Artists",
-      icon: Users,
-      tabType: "availability",
-      href: "/marketplace",
-      action: () => handleTabSwitch("availability", "/marketplace"),
-    },
-  ]
-
-  const findWorksItems = [
-    {
-      title: "Post your services",
-      icon: Briefcase,
-      tabType: "availability",
-      href: "/marketplace/create",
-      action: () => {
-        // For create pages, just navigate without tab switching
-        navigate("/marketplace/create?type=availability")
-      },
-    },
-    {
-      title: "Browse Available Works",
-      icon: Search,
-      tabType: "jobs",
-      href: "/marketplace",
-      action: () => handleTabSwitch("jobs", "/marketplace"),
-    },
+  // Navigation items
+  const navigationItems = [
+    { text: "Home", path: "/home", key: "home" },
+    { text: "Find Talents", path: "/marketplace", key: "talents", tabType: "services" },
+    { text: "Find Works", path: "/marketplace", key: "works", tabType: "jobs" },
+    { text: "Community", path: "/community", key: "community" },
   ]
 
   const handleProfileMenuClick = (href) => {
@@ -370,63 +342,6 @@ export default function AuthNavbar() {
     navigate('/')
   }
 
-  // Reusable dropdown (parent clickable + children clickable)
-  const DropdownItem = ({ text, items = [], isActive, onParentClick }) => {
-    const [open, setOpen] = useState(false)
-    const hasDropdown = items.length > 0
-
-    return (
-      <div
-        className="relative"
-        onMouseEnter={() => hasDropdown && setOpen(true)}
-        onMouseLeave={() => hasDropdown && setOpen(false)}
-      >
-        {/* Parent label */}
-        <button type="button" onClick={onParentClick} className="cursor-pointer transition-all duration-300 px-4 py-2">
-          <div className="flex items-center space-x-1">
-            <span
-              className={`font-medium text-base transition-colors duration-300 ${isActive ? "text-[#A95BAB]" : "text-white hover:text-[#A95BAB]"}`}
-            >
-              {text}
-            </span>
-            {hasDropdown && (
-              <ChevronRight
-                className={`w-4 h-4 transition-transform duration-300 ${open ? "rotate-90" : "rotate-0"} ${isActive ? "text-[#A95BAB]" : "text-white"}`}
-              />
-            )}
-          </div>
-        </button>
-
-        {/* Dropdown panel */}
-        {hasDropdown && open && (
-          <div className="absolute top-full left-0 w-72 bg-[#202020] border border-gray-700 rounded-lg shadow-lg z-50 animate-in fade-in-0 zoom-in-95 duration-150">
-            <div className="p-2">
-              {items.map((item, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => {
-                    console.log("Navbar: Menu item clicked:", item.title)
-                    // Use the custom action for each item
-                    item.action()
-                    setOpen(false)
-                  }}
-                  className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-white/10 transition-colors duration-200"
-                >
-                  <div className="flex items-center space-x-3">
-                    <item.icon className="w-5 h-5 text-white" />
-                    <span className="text-white font-medium whitespace-nowrap">{item.title}</span>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-gray-400" />
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    )
-  }
-
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-[#202020]/98 backdrop-blur-sm shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -446,44 +361,26 @@ export default function AuthNavbar() {
           {/* Center nav - Desktop */}
           <div className="hidden md:flex items-center justify-center flex-1">
             <div className="flex items-center space-x-6 md:space-x-8">
-              {/* Home */}
-              <DropdownItem
-                text="Home"
-                items={[]}
-                isActive={activeMenu === "home"}
-                onParentClick={() => {
-                  setActiveMenu("home")
-                  navigate("/home")
-                }}
-              />
-              {/* Clicking parent sets default tab + navigates */}
-              <DropdownItem
-                text="Find Talents"
-                items={findTalentsItems}
-                isActive={activeMenu === "talents"}
-                onParentClick={() => {
-                  setActiveMenu("talents")
-                  handleTabSwitch("availability", "/marketplace") // default of this menu
-                }}
-              />
-              <DropdownItem
-                text="Find Works"
-                items={findWorksItems}
-                isActive={activeMenu === "works"}
-                onParentClick={() => {
-                  setActiveMenu("works")
-                  handleTabSwitch("jobs", "/marketplace") // default of this menu
-                }}
-              />
-              <DropdownItem
-                text="Community"
-                items={[]}
-                isActive={activeMenu === "community"}
-                onParentClick={() => {
-                  setActiveMenu("community")
-                  navigate("/community")
-                }}
-              />
+              {navigationItems.map((item) => (
+                <button
+                  key={item.key}
+                  onClick={() => {
+                    setActiveMenu(item.key)
+                    if (item.tabType) {
+                      handleTabSwitch(item.tabType, item.path)
+                    } else {
+                      navigate(item.path)
+                    }
+                  }}
+                  className={`text-base font-medium transition-colors duration-300 hover:text-[#A95BAB] ${
+                    activeMenu === item.key 
+                      ? "text-[#A95BAB]" 
+                      : "text-white"
+                  }`}
+                >
+                  {item.text}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -810,131 +707,28 @@ export default function AuthNavbar() {
         {isMobileMenuOpen && (
           <div className="md:hidden bg-[#202020]/95 backdrop-blur-sm border-t border-gray-700/50">
             <div className="px-4 py-4 space-y-3">
-              {/* Home */}
-              <button
-                onClick={() => {
-                  setActiveMenu("home")
-                  navigate("/home")
-                  setIsMobileMenuOpen(false)
-                }}
-                className={`block w-full text-left px-3 py-2 rounded-lg transition-colors duration-300 ${
-                  activeMenu === "home" 
-                    ? "text-[#A95BAB] bg-[#A95BAB]/10" 
-                    : "text-white hover:text-[#A95BAB] hover:bg-white/5"
-                }`}
-              >
-                Home
-              </button>
-
-              {/* Find Talents - Expandable */}
-              <div>
+              {/* Navigation Items */}
+              {navigationItems.map((item) => (
                 <button
+                  key={item.key}
                   onClick={() => {
-                    if (activeMobileDropdown === "talents") {
-                      setActiveMobileDropdown(null)
+                    setActiveMenu(item.key)
+                    if (item.tabType) {
+                      handleTabSwitch(item.tabType, item.path)
                     } else {
-                      setActiveMobileDropdown("talents")
+                      navigate(item.path)
                     }
+                    setIsMobileMenuOpen(false)
                   }}
-                  className={`flex items-center justify-between w-full text-left px-3 py-2 rounded-lg transition-colors duration-300 ${
-                    activeMenu === "talents" 
+                  className={`block w-full text-left px-3 py-2 rounded-lg transition-colors duration-300 ${
+                    activeMenu === item.key 
                       ? "text-[#A95BAB] bg-[#A95BAB]/10" 
                       : "text-white hover:text-[#A95BAB] hover:bg-white/5"
                   }`}
                 >
-                  <span>Find Talents</span>
-                  <ChevronDown 
-                    className={`w-4 h-4 transition-transform duration-300 ${
-                      activeMobileDropdown === "talents" ? "rotate-180" : "rotate-0"
-                    }`}
-                  />
+                  {item.text}
                 </button>
-                
-                {activeMobileDropdown === "talents" && (
-                  <div className="mt-2 ml-4 space-y-2">
-                    {findTalentsItems.map((item, index) => {
-                      const IconComponent = item.icon
-                      return (
-                        <button
-                          key={index}
-                          onClick={() => {
-                            item.action()
-                            setIsMobileMenuOpen(false)
-                            setActiveMobileDropdown(null)
-                          }}
-                          className="flex items-center space-x-3 w-full text-left px-3 py-2 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors duration-300"
-                        >
-                          <IconComponent className="w-4 h-4" />
-                          <span className="text-sm">{item.title}</span>
-                        </button>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Find Works - Expandable */}
-              <div>
-                <button
-                  onClick={() => {
-                    if (activeMobileDropdown === "works") {
-                      setActiveMobileDropdown(null)
-                    } else {
-                      setActiveMobileDropdown("works")
-                    }
-                  }}
-                  className={`flex items-center justify-between w-full text-left px-3 py-2 rounded-lg transition-colors duration-300 ${
-                    activeMenu === "works" 
-                      ? "text-[#A95BAB] bg-[#A95BAB]/10" 
-                      : "text-white hover:text-[#A95BAB] hover:bg-white/5"
-                  }`}
-                >
-                  <span>Find Works</span>
-                  <ChevronDown 
-                    className={`w-4 h-4 transition-transform duration-300 ${
-                      activeMobileDropdown === "works" ? "rotate-180" : "rotate-0"
-                    }`}
-                  />
-                </button>
-                
-                {activeMobileDropdown === "works" && (
-                  <div className="mt-2 ml-4 space-y-2">
-                    {findWorksItems.map((item, index) => {
-                      const IconComponent = item.icon
-                      return (
-                        <button
-                          key={index}
-                          onClick={() => {
-                            item.action()
-                            setIsMobileMenuOpen(false)
-                            setActiveMobileDropdown(null)
-                          }}
-                          className="flex items-center space-x-3 w-full text-left px-3 py-2 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors duration-300"
-                        >
-                          <IconComponent className="w-4 h-4" />
-                          <span className="text-sm">{item.title}</span>
-                        </button>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Community */}
-              <button
-                onClick={() => {
-                  setActiveMenu("community")
-                  navigate("/community")
-                  setIsMobileMenuOpen(false)
-                }}
-                className={`block w-full text-left px-3 py-2 rounded-lg transition-colors duration-300 ${
-                  activeMenu === "community" 
-                    ? "text-[#A95BAB] bg-[#A95BAB]/10" 
-                    : "text-white hover:text-[#A95BAB] hover:bg-white/5"
-                }`}
-              >
-                Community
-              </button>
+              ))}
 
               {/* Mobile Profile Quick Actions */}
               <div className="pt-4 border-t border-gray-700/50">

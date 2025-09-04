@@ -110,15 +110,12 @@ const CreateProject = () => {
         status: formData.status
       };
 
-      console.log('[CreateProject] Submitting project data:', projectData);
-
       const result = await dispatch(createProject(projectData)).unwrap();
-      console.log('[CreateProject] Project created successfully:', result);
 
       // Navigate to the new project
       navigate(`/projects/${result.projectId}`);
     } catch (error) {
-      console.error('[CreateProject] Failed to create project:', error);
+      setErrors({ general: error.message || 'Failed to create project. Please try again.' });
     }
   };
 
@@ -138,7 +135,7 @@ const CreateProject = () => {
               onClick={handleBack}
               variant="outline"
               size="sm"
-              className="border-white/30 text-white hover:bg-white/10"
+              className="border-gray-600 text-gray-300 hover:bg-gray-700"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Projects
@@ -298,7 +295,7 @@ const CreateProject = () => {
                     type="button"
                     onClick={handleBack}
                     variant="outline"
-                    className="flex-1 border-white/30 text-white hover:bg-white/10"
+                    className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-700"
                   >
                     Cancel
                   </Button>
