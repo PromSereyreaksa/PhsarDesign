@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import applicationsAPI from '../../services/applicationsAPI'
+import { convertApplicationToProject, fetchProjects, fetchClientProjects } from './projectSlice'
 
 // Async thunks
 export const fetchIncomingApplications = createAsyncThunk(
@@ -36,11 +37,53 @@ export const fetchOutgoingApplications = createAsyncThunk(
 
 export const acceptApplication = createAsyncThunk(
   'applications/accept',
-  async (applicationId, { rejectWithValue, dispatch }) => {
+  async ({ applicationId, postId, convertToProject = true }, { rejectWithValue, dispatch, getState }) => {
     try {
-      console.log('[Applications] Accepting application (will auto-convert to project):', applicationId)
+      console.log('[Applications] Accepting application:', { applicationId, postId, convertToProject })
       const response = await applicationsAPI.acceptApplication(applicationId)
-      console.log('[Applications] Application accepted and converted:', response)
+      console.log('[Applications] Application accepted:', response)
+      
+      // If convertToProject is true, convert the accepted application to a project
+      if (convertToProject && response.data) {
+        try {
+          const application = response.data;
+          const state = getState();
+          const currentUser = state.auth.user;
+          
+          // Create project data matching backend fields exactly
+          const projectData = {
+            title: `Project for ${application.artist?.firstName || 'Artist'}`,
+            description: `Project created from accepted application. Original message: ${application.message || 'No message provided'}`,
+            budget: 100, // Default budget - can be updated later
+            paymentStatus: 'pending',
+            status: 'open', // Default to open as specified
+            categoryId: 1, // Default category - should be updated
+            clientId: application.clientId || currentUser?.userId,
+            artistId: application.artistId,
+            deadline: null // Can be set later
+          };
+          
+          console.log('[Applications] Converting to project with data:', projectData);
+          
+          // Convert application to project
+          await dispatch(convertApplicationToProject({ 
+            applicationId, 
+            projectData 
+          })).unwrap();
+          
+          // Refresh projects list for the current user
+          if (currentUser?.role === 'client' && currentUser?.userId) {
+            await dispatch(fetchClientProjects(currentUser.userId));
+          } else {
+            await dispatch(fetchProjects());
+          }
+          
+          console.log('[Applications] Project conversion and refresh completed successfully');
+        } catch (conversionError) {
+          console.error('[Applications] Failed to convert to project:', conversionError);
+          // Don't fail the entire operation if conversion fails
+        }
+      }
       
       // Refresh applications after accepting
       dispatch(fetchIncomingApplications())

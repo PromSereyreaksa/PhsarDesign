@@ -32,6 +32,8 @@ const PublicArtistProfile = lazy(() => import("../pages/public/PublicArtistProfi
 const ForgotPasswordPage = lazy(() => import("../pages/auth/ForgotPasswordPage"))
 const ChangePasswordPage = lazy(() => import("../pages/auth/ChangePasswordPage"))
 const OTPVerificationPage = lazy(() => import("../pages/auth/OTPVerificationPage"))
+const Settings = lazy(() => import("../pages/Settings"))
+const Projects = lazy(() => import("../pages/Projects"))
 
 // Pages with pagination - load directly for better performance
 import CategoryPage from "../pages/Marketplace/CategoryPage"
@@ -180,6 +182,30 @@ function App() {
             <ProtectedRoute>
               <LazyRoute>
                 <NotificationsPage />
+              </LazyRoute>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Projects routes */}
+        <Route
+          path="/projects/*"
+          element={
+            <ProtectedRoute>
+              <LazyRoute>
+                <Projects />
+              </LazyRoute>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Settings route */}
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <LazyRoute>
+                <Settings />
               </LazyRoute>
             </ProtectedRoute>
           }
