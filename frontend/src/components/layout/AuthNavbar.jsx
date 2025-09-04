@@ -280,14 +280,18 @@ export default function AuthNavbar() {
     dispatch(setActiveTab(tabType))
 
     // 2. Update filters based on tab type (matching MarketplacePage logic)
-    const newFilters = { ...filters }
-    if (tabType === "availability") newFilters.section = "services"
-    if (tabType === "jobs") newFilters.section = "jobs"
+    const newFilters = { section: tabType === "availability" ? "services" : "jobs" }
     dispatch(setFilters(newFilters))
 
     // 3. Navigate to target path with type parameter
     const params = new URLSearchParams()
-    params.set("type", tabType)
+    
+    // Map tab types to URL parameters correctly
+    if (tabType === "availability") {
+      params.set("type", "services")
+    } else if (tabType === "jobs") {
+      params.set("type", "jobs")
+    }
 
     // Preserve existing category filter if we're on marketplace
     if (location.pathname === "/marketplace" && filters.category) {
@@ -298,12 +302,8 @@ export default function AuthNavbar() {
     console.log("Navbar: Navigating to:", finalUrl)
     navigate(finalUrl, { replace: targetPath === location.pathname })
 
-    // 4. Fetch appropriate posts (matching MarketplacePage)
-    if (tabType === "availability") {
-      dispatch(fetchAvailabilityPosts(newFilters))
-    } else if (tabType === "jobs") {
-      dispatch(fetchJobPosts(newFilters))
-    }
+    // 4. Let MarketplacePage handle the data fetching to avoid duplicate calls
+    // Removed fetchAvailabilityPosts and fetchJobPosts calls from here
   }
 
   // Profile menu items
@@ -318,7 +318,7 @@ export default function AuthNavbar() {
   // Navigation items
   const navigationItems = [
     { text: "Home", path: "/home", key: "home" },
-    { text: "Find Talents", path: "/marketplace", key: "talents", tabType: "services" },
+    { text: "Find Talents", path: "/marketplace", key: "talents", tabType: "availability" },
     { text: "Find Works", path: "/marketplace", key: "works", tabType: "jobs" },
     { text: "Community", path: "/community", key: "community" },
   ]

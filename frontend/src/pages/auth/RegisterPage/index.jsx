@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 // import { register } from "../../../store/actions/authActions"
 import { ArrowLeft, Eye, EyeOff } from "lucide-react"
 import { Button } from "../../../components/ui/button"
@@ -14,6 +14,8 @@ import { authAPI } from "../../../lib/api"
 import { loginFailure, loginStart } from "../../../store/slices/authSlice"
 
 export default function RegisterPage() {
+  const location = useLocation()
+  
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -30,6 +32,18 @@ export default function RegisterPage() {
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const { loading } = useSelector((state) => state.auth)
+
+  // Pre-fill email from URL parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search)
+    const emailParam = urlParams.get('email')
+    if (emailParam) {
+      setFormData(prev => ({
+        ...prev,
+        email: emailParam
+      }))
+    }
+  }, [location.search])
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }))

@@ -2,7 +2,8 @@
 
 import { ArrowRight, Award, CheckCircle, Clock, Globe, Heart, Linkedin, Mail, Send, Shield, Star, Target, Users } from "lucide-react"
 import { useState } from "react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
+import { useSelector } from "react-redux"
 import SharedPublicFooter from "../../../components/layout/SharedPublicFooter"
 import SharedPublicNavbar from "../../../components/layout/SharedPublicNavbar"
 import { Button } from "../../../components/ui/button"
@@ -12,6 +13,10 @@ import { Input } from "../../../components/ui/input"
 export default function AboutPage() {
   const [email, setEmail] = useState("")
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  
+  // Get authentication state and navigation
+  const navigate = useNavigate()
+  const { isAuthenticated } = useSelector((state) => state.auth)
 
   const smoothScroll = (elementId) => {
     const element = document.getElementById(elementId)
@@ -19,6 +24,28 @@ export default function AboutPage() {
       element.scrollIntoView({ behavior: "smooth" })
     }
     setIsMenuOpen(false)
+  }
+
+  // Handle conditional navigation based on authentication status
+  const handleJoinCommunity = () => {
+    if (isAuthenticated) {
+      navigate("/home")
+    } else {
+      navigate("/register")
+    }
+  }
+
+  // Handle email-based navigation with pre-filled email
+  const handleGetStartedWithEmail = () => {
+    if (isAuthenticated) {
+      navigate("/home")
+    } else {
+      if (email.trim()) {
+        navigate(`/register?email=${encodeURIComponent(email.trim())}`)
+      } else {
+        navigate("/register")
+      }
+    }
   }
 
   const stats = [
@@ -213,15 +240,14 @@ export default function AboutPage() {
               We're on a mission to connect the world's most talented creatives with businesses that need exceptional
               design. Our platform bridges the gap between artistic vision and commercial success.
             </p>
-            <Link to="/register">
-              <Button
-                size="lg"
-                className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-lg px-8 py-4 text-lg font-semibold group transform hover:scale-105 transition-all duration-500 ease-out"
-              >
-                Join Our Community
-                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-500 ease-out" />
-              </Button>
-            </Link>
+            <Button
+              size="lg"
+              className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-lg px-8 py-4 text-lg font-semibold group transform hover:scale-105 transition-all duration-500 ease-out"
+              onClick={handleJoinCommunity}
+            >
+              Join Our Community
+              <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-500 ease-out" />
+            </Button>
           </div>
         </div>
       </section>
@@ -521,11 +547,12 @@ export default function AboutPage() {
               onChange={(e) => setEmail(e.target.value)}
               className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 rounded-lg px-6"
             />
-            <Link to="/register">
-              <Button className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-lg px-8 whitespace-nowrap transform hover:scale-105 transition-all duration-500 ease-out">
-                Get Started
-              </Button>
-            </Link>
+            <Button 
+              className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-lg px-8 whitespace-nowrap transform hover:scale-105 transition-all duration-500 ease-out"
+              onClick={handleGetStartedWithEmail}
+            >
+              Get Started
+            </Button>
           </div>
 
           

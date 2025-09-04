@@ -20,11 +20,13 @@ import {
 import {
     clearCategoryPosts,
     fetchAvailabilityPostsByCategory,
-    fetchCategories,
     fetchJobPostsByCategory,
     setCategoryPostsPage,
     setFilters
 } from "../../store/slices/marketplaceSlice";
+
+// Import categories from the dedicated categories slice
+import { fetchCategories } from "../../store/slices/categoriesSlice";
 
 const CategoryPage = () => {
   const dispatch = useAppDispatch();
@@ -38,14 +40,18 @@ const CategoryPage = () => {
   // Get user for RBAC checks
   const { user } = useAppSelector((state) => state.auth);
 
-  // Get data from marketplace slice (categories and category posts)
+  // Get data from marketplace slice (category posts and filters)
   const { 
     filters, 
-    categories, 
-    categoriesLoading, 
-    categoriesError,
     categoryPosts 
   } = useAppSelector((state) => state.marketplace);
+  
+  // Get categories from the dedicated categories slice
+  const { 
+    categories, 
+    loading: categoriesLoading, 
+    error: categoriesError 
+  } = useAppSelector((state) => state.categories);
   
   // Get parameters from URL - this is the single source of truth
   const urlParams = new URLSearchParams(location.search);
@@ -192,6 +198,12 @@ const CategoryPage = () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     prevCategoryName.current = categoryName;
+    
+    // Cleanup function to clear category posts when leaving this page
+    return () => {
+      console.log("🧹 CategoryPage cleanup - clearing category posts");
+      dispatch(clearCategoryPosts());
+    };
   }, [dispatch, categoryName]);
 
   // Fetch categories if not loaded
@@ -585,7 +597,7 @@ const CategoryPage = () => {
             </div>
 
             {/* Sort Filter */}
-            <div className="flex items-center">
+            <div className="flex items-center gap-3">
               <select
                 value={sortByFromUrl}
                 onChange={(e) => handleFilterChange({ ...stableFilters, sortBy: e.target.value })}
@@ -601,6 +613,23 @@ const CategoryPage = () => {
                 <option value="price_asc">Price: Low</option>
                 <option value="price_desc">Price: High</option>
               </select>
+              
+              {/* Clear Filters / See All Button */}
+              {(searchFromUrl || sortByFromUrl !== 'newest') && (
+                <button
+                  onClick={() => {
+                    const params = new URLSearchParams();
+                    if (effectiveCategoryId) {
+                      params.set('categoryId', effectiveCategoryId);
+                    }
+                    params.set('type', typeFromUrl);
+                    navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+                  }}
+                  className="px-4 py-3 bg-[#A95BAB]/20 backdrop-blur-sm border border-[#A95BAB]/30 rounded-xl text-[#A95BAB] text-sm hover:bg-[#A95BAB]/30 transition-all whitespace-nowrap"
+                >
+                  See All
+                </button>
+              )}
             </div>
           </div>
         </div>

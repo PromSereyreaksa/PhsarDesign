@@ -690,12 +690,20 @@ const marketplaceSlice = createSlice({
       })
       .addCase(fetchCategories.fulfilled, (state, action) => {
         state.categoriesLoading = false
-        state.categories = action.payload
+        // Ensure we always have a valid array
+        const categoriesData = action.payload?.categories || action.payload?.data || action.payload;
+        state.categories = Array.isArray(categoriesData) ? categoriesData : [];
         state.categoriesError = null
+        console.log("📂 Categories loaded successfully:", {
+          count: state.categories.length,
+          sample: state.categories.slice(0, 3).map(cat => ({ id: cat.id || cat._id, name: cat.name }))
+        });
       })
       .addCase(fetchCategories.rejected, (state, action) => {
         state.categoriesLoading = false
         state.categoriesError = action.payload
+        // Don't clear existing categories on error - keep them if we have them
+        console.error("❌ Categories fetch failed:", action.payload);
       })
 
       // Fetch category by ID

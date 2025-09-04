@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import SearchBox from "../../../components/common/SearchBox";
+import EnhancedSearchBox from "../../../components/common/EnhancedSearchBox";
 import SuggestionChip from "../../../components/common/SuggestionChip";
 
 export default function HeroSectionAuth({ backgroundImageUrl }) {
@@ -56,6 +56,31 @@ export default function HeroSectionAuth({ backgroundImageUrl }) {
         navigate(`/marketplace?${params.toString()}`);
       }
     }
+  };
+
+  // Handle suggestion selection from enhanced search
+  const handleSuggestionSelected = (suggestion) => {
+    if (suggestion.type === 'category') {
+      // Navigate to category page with proper URL structure
+      const categoryName = suggestion.title;
+      const categoryId = suggestion.categoryId;
+      
+      // Create URL-friendly category name
+      const urlCategoryName = categoryName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      
+      if (categoryId && categoryId !== 'unknown') {
+        // Navigate to specific category page: /marketplace/category/{categoryName}?type=services&categoryId={id}
+        navigate(`/marketplace/category/${urlCategoryName}?type=services&categoryId=${categoryId}`);
+      } else {
+        // Fallback to marketplace with category search if no valid ID
+        console.warn("No valid categoryId found, falling back to search by category name");
+        navigate(`/marketplace?category=${encodeURIComponent(categoryName)}&type=services`);
+      }
+      return;
+    }
+    
+    // For any other type, use normal search logic
+    handleSearch(suggestion.title);
   };
 
   // Handle suggestion chip click
@@ -132,10 +157,13 @@ export default function HeroSectionAuth({ backgroundImageUrl }) {
             Find Artists, See Work, Be Discovered
           </h1>
           <div className="space-y-4">
-            <SearchBox
+            <EnhancedSearchBox
               value={searchController}
               onChange={handleSearchChange}
               onSubmit={handleSearchSubmit}
+              onSuggestionSelected={handleSuggestionSelected}
+              searchType="all"
+              placeholder="What type of service are you looking for?"
             />
             {buildSuggestionButtons()}
           </div>
@@ -155,10 +183,13 @@ export default function HeroSectionAuth({ backgroundImageUrl }) {
             Find Artists, See Work, Be Discovered
           </h1>
           <div className="space-y-4">
-            <SearchBox
+            <EnhancedSearchBox
               value={searchController}
               onChange={handleSearchChange}
               onSubmit={handleSearchSubmit}
+              onSuggestionSelected={handleSuggestionSelected}
+              searchType="all"
+              placeholder="What type of service are you looking for?"
             />
             {buildSuggestionButtons()}
           </div>
@@ -180,10 +211,13 @@ export default function HeroSectionAuth({ backgroundImageUrl }) {
                 Find Artists, See Work, Be Discovered
               </h1>
               <div className="space-y-4">
-                <SearchBox
+                <EnhancedSearchBox
                   value={searchController}
                   onChange={handleSearchChange}
                   onSubmit={handleSearchSubmit}
+                  onSuggestionSelected={handleSuggestionSelected}
+                  searchType="all"
+                  placeholder="What type of service are you looking for?"
                 />
                 {buildSuggestionButtons()}
               </div>

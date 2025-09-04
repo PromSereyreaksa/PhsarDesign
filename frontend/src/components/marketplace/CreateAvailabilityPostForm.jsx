@@ -46,18 +46,22 @@ const CreateAvailabilityPostForm = ({ onSubmit, onCancel, isSubmitting = false }
   }, [dispatch])
 
   const popularSkills = [
-    "Photoshop",
-    "Illustrator",
+    "Adobe Photoshop",
+    "Adobe Illustrator",
+    "Adobe XD",
     "Figma",
-    "After Effects",
-    "Premiere Pro",
     "Sketch",
-    "InDesign",
+    "InVision",
+    "CorelDRAW",
+    "Affinity Designer",
+    "Canva",
+    "Procreate",
     "Blender",
-    "HTML/CSS",
-    "JavaScript",
-    "React",
-    "Vue.js",
+    "Cinema 4D",
+    "Adobe InDesign",
+    "Adobe Lightroom",
+    "Adobe After Effects",
+    "Adobe Premiere Pro"
   ]
 
   const handleInputChange = (e) => {
@@ -565,28 +569,7 @@ const handleFormSubmit = async (e) => {
               ))}
             </div>
             
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={newSkill}
-                onChange={(e) => setNewSkill(e.target.value)}
-                placeholder="Add custom skill..."
-                className="flex-1 px-4 py-2 bg-gray-700/50 border border-gray-600/50 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-[#A95BAB] focus:border-[#A95BAB] transition-all"
-                onKeyPress={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault()
-                    handleAddCustomSkill()
-                  }
-                }}
-              />
-              <button
-                type="button"
-                onClick={handleAddCustomSkill}
-                className="px-4 py-2 bg-[#A95BAB] hover:bg-[#A95BAB]/80 text-white rounded-lg transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
+            
             
             {formData.skills.length > 0 && (
               <div className="space-y-2">
