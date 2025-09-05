@@ -139,7 +139,7 @@ const PublicArtistProfile = () => {
   // Prepare artist data in the same format as ArtistProfile with safety checks
   const artistData = currentArtist ? {
     name: `${currentArtist.user?.firstName || ''} ${currentArtist.user?.lastName || ''}`.trim() || 'Unknown Artist',
-    username: `@${currentArtist.user?.username || currentArtist.user?.firstName?.toLowerCase() || 'unknown'}`,
+    username: `@${currentArtist.user?.slug || 'unknown'}`,
     avatar: currentArtist.user?.avatarURL || currentArtist.user?.avatar,
     coverImage: currentArtist.coverImage || "/placeholder.svg",
     bio: currentArtist.bio || 'No bio available.',
@@ -411,11 +411,7 @@ const PublicArtistProfile = () => {
                         key={post.postId || post.id || post._id || index}
                         className="bg-white/5 border-white/10 hover:bg-white/10 rounded-2xl overflow-hidden group cursor-pointer transform hover:scale-[1.02] transition-all duration-300 ease-out"
                         onClick={() => {
-                          const slug = String(post.title || 'untitled')
-                            .toLowerCase()
-                            .replace(/[^a-z0-9]+/g, "-")
-                            .replace(/(^-|-$)/g, "")
-                          navigate(`/marketplace/${slug}`)
+                          navigate(`/marketplace/service/${post.slug}`)
                         }}
                       >
                         <div className="relative overflow-hidden">

@@ -1,17 +1,61 @@
 "use client";
 
-import { useState } from "react";
-import { useSelector } from "react-redux";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import EnhancedSearchBox from "../../../components/common/EnhancedSearchBox";
 import SuggestionChip from "../../../components/common/SuggestionChip";
+import { fetchCategories } from "../../../store/slices/categoriesSlice";
+import categoryAPI from "../../../store/api/categoryAPI";
+import { clearFilters, clearCategoryPosts, clearCurrentPost, clearError } from "../../../store/slices/marketplaceSlice";
+import { clearPosts, clearError as clearPostsError } from "../../../store/slices/postsSlice";
 
 export default function HeroSectionAuth({ backgroundImageUrl }) {
   const [searchController, setSearchController] = useState("");
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   // Get user from Redux store
   const { user } = useSelector((state) => state.auth);
+  
+  // Get categories from Redux store
+  const { categories, loading: categoriesLoading, error: categoriesError } = useSelector((state) => state.categories);
+
+  // Fetch categories on component mount
+  useEffect(() => {
+    console.log("[HeroSectionAuth] Categories state:", { 
+      categories: categories,
+      categoriesLength: categories?.length || 0,
+      categoriesLoading,
+      categoriesError,
+      categoriesStructure: categories?.length > 0 ? categories[0] : null
+    });
+    
+    if ((!categories || categories.length === 0) && !categoriesLoading) {
+      console.log("[HeroSectionAuth] Fetching categories from backend...");
+      dispatch(fetchCategories())
+        .then((result) => {
+          console.log("[HeroSectionAuth] Categories fetch result:", result);
+        })
+        .catch((error) => {
+          console.error("[HeroSectionAuth] Categories fetch error:", error);
+          
+          // If Redux fetch fails, try direct API call as fallback
+          console.log("[HeroSectionAuth] Trying direct API call as fallback...");
+          categoryAPI.getAllCategories()
+            .then((directResult) => {
+              console.log("[HeroSectionAuth] Direct API call result:", directResult);
+            })
+            .catch((directError) => {
+              console.error("[HeroSectionAuth] Direct API call also failed:", directError);
+            });
+        });
+    }
+    
+    if (categoriesError) {
+      console.error("[HeroSectionAuth] Categories error from Redux:", categoriesError);
+    }
+  }, [dispatch, categories, categoriesLoading, categoriesError]);
 
   // Get user's first name or fallback
   const getUserName = () => {
@@ -20,46 +64,24 @@ export default function HeroSectionAuth({ backgroundImageUrl }) {
     return "User";
   };
 
-  // Handle search functionality
-  const handleSearch = (searchTerm) => {
-    if (searchTerm.trim()) {
-      const params = new URLSearchParams();
-      
-      // Map search terms to category names (this should match your database categories)
-      const categoryMapping = {
-        "logo": "Logo Design",
-        "graphic design": "Graphic Design", 
-        "3D Render": "3D Design",
-        "3d render": "3D Design",
-        "illustration": "Digital Art",
-        "branding": "Branding",
-        "web design": "Web Design",
-        "ui design": "UI/UX Design",
-        "ux design": "UI/UX Design",
-        "character design": "Character Design"
-      };
-      
-      const searchLower = searchTerm.toLowerCase().trim();
-      const matchedCategory = categoryMapping[searchLower];
-      
-      if (matchedCategory) {
-        // If search term matches a category, search by category
-        console.log(`🏷️ Search term "${searchTerm}" mapped to category "${matchedCategory}"`);
-        params.set("category", matchedCategory);
-        params.set("type", "availability");
-        navigate(`/marketplace?${params.toString()}`);
-      } else {
-        // Otherwise, search by text
-        console.log(`🔍 Search term "${searchTerm}" will be used as text search`);
-        params.set("search", searchTerm.trim());
-        params.set("type", "availability");
-        navigate(`/marketplace?${params.toString()}`);
-      }
-    }
+  // Handle search functionality (wrapper for executeSearch)
+  const handleSearch = (searchTerm = searchController) => {
+    // Use the parameter if provided, otherwise use current state
+    const actualSearchTerm = searchTerm || searchController;
+    executeSearch(actualSearchTerm);
   };
 
   // Handle suggestion selection from enhanced search
   const handleSuggestionSelected = (suggestion) => {
+    // Clear previous state before navigation
+    console.log("[HeroSectionAuth] Clearing state before suggestion selection");
+    dispatch(clearFilters());
+    dispatch(clearCategoryPosts());
+    dispatch(clearCurrentPost());
+    dispatch(clearError());
+    dispatch(clearPosts());
+    dispatch(clearPostsError());
+
     if (suggestion.type === 'category') {
       // Navigate to category page with proper URL structure
       const categoryName = suggestion.title;
@@ -79,14 +101,117 @@ export default function HeroSectionAuth({ backgroundImageUrl }) {
       return;
     }
     
-    // For any other type, use normal search logic
-    handleSearch(suggestion.title);
+    // For any other type, use the new executeSearch function
+    executeSearch(suggestion.title);
   };
 
   // Handle suggestion chip click
   const handleSuggestionClick = (suggestion) => {
+    console.log("[HeroSectionAuth] Suggestion clicked:", suggestion);
+    console.log("[HeroSectionAuth] Current searchController:", searchController);
+    console.log("[HeroSectionAuth] Categories available:", categories?.length || 0);
+    
+    // Update the search input
     setSearchController(suggestion);
-    handleSearch(suggestion); // Immediately search when clicking a chip
+    
+    // Directly execute search with the clicked suggestion
+    // Don't rely on state updates
+    executeSearch(suggestion);
+  };
+
+  // Separate search execution function to avoid state dependency issues
+  const executeSearch = (searchTerm) => {
+    console.log("[HeroSectionAuth] Executing search with term:", searchTerm);
+    
+    if (!searchTerm || !searchTerm.trim()) {
+      console.log("[HeroSectionAuth] Empty search term, aborting");
+      return;
+    }
+
+    // Clear previous state before navigation
+    console.log("[HeroSectionAuth] Clearing previous state before navigation");
+    dispatch(clearFilters());
+    dispatch(clearCategoryPosts());
+    dispatch(clearCurrentPost());
+    dispatch(clearError());
+    dispatch(clearPosts());
+    dispatch(clearPostsError());
+
+    // Create dynamic category mapping from backend categories
+    const categoryMapping = {};
+    
+    console.log("[HeroSectionAuth] Creating category mapping from:", categories);
+    
+    if (categories && categories.length > 0) {
+      categories.forEach(category => {
+        const categoryName = category.name || category.categoryName || category.title || category.label;
+        if (categoryName) {
+          // Add exact match (case-insensitive)
+          categoryMapping[categoryName.toLowerCase()] = categoryName;
+          
+          // Add partial matches for common search terms
+          const lowerName = categoryName.toLowerCase();
+          if (lowerName.includes('logo')) categoryMapping['logo'] = categoryName;
+          if (lowerName.includes('graphic')) categoryMapping['graphic design'] = categoryName;
+          if (lowerName.includes('3d')) {
+            categoryMapping['3d render'] = categoryName;
+            categoryMapping['3d design'] = categoryName;
+          }
+          if (lowerName.includes('digital') || lowerName.includes('illustration')) {
+            categoryMapping['illustration'] = categoryName;
+            categoryMapping['digital art'] = categoryName;
+          }
+          if (lowerName.includes('brand')) categoryMapping['branding'] = categoryName;
+          if (lowerName.includes('web')) categoryMapping['web design'] = categoryName;
+          if (lowerName.includes('ui') || lowerName.includes('ux')) {
+            categoryMapping['ui design'] = categoryName;
+            categoryMapping['ux design'] = categoryName;
+          }
+          if (lowerName.includes('character')) categoryMapping['character design'] = categoryName;
+        }
+      });
+    }
+    
+    console.log("[HeroSectionAuth] Category mapping created:", categoryMapping);
+    
+    const searchLower = searchTerm.toLowerCase().trim();
+    const matchedCategory = categoryMapping[searchLower];
+    
+    if (matchedCategory) {
+      // If search term matches a category, navigate to category page
+      console.log(`🏷️ Search term "${searchTerm}" mapped to category "${matchedCategory}"`);
+      
+      // Create URL-friendly category name
+      const urlCategoryName = matchedCategory.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      
+      // Try to find the category ID for more reliable matching
+      let categoryId = null;
+      if (categories && categories.length > 0) {
+        const foundCategory = categories.find(cat => {
+          const catName = cat.name || cat.categoryName || cat.title || cat.label;
+          return catName && catName.toLowerCase() === matchedCategory.toLowerCase();
+        });
+        categoryId = foundCategory?.categoryId || foundCategory?.id || foundCategory?._id;
+      }
+      
+      // Navigate to category page: /marketplace/category/{categoryName}
+      const params = new URLSearchParams();
+      params.set("type", "services");
+      if (categoryId && categoryId !== 'undefined' && categoryId !== 'null') {
+        params.set("categoryId", categoryId);
+      }
+      
+      const targetUrl = `/marketplace/category/${urlCategoryName}?${params.toString()}`;
+      console.log(`🔗 Navigating to category page: ${targetUrl}`);
+      navigate(targetUrl);
+    } else {
+      // Otherwise, search by text in marketplace
+      console.log(`🔍 Search term "${searchTerm}" will be used as text search`);
+      const params = new URLSearchParams();
+      params.set("search", searchTerm.trim());
+      params.set("type", "availability");
+      navigate(`/marketplace?${params.toString()}`);
+    }
   };
 
   // Handle search input change
@@ -100,13 +225,39 @@ export default function HeroSectionAuth({ backgroundImageUrl }) {
   };
 
   const buildSuggestionButtons = () => {
-    const suggestions = [
-      "logo",
-      "graphic design",
-      "3D Render",
-      "illustration",
-      "branding",
-    ];
+    // Get suggestions from backend categories, fallback to hardcoded if not loaded
+    let suggestions = [];
+    
+    console.log("[HeroSectionAuth] Building suggestions with categories:", categories);
+    
+    if (categories && categories.length > 0) {
+      // Handle different possible category data structures
+      suggestions = categories
+        .slice(0, 5)
+        .map(category => {
+          // Try different property names that might contain the category name
+          return category.name || 
+                 category.categoryName || 
+                 category.title || 
+                 category.label || 
+                 (typeof category === 'string' ? category : null);
+        })
+        .filter(Boolean);
+      
+      console.log("[HeroSectionAuth] Processed suggestions from backend:", suggestions);
+    }
+    
+    // Fallback suggestions if backend categories aren't loaded yet or processing failed
+    if (suggestions.length === 0) {
+      console.log("[HeroSectionAuth] Using fallback suggestions");
+      suggestions = [
+        "Logo Design",
+        "Graphic Design", 
+        "3D Design",
+        "Digital Art",
+        "Branding",
+      ];
+    }
 
     // Responsive font sizing
     const getFontSize = () => {
@@ -122,14 +273,18 @@ export default function HeroSectionAuth({ backgroundImageUrl }) {
     if (isDesktop) {
       return (
         <div className="flex flex-wrap gap-3">
-          {suggestions.map((suggestion, index) => (
-            <SuggestionChip
-              key={index}
-              label={suggestion}
-              onTap={() => handleSuggestionClick(suggestion)}
-              fontSize={getFontSize()}
-            />
-          ))}
+          {categoriesLoading ? (
+            <div className="text-white/70 text-sm">Loading categories...</div>
+          ) : (
+            suggestions.map((suggestion, index) => (
+              <SuggestionChip
+                key={index}
+                label={suggestion}
+                onTap={() => handleSuggestionClick(suggestion)}
+                fontSize={getFontSize()}
+              />
+            ))
+          )}
         </div>
       );
     }
@@ -137,14 +292,18 @@ export default function HeroSectionAuth({ backgroundImageUrl }) {
     // For mobile and tablet, use flex wrap with intrinsic width
     return (
       <div className="flex flex-wrap gap-3 items-start">
-        {suggestions.map((suggestion, index) => (
-          <SuggestionChip
-            key={index}
-            label={suggestion}
-            onTap={() => handleSuggestionClick(suggestion)}
-            fontSize={getFontSize()}
-          />
-        ))}
+        {categoriesLoading ? (
+          <div className="text-white/70 text-xs">Loading categories...</div>
+        ) : (
+          suggestions.map((suggestion, index) => (
+            <SuggestionChip
+              key={index}
+              label={suggestion}
+              onTap={() => handleSuggestionClick(suggestion)}
+              fontSize={getFontSize()}
+            />
+          ))
+        )}
       </div>
     );
   };

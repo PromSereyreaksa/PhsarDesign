@@ -15,11 +15,23 @@ export const fetchAvailabilityPosts = createAsyncThunk(
   'posts/fetchAvailabilityPosts',
   async (params = {}) => {
     const { page = 1, limit = 6, ...otherParams } = params;
+    
+    // Clean up undefined or null values to prevent API issues
+    const cleanParams = Object.entries(otherParams).reduce((acc, [key, value]) => {
+      if (value !== undefined && value !== null && value !== 'undefined' && value !== 'null' && value !== '') {
+        acc[key] = value;
+      }
+      return acc;
+    }, {});
+    
+    console.log('[fetchAvailabilityPosts] Original params:', otherParams);
+    console.log('[fetchAvailabilityPosts] Cleaned params:', cleanParams);
+    
     const response = await availabilityPostsAPI.getAll({
       page,
       limit,
       isActive: true,
-      ...otherParams
+      ...cleanParams
     });
     
     console.log('API availability response:', response.data);
@@ -108,11 +120,23 @@ export const fetchJobPosts = createAsyncThunk(
   'posts/fetchJobPosts',
   async (params = {}) => {
     const { page = 1, limit = 6, ...otherParams } = params;
+    
+    // Clean up undefined or null values to prevent API issues
+    const cleanParams = Object.entries(otherParams).reduce((acc, [key, value]) => {
+      if (value !== undefined && value !== null && value !== 'undefined' && value !== 'null' && value !== '') {
+        acc[key] = value;
+      }
+      return acc;
+    }, {});
+    
+    console.log('[fetchJobPosts] Original params:', otherParams);
+    console.log('[fetchJobPosts] Cleaned params:', cleanParams);
+    
     const response = await jobPostsAPI.getAll({ 
       page,
       limit, 
       isActive: true, 
-      ...otherParams 
+      ...cleanParams 
     });
     
     console.log('API job posts response:', response.data);
@@ -163,34 +187,6 @@ export const deleteJobPost = createAsyncThunk(
   }
 );
 
-// Categories thunk (shared for both post types)
-export const fetchCategories = createAsyncThunk(
-  'posts/fetchCategories',
-  async () => {
-    const response = await portfolioAPI.getCategories();
-    // Handle different API response structures
-    const data = response.data;
-    // If data is already an array, return it
-    if (Array.isArray(data)) {
-      return data;
-    }
-    // If data has a categories property, return that
-    if (data && Array.isArray(data.categories)) {
-      return data.categories;
-    }
-    // If data has other array properties, check for them
-    if (data && typeof data === 'object') {
-      const possibleArrays = Object.values(data).filter(Array.isArray);
-      if (possibleArrays.length > 0) {
-        return possibleArrays[0];
-      }
-    }
-    // Fallback to empty array
-    console.warn('Categories API returned unexpected format:', data);
-    return [];
-  }
-);
-
 // Legacy thunk for backward compatibility
 export const fetchPosts = createAsyncThunk(
   'posts/fetchPosts',
@@ -237,11 +233,6 @@ const initialState = {
   myJobPostsLoading: false,
   myJobPostsError: null,
   
-  // Shared data
-  categories: [],
-  categoriesLoading: false,
-  categoriesError: null,
-  
   // Legacy support
   posts: [], // For backward compatibility
   loading: false,
@@ -259,7 +250,6 @@ const postsSlice = createSlice({
       state.error = null;
       state.availabilityPostsError = null;
       state.jobPostsError = null;
-      state.categoriesError = null;
       state.myAvailabilityPostsError = null;
       state.myJobPostsError = null;
     },
@@ -521,20 +511,6 @@ const postsSlice = createSlice({
         if (state.jobPostsPagination.totalCount > 0) {
           state.jobPostsPagination.totalCount -= 1;
         }
-      })
-      
-      // Fetch categories
-      .addCase(fetchCategories.pending, (state) => {
-        state.categoriesLoading = true;
-        state.categoriesError = null;
-      })
-      .addCase(fetchCategories.fulfilled, (state, action) => {
-        state.categoriesLoading = false;
-        state.categories = action.payload;
-      })
-      .addCase(fetchCategories.rejected, (state, action) => {
-        state.categoriesLoading = false;
-        state.categoriesError = action.error.message || 'Failed to fetch categories';
       });
   },
 });
