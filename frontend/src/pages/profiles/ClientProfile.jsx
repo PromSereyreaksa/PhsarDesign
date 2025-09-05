@@ -32,6 +32,7 @@ export default function ClientProfile() {
   const [isPhonePublic, setIsPhonePublic] = useState(true)
   const [debugInfo, setDebugInfo] = useState({})
   const hasFetchedRef = useRef(null)
+  const currentUserIdRef = useRef(null)
 
   useEffect(() => {
     // Prevent double execution for the same userId
@@ -40,9 +41,16 @@ export default function ClientProfile() {
       return
     }
 
+    // Additional check to prevent unnecessary fetches when user object changes
+    if (currentUserIdRef.current === user?.userId && userId === user?.userId) {
+      console.log("🚫 Skipping fetch - same user, no need to refetch")
+      return
+    }
+
     const fetchClientData = async () => {
       if (user && (userId === user.userId || !userId)) {
         hasFetchedRef.current = userId
+        currentUserIdRef.current = user.userId
         setIsOwner(true)
         setIsLoading(true)
         setDebugInfo({ stage: "starting", timestamp: new Date().toISOString() })
@@ -90,10 +98,7 @@ export default function ClientProfile() {
             clientId: freshClientData.clientId || freshClientData.userId || "",
             firstName: freshClientData.user?.firstName || "",
             lastName: freshClientData.user?.lastName || "",
-            username:
-              freshClientData.user?.firstName && freshClientData.user?.lastName
-                ? `@${freshClientData.user.firstName.toLowerCase()}${freshClientData.user.lastName.toLowerCase()}`
-                : "@user",
+            username:`@${freshClientData.user?.slug}`,
             avatar: processedAvatarUrl,
             bio: freshClientData.user?.bio || "",
             industry: freshClientData.industry || "",
@@ -149,43 +154,9 @@ export default function ClientProfile() {
             setErrorMessage(`Failed to fetch client data: ${error.message}`)
           }
 
-          // Fallback to existing user data
-          let fallbackAvatarUrl = null
-          if (user.avatar && typeof user.avatar === "string" && user.avatar.trim() !== "") {
-            const avatarUrl = user.avatar.trim()
-            fallbackAvatarUrl = avatarUrl.includes("?")
-              ? `${avatarUrl}&t=${Date.now()}`
-              : `${avatarUrl}?t=${Date.now()}`
-            console.log("[v0] Using fallback avatar from Redux:", fallbackAvatarUrl)
-          }
-
-          const fallbackClientData = {
-            id: user.userId || "",
-            clientId: user.clientId || user.userId || "",
-            firstName: user.firstName || "",
-            lastName: user.lastName || "",
-            username:
-              user.firstName && user.lastName
-                ? `@${user.firstName.toLowerCase()}${user.lastName.toLowerCase()}`
-                : "@user",
-            avatar: fallbackAvatarUrl,
-            bio: user.about || user.bio || "",
-            industry: user.industry || "",
-            location: user.location || "Location not specified",
-            companySize: user.companySize || "",
-            website: user.website || "",
-            phoneNumber: user.phoneNumber || "",
-            joinDate: user.createdAt || "Recently",
-            rating: user.rating || 0,
-            totalReviews: user.reviews?.length || 0,
-            totalProjects: jobPosts?.length || 0,
-            projectsPosted: jobPosts || [],
-            reviews: user.reviews || [],
-            coverImage: user.coverUrl || "/placeholder.svg",
-          }
-
-          setClientData(fallbackClientData)
-          setDebugInfo((prev) => ({ ...prev, fallbackUsed: true }))
+          // Set null data when API fails
+          setClientData(null)
+          setDebugInfo((prev) => ({ ...prev, fallbackUsed: false }))
         } finally {
           setIsLoading(false)
         }
@@ -197,15 +168,15 @@ export default function ClientProfile() {
     }
 
     fetchClientData()
+  }, [userId, user?.userId, user?.token]) // eslint-disable-line react-hooks/exhaustive-deps
 
-    if (user && user.userId) {
+  // Separate effect for fetching job posts - only when user.userId changes
+  useEffect(() => {
+    if (user?.userId) {
       console.log("[v0] Dispatching fetchMyJobPosts for client profile")
-      console.log("[v0] Current Redux state - myJobPosts:", jobPosts)
-      console.log("[v0] Current Redux state - loading:", postsLoading)
-      console.log("[v0] Current Redux state - error:", postsError)
       dispatch(fetchMyJobPosts())
     }
-  }, [userId, user, dispatch])
+  }, [dispatch, user?.userId])
 
   // Update client data when job posts are loaded from Redux
   useEffect(() => {
@@ -220,7 +191,7 @@ export default function ClientProfile() {
         console.log("[v0] Updated client data with job posts:", jobPosts.length, "posts")
       }
     }
-  }, [jobPosts])
+  }, [jobPosts, clientData])
 
   const handleEditProfile = () => {
     console.log("[v0] Edit Profile button clicked - navigating to /profile/edit")
@@ -229,10 +200,6 @@ export default function ClientProfile() {
 
   const handleEditPost = (postId) => {
     navigate(`/marketplace/edit/${postId}`)
-  }
-
-  const getStatusColor = (isActive) => {
-    return isActive ? "text-green-400 bg-green-400/20" : "text-gray-400 bg-gray-400/20"
   }
 
   const handleRetry = () => {
@@ -279,7 +246,7 @@ export default function ClientProfile() {
         <div className="max-w-7xl mx-auto px-6 py-10 text-white text-center">
           <p>No client data available.</p>
           {/* Debug info for development */}
-          {process.env.NODE_ENV === "development" && (
+          {import.meta.env.DEV && (
             <details className="mt-4 text-left text-xs">
               <summary className="cursor-pointer text-gray-400">Debug Info</summary>
               <pre className="bg-gray-800 p-4 mt-2 rounded overflow-auto">{JSON.stringify(debugInfo, null, 2)}</pre>

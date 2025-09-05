@@ -14,7 +14,10 @@ import { useAppDispatch, useAppSelector } from "../../hooks/useRedux.js";
 // Import from marketplace slice (now includes categories)
 import {
     setFilters,
-    clearCategoryPosts
+    clearCategoryPosts,
+    clearCurrentPost,
+    clearError,
+    clearFilters
 } from "../../store/slices/marketplaceSlice";
 
 // Import categories from the dedicated categories slice
@@ -35,7 +38,9 @@ import {
     selectJobPostsPagination,
     setActiveTab,
     setAvailabilityPostsPage,
-    setJobPostsPage
+    setJobPostsPage,
+    clearPosts,
+    clearError as clearPostsError
 } from '../../store/slices/postsSlice';
 
 import FeaturedArtists from "./FeaturedArtist";
@@ -157,8 +162,8 @@ const MarketplacePage = () => {
     const params = new URLSearchParams();
     params.set('type', activeTab === 'availability' ? 'services' : 'jobs');
     
-    // Add category ID if available for more reliable matching
-    if (resolvedCategoryId) {
+    // Only add category ID if it's valid and not undefined
+    if (resolvedCategoryId && resolvedCategoryId !== 'undefined' && resolvedCategoryId !== 'null') {
       params.set('categoryId', resolvedCategoryId);
     }
     
@@ -212,29 +217,59 @@ const MarketplacePage = () => {
   useEffect(() => {
     console.log("🔄 MarketplacePage mounted - ensuring fresh state");
     
-    // Only clear category-specific posts, not marketplace posts
+    // Clear previous state on mount for fresh start
+    console.log("[MarketplacePage] Component mounting, clearing previous state");
     dispatch(clearCategoryPosts());
+    dispatch(clearCurrentPost());
+    dispatch(clearError());
     
     // No need to reset pagination here as it's handled by URL params
     
     return () => {
       console.log("🧹 MarketplacePage unmounting - cleanup");
     };
-  }, []); // Empty dependency array - only run on mount/unmount
+  }, [dispatch]); // Include dispatch in dependency array
 
   // Check URL params for category filtering, post type, and pagination
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const category = params.get("category");
+    const categoryId = params.get("categoryId"); // Extract categoryId parameter
     const section = params.get("section");
     const postType = params.get("type"); // 'availability' or 'jobs'
     const searchTerm = params.get("search"); // Extract search parameter
+    const sortBy = params.get("sortBy"); // Extract sort parameter
+    const minPrice = params.get("minPrice"); // Extract min price parameter
+    const maxPrice = params.get("maxPrice"); // Extract max price parameter
     const page = parseInt(params.get("page")) || 1; // Extract page parameter
 
     const newFilters = { ...filters };
     if (category) newFilters.category = category;
+    // Only set categoryId if it exists and is not 'undefined' string
+    if (categoryId && categoryId !== 'undefined' && categoryId !== 'null') {
+      newFilters.categoryId = categoryId;
+    } else {
+      // Remove categoryId from filters if it's invalid
+      delete newFilters.categoryId;
+    }
     if (section) newFilters.section = section;
     if (searchTerm) newFilters.search = searchTerm; // Set search filter
+    if (sortBy) newFilters.sortBy = sortBy; // Set sort filter
+    if (minPrice) newFilters.minPrice = minPrice; // Set min price filter
+    if (maxPrice) newFilters.maxPrice = maxPrice; // Set max price filter
+
+    console.log("[MarketplacePage] URL params parsed:", {
+      category,
+      categoryId,
+      section,
+      postType,
+      searchTerm,
+      sortBy,
+      minPrice,
+      maxPrice,
+      page,
+      newFilters
+    });
 
     // Ensure consistency between section and type
     if (postType === 'jobs') {
@@ -266,8 +301,11 @@ const MarketplacePage = () => {
   // Memoize filters to prevent unnecessary re-renders
   const memoizedFilters = useMemo(() => filters, [
     filters.category,
+    filters.categoryId,
     filters.search,
     filters.sortBy,
+    filters.minPrice,
+    filters.maxPrice,
     filters.section
   ]);
 
@@ -293,6 +331,14 @@ const MarketplacePage = () => {
     if (tabType === activeTab) return;
 
     console.log(`Switching to ${tabType} tab`);
+    
+    // Clear previous posts state when switching tabs, but preserve filters
+    console.log("[MarketplacePage] Tab change detected, clearing previous posts but preserving filters");
+    dispatch(clearCategoryPosts());
+    dispatch(clearCurrentPost());
+    dispatch(clearError());
+    dispatch(clearPosts());
+    dispatch(clearPostsError());
 
     dispatch(setActiveTab(tabType));
 
@@ -303,7 +349,7 @@ const MarketplacePage = () => {
       dispatch(setJobPostsPage(1));
     }
 
-    // Update filters
+    // Update filters - only change section, preserve other filters like sortBy
     const newFilters = { ...filters };
     if (tabType === "availability") {
       newFilters.section = "services";
@@ -329,14 +375,55 @@ const MarketplacePage = () => {
 
   // Handle filter change
   const handleFilterChange = useCallback((newFilters) => {
-    dispatch(setFilters(newFilters));
+    console.log("[MarketplacePage] Filter change requested:", newFilters);
+    console.log("[MarketplacePage] Current filters:", filters);
+    
+    // Check if this is a search operation (when search filter is being set)
+    const isSearchOperation = newFilters.search !== undefined && newFilters.search !== filters.search;
+    
+    if (isSearchOperation) {
+      console.log("[MarketplacePage] Search operation detected, clearing previous state");
+      // Clear all relevant state when performing a search
+      dispatch(clearCategoryPosts());
+      dispatch(clearCurrentPost());
+      dispatch(clearError());
+      dispatch(clearPosts());
+      dispatch(clearPostsError());
+      // DON'T clear filters during search - preserve sortBy and other filters
+    }
+    
+    // Merge new filters with existing filters
+    const updatedFilters = { ...filters, ...newFilters };
+    console.log("[MarketplacePage] Updated filters after merge:", updatedFilters);
+    
+    dispatch(setFilters(updatedFilters));
+    
+    // Update URL with new filters
+    const params = new URLSearchParams(location.search);
+    
+    // Update URL parameters for all filter types
+    Object.keys(updatedFilters).forEach(key => {
+      const value = updatedFilters[key];
+      if (value && value !== '' && value !== 'newest') { // Don't add default values to URL
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+    });
+    
+    // Always remove page when filters change
+    params.delete('page');
+    
+    // Update URL
+    navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+    
     // Reset to page 1 when filters change
     if (activeTab === 'availability') {
       dispatch(setAvailabilityPostsPage(1));
     } else {
       dispatch(setJobPostsPage(1));
     }
-  }, [dispatch, activeTab]);
+  }, [dispatch, activeTab, filters, location.search, location.pathname, navigate]);
 
   // Smart post creation routing based on user role
   const handleCreatePost = () => {
@@ -387,7 +474,14 @@ const MarketplacePage = () => {
         });
         
         // Navigate to category page like "See All" does
-        navigate(`/marketplace/category/${urlCategoryName}?categoryId=${categoryId}`);
+        // Only include categoryId in URL if it's valid
+        if (categoryId && categoryId !== 'undefined' && categoryId !== 'null') {
+          navigate(`/marketplace/category/${urlCategoryName}?categoryId=${categoryId}`);
+        } else {
+          // Navigate without categoryId if it's not valid
+          console.warn("Category ID is undefined, navigating without categoryId parameter");
+          navigate(`/marketplace/category/${urlCategoryName}`);
+        }
       }
     } else {
       // If "All Categories" selected, just update the current filter

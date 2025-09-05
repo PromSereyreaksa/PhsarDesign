@@ -614,7 +614,7 @@ const EditProfile = () => {
       setFreshUserData(combinedData)
     } catch (error) {
       console.error("[v0] Error fetching fresh user data:", error)
-      // Fallback to Redux user data if API fails
+      // Use API data if available
       setFreshUserData(user)
     } finally {
       setIsFetchingUserData(false)

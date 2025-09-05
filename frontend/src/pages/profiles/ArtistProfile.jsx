@@ -1,7 +1,7 @@
 "use client"
 
 import { Calendar, Edit, Eye, Heart, MapPin, MessageSquare, Star } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { useNavigate, useParams } from "react-router-dom"
 import AuthFooter from "../../components/layout/AuthFooter"
@@ -22,55 +22,24 @@ export default function ArtistProfile() {
   const [isOwner, setIsOwner] = useState(false)
   const [artistData, setArtistData] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
+  const fetchedUserIdRef = useRef(null)
   // Use Redux selectors for user's own posts
   const myAvailabilityPosts = useSelector((state) => state.posts.myAvailabilityPosts)
   const postsLoading = useSelector((state) => state.posts.myAvailabilityPostsLoading)
-
-  const mockArtistData = {
-    id: userId || "1",
-    name: "Emma Wilson",
-    username: "@emmawilson",
-    avatar: "/professional-artist-portrait.png",
-    coverImage: "/artistic-workspace.png",
-    bio: "Digital artist and illustrator specializing in character design and concept art. I bring stories to life through vibrant colors and imaginative worlds.",
-    location: "San Francisco, CA",
-    joinDate: "March 2023",
-    skills: ["Digital Art", "Character Design", "Illustration", "Concept Art", "UI/UX Design"],
-    rating: 4.9,
-    totalReviews: 127,
-    totalProjects: 89,
-    responseTime: "2 hours",
-    availability: "Available",
-    hourlyRate: "$75/hour",
-    reviews: [
-      {
-        id: 1,
-        clientName: "John Smith",
-        clientAvatar: "/professional-headshot.png",
-        rating: 5,
-        comment:
-          "Emma delivered exceptional work on our character designs. Her attention to detail and creativity exceeded our expectations.",
-        date: "2 weeks ago",
-        project: "Fantasy Game Characters",
-      },
-      {
-        id: 2,
-        clientName: "Sarah Johnson",
-        clientAvatar: "/professional-businesswoman-headshot.png",
-        rating: 5,
-        comment: "Professional, timely, and incredibly talented. Will definitely work with Emma again!",
-        date: "1 month ago",
-        project: "Brand Illustration",
-      },
-    ],
-  }
 
   // Use only the current user's posts
   const posts = myAvailabilityPosts;
 
   useEffect(() => {
+    // Prevent infinite loops by checking if we already fetched for this user
+    if (fetchedUserIdRef.current === user?.userId && (userId === user?.userId || !userId)) {
+      console.log("🚫 Skipping fetch - already fetched for user:", user?.userId)
+      return
+    }
+
     const fetchUserData = async () => {
       if (user && (userId === user.userId || !userId)) {
+        fetchedUserIdRef.current = user.userId
         setIsOwner(true)
         setIsLoading(true)
 
@@ -112,20 +81,19 @@ export default function ArtistProfile() {
           }
 
           setArtistData({
-            ...mockArtistData,
             id: freshUserData.userId,
             name: `${freshUserData.firstName} ${freshUserData.lastName}`,
-            username: `@${freshUserData.firstName?.toLowerCase()}${freshUserData.lastName?.toLowerCase()}`,
-            avatar: processedAvatarUrl, // Use processed avatar or null for fallback
-            bio: freshUserData.about || freshUserData.bio || mockArtistData.bio,
-            location: freshUserData.location || "Location not specified",
-            joinDate: mockArtistData.joinDate,
+            username: `@${freshUserData.slug}`,
+            avatar: processedAvatarUrl,
+            bio: freshUserData.about || freshUserData.bio || null,
+            location: freshUserData.location || null,
+            joinDate: freshUserData.createdAt ? new Date(freshUserData.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : null,
             skills: artistProfileData?.skills
               ? artistProfileData.skills
                   .split(",")
                   .map((s) => s.trim())
                   .filter(Boolean)
-              : mockArtistData.skills,
+              : [],
             tools: artistProfileData?.specialties
               ? artistProfileData.specialties
                   .split(",")
@@ -137,14 +105,14 @@ export default function ArtistProfile() {
                     .map((s) => s.trim())
                     .filter(Boolean)
                 : [],
-            rating: mockArtistData.rating,
-            totalReviews: mockArtistData.totalReviews,
-            totalProjects: mockArtistData.totalProjects,
-            responseTime: artistProfileData?.responseTime ? `${artistProfileData.responseTime} hours` : "Not specified",
-            availability: artistProfileData?.availability || "Not specified",
-            hourlyRate: artistProfileData?.hourlyRate ? `$${artistProfileData.hourlyRate}/hour` : "Not specified",
-            reviews: mockArtistData.reviews,
-            coverImage: mockArtistData.coverImage,
+            rating: artistProfileData?.rating || 0,
+            totalReviews: artistProfileData?.totalReviews || 0,
+            totalProjects: artistProfileData?.totalProjects || 0,
+            responseTime: artistProfileData?.responseTime ? `${artistProfileData.responseTime} hours` : null,
+            availability: artistProfileData?.availability || null,
+            hourlyRate: artistProfileData?.hourlyRate ? `$${artistProfileData.hourlyRate}/hour` : null,
+            reviews: artistProfileData?.reviews || [],
+            coverImage: artistProfileData?.coverImage || null,
           })
 
           // No need to fetch posts here, already handled by Redux slice
@@ -163,14 +131,13 @@ export default function ArtistProfile() {
           }
 
           setArtistData({
-            ...mockArtistData,
             id: user.userId,
             name: `${user.firstName} ${user.lastName}`,
             username: `@${user.firstName?.toLowerCase()}${user.lastName?.toLowerCase()}`,
-            avatar: fallbackAvatarUrl, // Use fallback avatar or null
-            bio: user.about || user.bio || mockArtistData.bio,
-            location: user.location || "Location not specified",
-            joinDate: mockArtistData.joinDate,
+            avatar: fallbackAvatarUrl,
+            bio: user.about || user.bio || null,
+            location: user.location || null,
+            joinDate: user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : null,
             skills: user.skills
               ? Array.isArray(user.skills)
                 ? user.skills
@@ -178,7 +145,7 @@ export default function ArtistProfile() {
                     .split(",")
                     .map((s) => s.trim())
                     .filter(Boolean)
-              : mockArtistData.skills,
+              : [],
             tools: user.specialties
               ? Array.isArray(user.specialties)
                 ? user.specialties
@@ -194,14 +161,14 @@ export default function ArtistProfile() {
                       .map((s) => s.trim())
                       .filter(Boolean)
                 : [],
-            rating: mockArtistData.rating,
-            totalReviews: mockArtistData.totalReviews,
-            totalProjects: mockArtistData.totalProjects,
-            responseTime: user.responseTime ? `${user.responseTime} hours` : "Not specified",
-            availability: user.availability || "Not specified",
-            hourlyRate: user.hourlyRate ? `$${user.hourlyRate}/hour` : "Not specified",
-            reviews: mockArtistData.reviews,
-            coverImage: mockArtistData.coverImage,
+            rating: user.rating || 0,
+            totalReviews: user.totalReviews || 0,
+            totalProjects: user.totalProjects || 0,
+            responseTime: user.responseTime ? `${user.responseTime} hours` : null,
+            availability: user.availability || null,
+            hourlyRate: user.hourlyRate ? `$${user.hourlyRate}/hour` : null,
+            reviews: user.reviews || [],
+            coverImage: user.coverImage || null,
           })
 
           // No need to fetch posts here, already handled by Redux slice
@@ -209,18 +176,21 @@ export default function ArtistProfile() {
           setIsLoading(false)
         }
       } else {
-        setArtistData(mockArtistData)
+        setArtistData(null)
         setIsOwner(false)
         // No need to fetch posts here, already handled by Redux slice
       }
     }
 
     fetchUserData();
-    // Fetch only the current user's posts
-    if (user && user.userId) {
+  }, [userId, user?.userId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Separate effect for fetching posts
+  useEffect(() => {
+    if (user?.userId) {
       dispatch(fetchMyAvailabilityPosts());
     }
-  }, [userId]) // Removed user?.avatar from dependencies to prevent unnecessary re-fetches
+  }, [dispatch, user?.userId])
 
   const handleEditProfile = () => {
     console.log("[v0] Edit Profile button clicked - navigating to /profile/edit")
@@ -316,11 +286,11 @@ console.log("My post:", myAvailabilityPosts);
                       <div className="flex items-center gap-4 text-sm text-gray-300">
                         <div className="flex items-center gap-1">
                           <MapPin className="w-4 h-4" />
-                          {artistData.location}
+                          {artistData.location || "Location not specified"}
                         </div>
                         <div className="flex items-center gap-1">
                           <Calendar className="w-4 h-4" />
-                          Joined {artistData.joinDate}
+                          Joined {artistData.joinDate || "Recently"}
                         </div>
                       </div>
                     </div>
@@ -367,22 +337,22 @@ console.log("My post:", myAvailabilityPosts);
               <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
                 <CardContent className="p-6 space-y-6">
                   <h3 className="text-xl font-bold text-white mb-6 pt-2">About</h3>
-                  <p className="text-gray-300 leading-relaxed text-sm break-words">{artistData.bio}</p>
+                  <p className="text-gray-300 leading-relaxed text-sm break-words">{artistData.bio || "No bio available."}</p>
 
                   <div className="space-y-4 pt-4 border-t border-white/10">
                     <div className="flex justify-between items-center gap-4">
                       <span className="text-gray-400 text-sm flex-shrink-0">Response Time</span>
-                      <span className="text-white text-sm font-medium text-right">{artistData.responseTime}</span>
+                      <span className="text-white text-sm font-medium text-right">{artistData.responseTime || "Not specified"}</span>
                     </div>
                     <div className="flex justify-between items-center gap-4">
                       <span className="text-gray-400 text-sm flex-shrink-0">Availability</span>
                       <span className={`text-sm font-medium text-right ${artistData.availability === "Available" ? "text-green-400" : "text-red-400"}`}>
-                        {artistData.availability}
+                        {artistData.availability || "Not specified"}
                       </span>
                     </div>
                     <div className="flex justify-between items-center gap-4">
                       <span className="text-gray-400 text-sm flex-shrink-0">Hourly Rate</span>
-                      <span className="text-white text-sm font-medium text-right">{artistData.hourlyRate}</span>
+                      <span className="text-white text-sm font-medium text-right">{artistData.hourlyRate || "Contact for pricing"}</span>
                     </div>
                   </div>
                 </CardContent>
