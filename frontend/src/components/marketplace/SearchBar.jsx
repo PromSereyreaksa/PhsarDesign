@@ -163,7 +163,20 @@ export default function SearchBar({ type = "all", filters, onFilterChange, activ
 
     } catch (error) {
       console.error("Error fetching suggestions:", error);
-      setSuggestions([]);
+      // Still show some basic suggestions based on search query
+      if (searchQuery.length >= 2) {
+        const basicSuggestions = [
+          {
+            id: `search-${searchQuery}`,
+            title: searchQuery,
+            type: 'search',
+            category: 'Search Term'
+          }
+        ];
+        setSuggestions(basicSuggestions);
+      } else {
+        setSuggestions([]);
+      }
     } finally {
       setLoading(false);
     }
@@ -176,27 +189,27 @@ export default function SearchBar({ type = "all", filters, onFilterChange, activ
     }
   }, [onFilterChange, filters?.search]);
 
-  // Debounced search effect - only fetch suggestions, don't navigate
+  // Trigger search when component mounts with existing search filter (from URL)
   useEffect(() => {
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
+    // On initial mount, if there's a search filter but no active search has been triggered
+    if (filters?.search && filters.search.trim() && query === filters.search) {
+      console.log("[SearchBar] Initial search detected from URL:", filters.search);
+      // Fetch suggestions for the initial search term
+      fetchSuggestions(filters.search.trim());
     }
+  }, [filters?.search, fetchSuggestions]); // Only run when filters.search changes
 
-    debounceTimer.current = setTimeout(() => {
-      // Only fetch suggestions, don't update filters automatically
-      if (query.trim()) {
-        fetchSuggestions(query.trim());
-      } else {
-        setSuggestions([]);
-      }
-    }, DEBOUNCE_DELAY);
+  // No auto-fetching - suggestions only on Enter or manual trigger
+  // Removed debounced suggestions fetching to reduce API calls
 
-    return () => {
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-      }
-    };
-  }, [query, fetchSuggestions]); // Removed handleFilterUpdate dependency
+  // Handle clearing search when input becomes empty
+  useEffect(() => {
+    // Only clear search filters when input is completely empty
+    if (query === "" && filters?.search && filters.search !== "") {
+      console.log("[SearchBar] Input cleared, clearing search filters");
+      handleFilterUpdate("");
+    }
+  }, [query, filters?.search, handleFilterUpdate]);
 
   // Autosuggest configuration
   const getSuggestionValue = (suggestion) => suggestion.title;
@@ -256,9 +269,11 @@ export default function SearchBar({ type = "all", filters, onFilterChange, activ
     setSuggestions([]);
   };
 
-  const handleKeyPress = (e) => {
+  const handleKeyDown = (e) => {
     if (e.key === "Enter") {
       e.preventDefault(); // Prevent form submission
+      console.log("[SearchBar] Enter key pressed, triggering immediate search:", query);
+      
       if (debounceTimer.current) {
         clearTimeout(debounceTimer.current);
       }
@@ -266,10 +281,15 @@ export default function SearchBar({ type = "all", filters, onFilterChange, activ
       // Clear suggestions
       setSuggestions([]);
       
-      // Only update filters/search when user presses Enter
+      // Only search when user presses Enter
       if (query.trim()) {
+        console.log("[SearchBar] Enter pressed - executing search for:", query.trim());
+        // Clear suggestions since we're executing the search
+        setSuggestions([]);
         handleFilterUpdate(query.trim());
       } else {
+        console.log("[SearchBar] Enter pressed - clearing search");
+        setSuggestions([]);
         handleFilterUpdate("");
       }
     }
@@ -283,12 +303,12 @@ export default function SearchBar({ type = "all", filters, onFilterChange, activ
   };
 
   const inputProps = {
-    placeholder: `Search ${activeTab === 'jobs' ? 'job posts' : 'services'} by title...`,
+    placeholder: `Search ${activeTab === 'jobs' ? 'job posts' : 'services'} by title... (Press Enter)`,
     value: query,
     onChange: (e, { newValue }) => {
       setQuery(newValue);
     },
-    onKeyPress: handleKeyPress,
+    onKeyDown: handleKeyDown,
     className: "react-autosuggest__input",
   };
 

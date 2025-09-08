@@ -373,8 +373,8 @@ const initialState = {
   loading: false,
   error: null,
   filters: {
-    category: "",
-    section: "",
+    category: "", // Empty string represents "All Categories"
+    section: "services", // Default to services section
     search: "",
     priceRange: "",
     location: "",
