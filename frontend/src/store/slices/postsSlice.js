@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { availabilityPostsAPI, jobPostsAPI } from '../api/marketplaceAPI';
+import { availabilityPostsAPI, jobPostsAPI, getAllJobPosts, getAllAvailabilityPosts } from '../api/marketplaceAPI';
 
 
 // so each thunk does not manually check for different response shapes
@@ -27,7 +27,7 @@ export const fetchAvailabilityPosts = createAsyncThunk(
     console.log('[fetchAvailabilityPosts] Original params:', otherParams);
     console.log('[fetchAvailabilityPosts] Cleaned params:', cleanParams);
     
-    const response = await availabilityPostsAPI.getAll({
+    const response = await getAllAvailabilityPosts({
       page,
       limit,
       isActive: true,
@@ -132,7 +132,7 @@ export const fetchJobPosts = createAsyncThunk(
     console.log('[fetchJobPosts] Original params:', otherParams);
     console.log('[fetchJobPosts] Cleaned params:', cleanParams);
     
-    const response = await jobPostsAPI.getAll({ 
+    const response = await getAllJobPosts({ 
       page,
       limit, 
       isActive: true, 

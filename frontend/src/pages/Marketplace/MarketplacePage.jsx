@@ -8,6 +8,7 @@ import LazyPostCard from "../../components/marketplace/LazyPostCard.jsx";
 import SearchBar from "../../components/marketplace/SearchBar";
 // import SEO from "../../components/seo/SEO";
 import PageSkeleton from "../../components/ui/PageSkeleton";
+import Pagination from "../../components/ui/Pagination";
 import SearchSkeleton from "../../components/ui/SearchSkeleton";
 import { useAppDispatch, useAppSelector } from "../../hooks/useRedux.js";
 
@@ -88,12 +89,18 @@ const MarketplacePage = () => {
 
   // Enhanced groupedPosts calculation with better error handling
   const groupedPosts = useMemo(() => {
+    // Skip grouping if filtering by specific category (will show flat list instead)
+    if (filters.category && filters.category.trim() !== '') {
+      console.log("📊 Filtering by category, skipping grouping:", filters.category);
+      return {};
+    }
+    
     if (!Array.isArray(postsToDisplay) || postsToDisplay.length === 0) {
       console.log("📊 No posts to display, returning empty grouped object");
       return {};
     }
     
-    console.log("📊 Grouping posts:", {
+    console.log("📊 Grouping posts for overview mode:", {
       totalPosts: postsToDisplay.length,
       samplePosts: postsToDisplay.slice(0, 2).map(post => ({
         id: post.id || post.jobId,
@@ -104,7 +111,7 @@ const MarketplacePage = () => {
     
     const grouped = {};
     const categoryCounts = {};
-    const MAX_POSTS_PER_CATEGORY = 6;
+    const MAX_POSTS_PER_CATEGORY = 6; // Always limit to 6 in overview mode
     
     // First pass: count all posts per category
     postsToDisplay.forEach(post => {
@@ -114,7 +121,7 @@ const MarketplacePage = () => {
     
     console.log("📊 Category counts:", categoryCounts);
     
-    // Second pass: add posts with limit of 6 per category
+    // Second pass: add posts with limit of 6 per category for overview
     postsToDisplay.forEach(post => {
       const categoryName = post.category?.name || post.category || 'Uncategorized';
       if (!grouped[categoryName]) {
@@ -140,51 +147,18 @@ const MarketplacePage = () => {
     return grouped;
   }, [postsToDisplay]);
 
-  // Handle "See All" for category with enhanced category resolution
+  // Handle "See All" for category - filter on same page instead of navigating
   const handleSeeAllCategory = (categoryName) => {
-    const categoryData = groupedPosts[categoryName];
-    const categoryId = categoryData?.categoryId;
+    console.log("🔍 See All clicked for category:", categoryName);
     
-    // Try to find the category ID from the loaded categories if not available from posts
-    let resolvedCategoryId = categoryId;
-    if (!resolvedCategoryId && categories.length > 0) {
-      const foundCategory = categories.find(cat => {
-        const catName = cat.name || cat.title || '';
-        return catName.toLowerCase() === categoryName.toLowerCase() ||
-               catName.toLowerCase().replace(/\s+/g, '-') === categoryName.toLowerCase().replace(/\s+/g, '-');
-      });
-      resolvedCategoryId = foundCategory?.categoryId || foundCategory?.id || foundCategory?._id;
-    }
+    // Apply the category filter on the same page
+    const newFilters = { ...filters, category: categoryName };
+    handleFilterChange(newFilters);
     
-    // Create URL with category ID as query parameter for better matching
-    const urlSlug = categoryName.toLowerCase().replace(/\s+/g, '-');
-    const baseUrl = `/marketplace/category/${urlSlug}`;
-    const params = new URLSearchParams();
-    params.set('type', activeTab === 'availability' ? 'services' : 'jobs');
-    
-    // Only add category ID if it's valid and not undefined
-    if (resolvedCategoryId && resolvedCategoryId !== 'undefined' && resolvedCategoryId !== 'null') {
-      params.set('categoryId', resolvedCategoryId);
-    }
-    
-    const targetUrl = `${baseUrl}?${params.toString()}`;
-    
-    console.log("🔍 [DEBUG] See All clicked with enhanced resolution:", {
+    console.log("🔍 Filtering to show all posts in category:", {
       categoryName,
-      categoryId,
-      resolvedCategoryId,
-      activeTab,
-      targetUrl,
-      urlSlug,
-      categoryData: {
-        postsCount: categoryData?.posts?.length,
-        totalCount: categoryData?.totalCount,
-        categoryObject: categoryData?.categoryObject
-      },
-      availableCategories: categories.map(cat => ({ id: cat.id || cat._id, name: cat.name }))
+      newFilters
     });
-    
-    navigate(targetUrl);
   };
 
   // Determine current posts and loading state based on active tab
@@ -230,6 +204,22 @@ const MarketplacePage = () => {
     };
   }, [dispatch]); // Include dispatch in dependency array
 
+  // Ensure "All Categories" is default when no URL params present
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const hasParams = params.toString() !== '';
+    
+    // If no URL params exist, ensure we're showing all categories (empty filter)
+    if (!hasParams && filters.category !== '') {
+      console.log("🏠 MarketplacePage - No URL params detected, setting to show All Categories");
+      dispatch(setFilters({ 
+        ...filters, 
+        category: '', // Empty string represents "All Categories"
+        section: 'services' // Default to services section
+      }));
+    }
+  }, [location.search, filters.category, dispatch]);
+
   // Check URL params for category filtering, post type, and pagination
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -241,22 +231,77 @@ const MarketplacePage = () => {
     const sortBy = params.get("sortBy"); // Extract sort parameter
     const minPrice = params.get("minPrice"); // Extract min price parameter
     const maxPrice = params.get("maxPrice"); // Extract max price parameter
+    const skills = params.get("skills"); // Extract skills parameter
+    const location_param = params.get("location"); // Extract location parameter
+    const availabilityType = params.get("availabilityType"); // Extract availability type parameter
     const page = parseInt(params.get("page")) || 1; // Extract page parameter
 
     const newFilters = { ...filters };
-    if (category) newFilters.category = category;
-    // Only set categoryId if it exists and is not 'undefined' string
+    
+    // Handle category filter
+    if (category) {
+      newFilters.category = category;
+    }
+    
+    // Handle categoryId filter
     if (categoryId && categoryId !== 'undefined' && categoryId !== 'null') {
       newFilters.categoryId = categoryId;
     } else {
       // Remove categoryId from filters if it's invalid
       delete newFilters.categoryId;
     }
-    if (section) newFilters.section = section;
-    if (searchTerm) newFilters.search = searchTerm; // Set search filter
-    if (sortBy) newFilters.sortBy = sortBy; // Set sort filter
-    if (minPrice) newFilters.minPrice = minPrice; // Set min price filter
-    if (maxPrice) newFilters.maxPrice = maxPrice; // Set max price filter
+    
+    // Handle section filter
+    if (section) {
+      newFilters.section = section;
+    }
+    
+    // Handle search filter - clear it if not present in URL
+    if (searchTerm) {
+      newFilters.search = searchTerm;
+    } else {
+      newFilters.search = ''; // Clear search if no search parameter in URL
+    }
+    
+    // Handle other filters - clear them if not present in URL
+    if (sortBy) {
+      newFilters.sortBy = sortBy;
+    } else {
+      newFilters.sortBy = 'newest'; // Reset to default if not in URL
+    }
+    
+    if (minPrice) {
+      newFilters.minPrice = minPrice;
+    } else {
+      delete newFilters.minPrice; // Remove if not in URL
+    }
+    
+    if (maxPrice) {
+      newFilters.maxPrice = maxPrice;
+    } else {
+      delete newFilters.maxPrice; // Remove if not in URL
+    }
+
+    // Handle skills filter
+    if (skills && skills.trim() !== '') {
+      newFilters.skills = skills;
+    } else {
+      delete newFilters.skills; // Remove if not in URL
+    }
+
+    // Handle location filter
+    if (location_param && location_param.trim() !== '') {
+      newFilters.location = location_param;
+    } else {
+      delete newFilters.location; // Remove if not in URL
+    }
+
+    // Handle availability type filter (for services)
+    if (availabilityType && availabilityType.trim() !== '') {
+      newFilters.availabilityType = availabilityType;
+    } else {
+      delete newFilters.availabilityType; // Remove if not in URL
+    }
 
     console.log("[MarketplacePage] URL params parsed:", {
       category,
@@ -267,6 +312,9 @@ const MarketplacePage = () => {
       sortBy,
       minPrice,
       maxPrice,
+      skills,
+      location_param,
+      availabilityType,
       page,
       newFilters
     });
@@ -296,6 +344,13 @@ const MarketplacePage = () => {
     }
 
     dispatch(setFilters(newFilters));
+    
+    // If we have a search term from URL, just set the loading state
+    // The main posts fetch effect will handle the actual fetching
+    if (searchTerm && searchTerm.trim()) {
+      console.log("[MarketplacePage] Search term detected from URL:", searchTerm);
+      setIsSearching(true); // Main fetch effect will handle the actual fetch
+    }
   }, [location.search, dispatch]);
 
   // Memoize filters to prevent unnecessary re-renders
@@ -306,11 +361,22 @@ const MarketplacePage = () => {
     filters.sortBy,
     filters.minPrice,
     filters.maxPrice,
-    filters.section
+    filters.section,
+    filters.skills,
+    filters.location,
+    filters.availabilityType
   ]);
 
   // Fetch posts when activeTab, filters, or pagination changes
   useEffect(() => {
+    console.log("[MarketplacePage] Posts fetch effect triggered:", {
+      activeTab,
+      memoizedFilters,
+      currentPage: currentPagination.currentPage,
+      limit: currentPagination.limit,
+      filtersSearch: filters.search
+    });
+    
     setIsSearching(true);
     const page = currentPagination.currentPage;
     const limit = currentPagination.limit;
@@ -318,11 +384,27 @@ const MarketplacePage = () => {
     if (activeTab === 'availability') {
       console.log("Fetching availability posts with filters:", memoizedFilters, "page:", page, "limit:", limit)
       dispatch(fetchAvailabilityPosts({ ...memoizedFilters, page, limit }))
-        .finally(() => setIsSearching(false));
+        .then((result) => {
+          console.log("[MarketplacePage] Availability posts fetch completed:", result);
+        })
+        .catch((error) => {
+          console.error("[MarketplacePage] Availability posts fetch error:", error);
+        })
+        .finally(() => {
+          setIsSearching(false);
+        });
     } else if (activeTab === 'jobs') {
       console.log("Fetching job posts with filters:", memoizedFilters, "page:", page, "limit:", limit)
       dispatch(fetchJobPosts({ ...memoizedFilters, page, limit }))
-        .finally(() => setIsSearching(false));
+        .then((result) => {
+          console.log("[MarketplacePage] Job posts fetch completed:", result);
+        })
+        .catch((error) => {
+          console.error("[MarketplacePage] Job posts fetch error:", error);
+        })
+        .finally(() => {
+          setIsSearching(false);
+        });
     }
   }, [activeTab, memoizedFilters, currentPagination.currentPage, currentPagination.limit, dispatch]);
 
@@ -453,46 +535,39 @@ const MarketplacePage = () => {
 
   const createButtonInfo = getCreateButtonInfo();
 
-  // Handle category change specifically - navigate to category page like "See All"
+  // Handle category change - filter on the same page instead of navigating
   const handleCategoryChange = useCallback((categoryValue) => {
     console.log("📂 Category changed to:", categoryValue);
     
-    if (categoryValue) {
-      // Find the category to get its ID
-      const selectedCategory = categories.find(cat => 
-        (cat.name || cat.title) === categoryValue
-      );
-      
-      if (selectedCategory) {
-        const categoryId = selectedCategory.id || selectedCategory._id;
-        const urlCategoryName = categoryValue.replace(/\s+/g, '').toLowerCase();
-        
-        console.log("🔗 Navigating to category page:", {
-          categoryValue,
-          urlCategoryName,
-          categoryId
-        });
-        
-        // Navigate to category page like "See All" does
-        // Only include categoryId in URL if it's valid
-        if (categoryId && categoryId !== 'undefined' && categoryId !== 'null') {
-          navigate(`/marketplace/category/${urlCategoryName}?categoryId=${categoryId}`);
-        } else {
-          // Navigate without categoryId if it's not valid
-          console.warn("Category ID is undefined, navigating without categoryId parameter");
-          navigate(`/marketplace/category/${urlCategoryName}`);
-        }
-      }
-    } else {
-      // If "All Categories" selected, just update the current filter
-      handleFilterChange({ ...filters, category: "" });
-      
-      // Update URL
-      const params = new URLSearchParams(location.search);
-      params.delete("category");
-      navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+    // Update the filter state with the selected category
+    const newFilters = { ...filters, category: categoryValue };
+    
+    // Use the existing handleFilterChange to update filters and URL
+    handleFilterChange(newFilters);
+    
+    console.log("🔗 Filtering by category on same page:", {
+      categoryValue,
+      newFilters
+    });
+  }, [filters, handleFilterChange]);
+
+  // Handle page change for pagination
+  const handlePageChange = useCallback((page) => {
+    console.log("📄 Page changed to:", page);
+    
+    // Update URL with new page parameter
+    const params = new URLSearchParams(location.search);
+    params.set('page', page.toString());
+    
+    // Update URL without triggering a page reload
+    navigate(`?${params.toString()}`, { replace: true });
+    
+    // Scroll to top of results
+    const resultsSection = document.getElementById('marketplace-results');
+    if (resultsSection) {
+      resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-  }, [filters, categories, handleFilterChange, location.search, navigate]);
+  }, [location.search, navigate]);
 
   if (currentLoading) {
     return <PageSkeleton />;
@@ -665,12 +740,52 @@ const MarketplacePage = () => {
                 : "Freelancing Opportunities"}
             </h2>
             {!isSearching && (
-              <p className="text-gray-400 text-sm mt-1">
-                {currentPagination.totalCount > 0 
-                  ? `${currentPagination.totalCount} ${currentPagination.totalCount === 1 ? 'result' : 'results'} found`
-                  : `${currentPosts.length} ${currentPosts.length === 1 ? 'result' : 'results'} found`
-                }
-              </p>
+              <div className="flex flex-col gap-1">
+                <p className="text-gray-400 text-sm">
+                  {currentPagination.totalCount > 0 
+                    ? `${currentPagination.totalCount} ${currentPagination.totalCount === 1 ? 'result' : 'results'} found`
+                    : `${currentPosts.length} ${currentPosts.length === 1 ? 'result' : 'results'} found`
+                  }
+                </p>
+                {/* Show active filters */}
+                {(filters.search || filters.category || filters.sortBy !== 'newest') && (
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {filters.search && (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#A95BAB]/20 text-[#A95BAB] text-xs rounded-full">
+                        Search: "{filters.search}"
+                        <button
+                          onClick={() => handleFilterChange({ search: '' })}
+                          className="hover:text-[#A95BAB]/80"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    )}
+                    {filters.category && (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full">
+                        Category: {filters.category}
+                        <button
+                          onClick={() => handleFilterChange({ category: '' })}
+                          className="hover:text-blue-300"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    )}
+                    {filters.sortBy !== 'newest' && (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full">
+                        Sort: {filters.sortBy}
+                        <button
+                          onClick={() => handleFilterChange({ sortBy: 'newest' })}
+                          className="hover:text-green-300"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
@@ -689,45 +804,122 @@ const MarketplacePage = () => {
         </div>
 
         {/* Loading State for Search */}
-        {isSearching && <SearchSkeleton />}
+        {isSearching && (
+          <div className="text-center py-16">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-[#A95BAB]/20 rounded-full mb-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#A95BAB]"></div>
+            </div>
+            <h3 className="text-xl font-semibold text-white mb-2">Searching...</h3>
+            <p className="text-gray-400">
+              {filters.search ? `Looking for "${filters.search}"` : 'Finding the best results for you'}
+            </p>
+          </div>
+        )}
+
+        {/* Error State */}
+        {currentError && (
+          <div className="text-center py-16">
+            <div className="text-6xl mb-4">⚠️</div>
+            <h3 className="text-2xl font-bold mb-2 text-white">
+              Something went wrong
+            </h3>
+            <p className="text-gray-400 mb-6">
+              {currentError.message || "Failed to load posts. Please try again."}
+            </p>
+            <button
+              onClick={() => {
+                dispatch(clearPostsError());
+                dispatch(clearError());
+                // Retry loading posts
+                window.location.reload();
+              }}
+              className="px-6 py-2 bg-[#A95BAB] hover:bg-[#A95BAB]/80 text-white rounded-lg transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        )}
 
         {/* Posts Grid */}
-        {!isSearching && (
+        {!isSearching && !currentError && (
           <>
             {!Array.isArray(postsToDisplay) || postsToDisplay.length === 0 ? (
               <div className="text-center py-16">
                 <div className="text-6xl mb-4">🎨</div>
                 <h3 className="text-2xl font-bold mb-2 text-white">
-                  No posts found
+                  {filters.search ? `No results found for "${filters.search}"` : "No posts found"}
                 </h3>
-                <p className="text-gray-400">
-                  Try adjusting your filters or check back later for new opportunities.
+                <p className="text-gray-400 mb-6">
+                  {filters.search 
+                    ? "Try searching with different keywords or browse all categories below."
+                    : "Try adjusting your filters or check back later for new opportunities."
+                  }
                 </p>
+                
+                {/* Clear search / Show helpful actions */}
+                {filters.search ? (
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+                    <button
+                      onClick={() => handleFilterChange({ search: '' })}
+                      className="px-6 py-2 bg-[#A95BAB] hover:bg-[#A95BAB]/80 text-white rounded-lg transition-colors"
+                    >
+                      Clear Search
+                    </button>
+                    <button
+                      onClick={() => handleFilterChange({ category: '', search: '' })}
+                      className="px-6 py-2 border border-gray-600 hover:border-gray-500 text-gray-300 hover:text-white rounded-lg transition-colors"
+                    >
+                      Browse All Posts
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex justify-center">
+                    <button
+                      onClick={() => handleFilterChange({ category: '', search: '', sortBy: 'newest' })}
+                      className="px-6 py-2 bg-[#A95BAB] hover:bg-[#A95BAB]/80 text-white rounded-lg transition-colors"
+                    >
+                      Reset All Filters
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="space-y-12">
-                {/* Group posts by category */}
-                {Object.entries(groupedPosts).map(([categoryName, categoryData]) => (
-                  <div key={categoryName} className="space-y-6">
-                    {/* Category Header */}
+                {/* Check if filtering by specific category */}
+                {filters.category && filters.category.trim() !== '' ? (
+                  /* Category-specific view: Show all posts in flat grid with pagination */
+                  <div className="space-y-6">
                     <div className="flex items-center justify-between">
-                      <h2 className="text-2xl font-bold text-white">{categoryName}</h2>
-                      {categoryData.totalCount > categoryData.posts.length && (
-                        <button
-                          onClick={() => handleSeeAllCategory(categoryName)}
-                          className="text-[#A95BAB] hover:text-[#A95BAB]/80 font-medium transition-colors flex items-center gap-2"
-                        >
-                          See All ({categoryData.totalCount})
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                        </button>
-                      )}
+                      <div>
+                        <h2 className="text-2xl font-bold text-white">
+                          {filters.category}
+                        </h2>
+                        <p className="text-gray-400 text-sm mt-1">
+                          {currentPagination.totalCount > 0 
+                            ? `${currentPagination.totalCount} ${currentPagination.totalCount === 1 ? 'result' : 'results'} found`
+                            : `${postsToDisplay.length} ${postsToDisplay.length === 1 ? 'result' : 'results'} found`
+                          }
+                          {currentPagination.totalPages > 1 && (
+                            <span className="ml-2">
+                              • Page {currentPagination.currentPage} of {currentPagination.totalPages}
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleFilterChange({ category: '' })}
+                        className="text-gray-400 hover:text-white transition-colors flex items-center gap-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                        Back to All Categories
+                      </button>
                     </div>
-
-                    {/* Posts Grid for this category */}
+                    
+                    {/* All posts in flat grid for the selected category (6 posts per page with pagination) */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-                      {categoryData.posts.map((post, index) => (
+                      {postsToDisplay.map((post, index) => (
                         <LazyPostCard 
                           key={post.jobId || post.id || post.postId || index}
                           post={post}
@@ -735,17 +927,65 @@ const MarketplacePage = () => {
                         />
                       ))}
                     </div>
-                  </div>
-                ))}
 
-                {/* Show message if any category has more posts than displayed */}
-                {Object.values(groupedPosts).some(categoryData => 
-                  categoryData.totalCount > categoryData.posts.length
-                ) && (
-                  <div className="text-center py-8">
-                    <p className="text-gray-400">
-                      Some categories show only the first 6 posts. Click "See All" to view more.
-                    </p>
+                    {/* Pagination for Category-Specific View */}
+                    {currentPagination.totalPages > 1 && (
+                      <div className="flex justify-center py-8" id="marketplace-results">
+                        <Pagination
+                          currentPage={currentPagination.currentPage}
+                          totalPages={currentPagination.totalPages}
+                          onPageChange={handlePageChange}
+                          className="mt-4"
+                        />
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* Overview mode: Group posts by category with "See All" buttons */
+                  Object.entries(groupedPosts).map(([categoryName, categoryData]) => (
+                    <div key={categoryName} className="space-y-6">
+                      {/* Category Header */}
+                      <div className="flex items-center justify-between">
+                        <h2 className="text-2xl font-bold text-white">{categoryName}</h2>
+                        {/* Only show "See All" button when in overview mode and there are more posts */}
+                        {categoryData.totalCount > categoryData.posts.length && (
+                          <button
+                            onClick={() => handleSeeAllCategory(categoryName)}
+                            className="text-[#A95BAB] hover:text-[#A95BAB]/80 font-medium transition-colors flex items-center gap-2"
+                          >
+                            See All ({categoryData.totalCount})
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Posts Grid for this category */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+                        {categoryData.posts.map((post, index) => (
+                          <LazyPostCard 
+                            key={post.jobId || post.id || post.postId || index}
+                            post={post}
+                            index={index}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                )}
+
+
+
+                {/* Pagination */}
+                {currentPagination.totalPages > 1 && (
+                  <div className="flex justify-center py-8" id="marketplace-results">
+                    <Pagination
+                      currentPage={currentPagination.currentPage}
+                      totalPages={currentPagination.totalPages}
+                      onPageChange={handlePageChange}
+                      className="mt-4"
+                    />
                   </div>
                 )}
               </div>

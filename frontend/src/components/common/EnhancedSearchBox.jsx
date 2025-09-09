@@ -115,7 +115,7 @@ export default function EnhancedSearchBox({
   searchType = "all", // "all", "jobs", "services"
   className = ""
 }) {
-  const [suggestions, setSuggestions] = useState([]);
+  const [suggestions, setSuggestions] = useState([]); // No suggestions by default
   const [isLoading, setIsLoading] = useState(false);
   const debounceTimer = useRef(null);
   const styleElement = useRef(null);
@@ -186,22 +186,8 @@ export default function EnhancedSearchBox({
     }
   }, []);
 
-  // Debounced suggestion fetching
-  useEffect(() => {
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
-    }
-
-    debounceTimer.current = setTimeout(() => {
-      fetchSuggestions(value);
-    }, 300);
-
-    return () => {
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-      }
-    };
-  }, [value, fetchSuggestions]);
+  // No auto-fetching - suggestions only on Enter
+  // Removed debounced suggestion fetching to reduce API calls
 
   // Autosuggest configuration
   const getSuggestionValue = (suggestion) => suggestion.title;
@@ -258,6 +244,8 @@ export default function EnhancedSearchBox({
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && onSubmit) {
       e.preventDefault();
+      // Clear suggestions when submitting
+      setSuggestions([]);
       onSubmit();
     }
   };
