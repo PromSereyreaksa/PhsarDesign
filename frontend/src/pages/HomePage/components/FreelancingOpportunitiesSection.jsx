@@ -64,13 +64,13 @@ export default function FreelancingOpportunitiesSection({ customImages, titleRef
         const randomPost = categoryPosts[Math.floor(Math.random() * categoryPosts.length)]
         console.log(`Random post for ${category.name}:`, randomPost)
         
-        if (randomPost.attachments && randomPost.attachments.length > 0) {
+        if (randomPost.attachment && randomPost.attachment.length > 0) {
           // Get first attachment URL
-          const attachments = typeof randomPost.attachments === 'string' 
-            ? JSON.parse(randomPost.attachments) 
-            : randomPost.attachments
-          if (Array.isArray(attachments) && attachments.length > 0) {
-            randomImage = attachments[0].url || attachments[0]
+          const attachment = typeof randomPost.attachment === 'string' 
+            ? JSON.parse(randomPost.attachment) 
+            : randomPost.attachment
+          if (Array.isArray(attachment) && attachment.length > 0) {
+            randomImage = attachment[0].url || attachment[0]
             console.log(`Image found for ${category.name}:`, randomImage)
           }
         }
