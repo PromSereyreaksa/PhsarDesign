@@ -237,13 +237,17 @@ const PublicArtistProfile = () => {
                     </div>
 
                     <div className="flex gap-3">
-                      <Button className="bg-[#A95BAB] hover:bg-[#A95BAB]/80">
+                      <Button 
+                        className="bg-[#A95BAB] hover:bg-[#A95BAB]/80"
+                        onClick={() => alert('Message feature is under development')}
+                      >
                         <MessageSquare className="w-4 h-4 mr-2" />
                         Message
                       </Button>
                       <Button
                         variant="outline"
                         className="border-white/30 text-white hover:bg-white/10 bg-transparent"
+                        onClick={() => alert('Follow feature is under development')}
                       >
                         Follow
                       </Button>
