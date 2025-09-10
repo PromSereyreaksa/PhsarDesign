@@ -55,6 +55,39 @@ const CreateJobPostForm = ({ onSubmit, onCancel, isSubmitting = false }) => {
     }))
   }
 
+  // Numeric input validation handlers
+  const handleNumericKeyDown = (e) => {
+    // Allow: backspace, delete, tab, escape, enter, period for decimals
+    if ([46, 8, 9, 27, 13, 110, 190].indexOf(e.keyCode) !== -1 ||
+        // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+        (e.keyCode === 65 && (e.ctrlKey === true || e.metaKey === true)) ||
+        (e.keyCode === 67 && (e.ctrlKey === true || e.metaKey === true)) ||
+        (e.keyCode === 86 && (e.ctrlKey === true || e.metaKey === true)) ||
+        (e.keyCode === 88 && (e.ctrlKey === true || e.metaKey === true)) ||
+        // Allow: home, end, left, right, down, up
+        (e.keyCode >= 35 && e.keyCode <= 40)) {
+      return
+    }
+    // Ensure that it is a number and stop the keypress
+    if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+      e.preventDefault()
+    }
+  }
+
+  const handleNumericInput = (e) => {
+    const value = e.target.value
+    // Remove any non-numeric characters except decimal point
+    const numericValue = value.replace(/[^0-9.]/g, '')
+    
+    // Ensure only one decimal point
+    const parts = numericValue.split('.')
+    if (parts.length > 2) {
+      e.target.value = parts[0] + '.' + parts.slice(1).join('')
+    } else {
+      e.target.value = numericValue
+    }
+  }
+
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files)
     if (files.length === 0) return
@@ -364,7 +397,7 @@ const CreateJobPostForm = ({ onSubmit, onCancel, isSubmitting = false }) => {
             </label>
             {categoriesLoading ? (
               <div className="flex items-center py-3">
-                <Loader />
+                <Loader size="sm" />
                 <span className="ml-2 text-gray-400">Loading categories...</span>
               </div>
             ) : (
@@ -483,6 +516,8 @@ const CreateJobPostForm = ({ onSubmit, onCancel, isSubmitting = false }) => {
                 name="budget"
                 value={formData.budget}
                 onChange={handleInputChange}
+                onKeyDown={handleNumericKeyDown}
+                onInput={handleNumericInput}
                 placeholder="0"
                 min="0"
                 step="0.01"
@@ -539,10 +574,42 @@ const CreateJobPostForm = ({ onSubmit, onCancel, isSubmitting = false }) => {
           </h3>
           <div className="space-y-4">
             <label htmlFor="attachments" className="cursor-pointer">
-              <div className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-600/50 border-dashed rounded-lg hover:border-[#A95BAB]/50 transition-colors">
-                <Upload className="w-8 h-8 text-gray-400 mb-2" />
-                <p className="text-gray-400 text-sm">Click to upload reference images</p>
-                <p className="text-gray-500 text-xs">PNG, JPG, or JPEG up to 10MB each (max 10 files)</p>
+              <div className="border-2 border-gray-600/50 border-dashed rounded-lg hover:border-[#A95BAB]/50 transition-colors p-6">
+                {!formData.attachments || formData.attachments.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-32">
+                    <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                    <p className="text-gray-400 text-sm">Click to upload reference images</p>
+                    <p className="text-gray-500 text-xs">PNG, JPG, or JPEG up to 10MB each (max 10 files)</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-center py-4 border-b border-gray-600/30">
+                      <Upload className="w-6 h-6 text-gray-400 mr-2" />
+                      <p className="text-gray-400 text-sm">Click to add more images ({formData.attachments.length}/10)</p>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {formData.attachments.map((photo, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={photo.preview}
+                            alt={`Attachment ${index + 1}`}
+                            className="w-full h-24 object-cover rounded-lg border border-gray-600/50"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                          <div className="absolute bottom-1 left-1 bg-black/50 text-white text-xs px-1 rounded">
+                            {photo.file?.name || 'Image'}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </label>
             <input
@@ -557,48 +624,11 @@ const CreateJobPostForm = ({ onSubmit, onCancel, isSubmitting = false }) => {
 
             {uploadingImages && (
               <div className="flex items-center justify-center py-4">
-                <Loader />
+                <Loader size="sm" />
                 <span className="ml-2 text-gray-300">Processing images...</span>
               </div>
             )}
 
-            {formData.attachments && formData.attachments.length > 0 && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {formData.attachments.map((photo, index) => (
-                    <div key={index} className="relative group">
-                      <img
-                        src={photo.url || "/placeholder.svg"}
-                        alt={`Attachment ${index + 1}`}
-                        className="w-full h-24 object-cover rounded-lg border border-gray-600"
-                        onError={(e) => {
-                          console.error("Image failed to load:", photo.url)
-                          e.target.src =
-                            "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIxIDEzVjE5QTIgMiAwIDAgMSAxOSAyMUg1QTIgMiAwIDAgMSAzIDE5VjVBMiAyIDAgMCAxIDUgM0gxM00xNSA5TDIxIDNNMjEgM0gxNk0yMSAzVjgiIHN0cm9rZT0iIzk5OTk4OCIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPC9zdmc+"
-                        }}
-                      />
-                      <div className="absolute bottom-1 left-1 bg-black/70 text-white text-xs px-2 py-1 rounded max-w-full truncate">
-                        {photo.name}
-                      </div>
-                      {photo.uploaded && (
-                        <div className="absolute top-1 left-1 bg-green-500 text-white text-xs px-1 rounded">✓</div>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveImage(index)}
-                        className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                        title="Remove image"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-                <div className="text-sm text-gray-400">
-                  {formData.attachments.length} attachment{formData.attachments.length !== 1 ? "s" : ""} selected
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
@@ -623,12 +653,12 @@ const CreateJobPostForm = ({ onSubmit, onCancel, isSubmitting = false }) => {
           >
             {isSubmitting ? (
               <div className="flex items-center justify-center">
-                <Loader />
+                <Loader size="sm" />
                 <span className="ml-2">Creating Job Post...</span>
               </div>
             ) : uploadingImages ? (
               <div className="flex items-center justify-center">
-                <Loader />
+                <Loader size="sm" />
                 <span className="ml-2">Processing Images...</span>
               </div>
             ) : (

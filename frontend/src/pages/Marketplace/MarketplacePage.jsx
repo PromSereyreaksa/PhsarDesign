@@ -621,11 +621,19 @@ const MarketplacePage = () => {
         </div>      {/* Back Button */}
       <div className="max-w-6xl mx-auto px-6 mb-6">
         <button
-          onClick={() => navigate("/home")}
+          onClick={() => {
+            // If we're currently viewing a specific category, reset to all categories
+            if (filters.category && filters.category.trim() !== '') {
+              handleFilterChange({ category: '' });
+            } else {
+              // If we're already viewing all categories, go back to home
+              navigate("/home");
+            }
+          }}
           className="inline-flex items-center text-gray-300 hover:text-[#A95BAB] transition-colors cursor-pointer"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Home
+          {filters.category && filters.category.trim() !== '' ? 'Back to All Categories' : 'Back to Home'}
         </button>
       </div>
 
@@ -906,15 +914,6 @@ const MarketplacePage = () => {
                           )}
                         </p>
                       </div>
-                      <button
-                        onClick={() => handleFilterChange({ category: '' })}
-                        className="text-gray-400 hover:text-white transition-colors flex items-center gap-2"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
-                        Back to All Categories
-                      </button>
                     </div>
                     
                     {/* All posts in flat grid for the selected category (6 posts per page with pagination) */}

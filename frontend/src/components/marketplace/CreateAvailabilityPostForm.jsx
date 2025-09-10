@@ -101,6 +101,39 @@ const CreateAvailabilityPostForm = ({ onSubmit, onCancel, isSubmitting = false }
     }
   }
 
+  // Numeric input validation handlers
+  const handleNumericKeyDown = (e) => {
+    // Allow: backspace, delete, tab, escape, enter, period for decimals
+    if ([46, 8, 9, 27, 13, 110, 190].indexOf(e.keyCode) !== -1 ||
+        // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+        (e.keyCode === 65 && (e.ctrlKey === true || e.metaKey === true)) ||
+        (e.keyCode === 67 && (e.ctrlKey === true || e.metaKey === true)) ||
+        (e.keyCode === 86 && (e.ctrlKey === true || e.metaKey === true)) ||
+        (e.keyCode === 88 && (e.ctrlKey === true || e.metaKey === true)) ||
+        // Allow: home, end, left, right, down, up
+        (e.keyCode >= 35 && e.keyCode <= 40)) {
+      return
+    }
+    // Ensure that it is a number and stop the keypress
+    if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+      e.preventDefault()
+    }
+  }
+
+  const handleNumericInput = (e) => {
+    const value = e.target.value
+    // Remove any non-numeric characters except decimal point
+    const numericValue = value.replace(/[^0-9.]/g, '')
+    
+    // Ensure only one decimal point
+    const parts = numericValue.split('.')
+    if (parts.length > 2) {
+      e.target.value = parts[0] + '.' + parts.slice(1).join('')
+    } else {
+      e.target.value = numericValue
+    }
+  }
+
   const handleRemoveSkill = (skillToRemove) => {
     setFormData((prev) => ({
       ...prev,
@@ -483,7 +516,7 @@ const handleFormSubmit = async (e) => {
               </label>
               {categoriesLoading ? (
                 <div className="flex items-center py-3">
-                  <Loader />
+                  <Loader size="sm" />
                   <span className="ml-2 text-gray-400">Loading categories...</span>
                 </div>
               ) : (
@@ -516,6 +549,8 @@ const handleFormSubmit = async (e) => {
                 name="budget"
                 value={formData.budget}
                 onChange={handleInputChange}
+                onKeyDown={handleNumericKeyDown}
+                onInput={handleNumericInput}
                 placeholder="e.g., 50"
                 min="0"
                 step="0.01"
@@ -699,7 +734,7 @@ const handleFormSubmit = async (e) => {
             
             {uploadingImages && (
               <div className="flex items-center justify-center py-4">
-                <Loader />
+                <Loader size="sm" />
                 <span className="ml-2 text-gray-300">Processing images...</span>
               </div>
             )}
@@ -777,12 +812,12 @@ const handleFormSubmit = async (e) => {
           >
             {isSubmitting ? (
               <div className="flex items-center justify-center">
-                <Loader />
+                <Loader size="sm" />
                 <span className="ml-2">Creating Availability Post...</span>
               </div>
             ) : uploadingImages ? (
               <div className="flex items-center justify-center">
-                <Loader />
+                <Loader size="sm" />
                 <span className="ml-2">Processing Images...</span>
               </div>
             ) : (

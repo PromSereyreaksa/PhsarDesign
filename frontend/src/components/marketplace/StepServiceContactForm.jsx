@@ -6,7 +6,7 @@ import { Textarea } from "../ui/textarea"
 export function StepServiceContactForm({ currentStep, formData, onInputChange, post }) {
   const [errors, setErrors] = useState({})
 
-  const validateField = (field, value) => {
+  const validateField = (field, value, currentFormData = formData) => {
     const newErrors = { ...errors }
 
     switch (field) {
@@ -55,10 +55,49 @@ export function StepServiceContactForm({ currentStep, formData, onInputChange, p
           if (selectedDate < today) {
             newErrors.proposedDeadline = 'Deadline cannot be in the past'
           } else {
-            delete newErrors.proposedDeadline
+            // Use the current form data for validation
+            const startDateValue = field === 'proposedStartDate' ? value : currentFormData.proposedStartDate
+            if (startDateValue) {
+              const startDate = new Date(startDateValue)
+              if (selectedDate <= startDate) {
+                newErrors.proposedDeadline = 'Deadline must be after the start date'
+              } else {
+                delete newErrors.proposedDeadline
+              }
+            } else {
+              delete newErrors.proposedDeadline
+            }
           }
         } else {
           delete newErrors.proposedDeadline
+        }
+        break
+      }
+
+      case 'proposedStartDate': {
+        if (value) {
+          const selectedDate = new Date(value)
+          const today = new Date()
+          today.setHours(0, 0, 0, 0)
+          
+          if (selectedDate < today) {
+            newErrors.proposedStartDate = 'Start date cannot be in the past'
+          } else {
+            // Use the current form data for validation
+            const deadlineValue = field === 'proposedDeadline' ? value : currentFormData.proposedDeadline
+            if (deadlineValue) {
+              const deadlineDate = new Date(deadlineValue)
+              if (selectedDate >= deadlineDate) {
+                newErrors.proposedStartDate = 'Start date must be before the deadline'
+              } else {
+                delete newErrors.proposedStartDate
+              }
+            } else {
+              delete newErrors.proposedStartDate
+            }
+          }
+        } else {
+          delete newErrors.proposedStartDate
         }
         break
       }
@@ -72,8 +111,53 @@ export function StepServiceContactForm({ currentStep, formData, onInputChange, p
   }
 
   const handleInputChange = (field, value) => {
+    // Update the parent state first
     onInputChange(field, value)
-    validateField(field, value)
+    
+    // Create updated form data for validation
+    const updatedFormData = { ...formData, [field]: value }
+    
+    // Validate the current field
+    validateField(field, value, updatedFormData)
+    
+    // If changing date fields, re-validate the other date field too
+    if (field === 'proposedStartDate' && updatedFormData.proposedDeadline) {
+      validateField('proposedDeadline', updatedFormData.proposedDeadline, updatedFormData)
+    } else if (field === 'proposedDeadline' && updatedFormData.proposedStartDate) {
+      validateField('proposedStartDate', updatedFormData.proposedStartDate, updatedFormData)
+    }
+  }
+
+  // Handle numeric input restrictions
+  const handleNumericKeyDown = (e) => {
+    // Allow: backspace, delete, tab, escape, enter, decimal point
+    if ([8, 9, 27, 13, 46, 110, 190].indexOf(e.keyCode) !== -1 ||
+        // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X, Ctrl+Z
+        (e.keyCode === 65 && e.ctrlKey === true) ||
+        (e.keyCode === 67 && e.ctrlKey === true) ||
+        (e.keyCode === 86 && e.ctrlKey === true) ||
+        (e.keyCode === 88 && e.ctrlKey === true) ||
+        (e.keyCode === 90 && e.ctrlKey === true) ||
+        // Allow: home, end, left, right, down, up
+        (e.keyCode >= 35 && e.keyCode <= 40)) {
+      return
+    }
+    // Ensure that it is a number and stop the keypress
+    if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+      e.preventDefault()
+    }
+  }
+
+  const handleNumericInput = (e) => {
+    // Remove any non-numeric characters except decimal point
+    const value = e.target.value.replace(/[^0-9.]/g, '')
+    // Ensure only one decimal point
+    const parts = value.split('.')
+    if (parts.length > 2) {
+      e.target.value = parts[0] + '.' + parts.slice(1).join('')
+    } else {
+      e.target.value = value
+    }
   }
 
   // Step 1: Service Details, Subject, Project Description
@@ -194,6 +278,8 @@ export function StepServiceContactForm({ currentStep, formData, onInputChange, p
               type="number"
               value={formData.proposedBudget || ''}
               onChange={(e) => handleInputChange('proposedBudget', e.target.value)}
+              onKeyDown={handleNumericKeyDown}
+              onInput={handleNumericInput}
               placeholder="0"
               min="0"
               max="50000"
@@ -212,33 +298,6 @@ export function StepServiceContactForm({ currentStep, formData, onInputChange, p
 
         {/* Timeline Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Deadline */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Deadline (Optional)
-            </label>
-            <div className="relative">
-              <Input
-                type="date"
-                value={formData.proposedDeadline || ''}
-                onChange={(e) => handleInputChange('proposedDeadline', e.target.value)}
-                min={new Date().toISOString().split('T')[0]}
-                className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:top-1/2 [&::-webkit-calendar-picker-indicator]:transform [&::-webkit-calendar-picker-indicator]:-translate-y-1/2 [&::-webkit-calendar-picker-indicator]:w-4 [&::-webkit-calendar-picker-indicator]:h-4 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:z-10"
-                style={{
-                  colorScheme: 'dark',
-                  transform: 'translateX(0)'
-                }}
-              />
-              <Calendar className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none z-0" />
-            </div>
-            {errors.proposedDeadline && (
-              <p className="text-red-400 text-xs mt-1">{errors.proposedDeadline}</p>
-            )}
-            <p className="text-gray-400 text-xs mt-1">
-              When you need this completed
-            </p>
-          </div>
-
           {/* Start Date */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -258,8 +317,38 @@ export function StepServiceContactForm({ currentStep, formData, onInputChange, p
               />
               <Calendar className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none z-0" />
             </div>
+            {errors.proposedStartDate && (
+              <p className="text-red-400 text-xs mt-1">{errors.proposedStartDate}</p>
+            )}
             <p className="text-gray-400 text-xs mt-1">
-              When you'd like to start
+              When you'd like to start this project
+            </p>
+          </div>
+
+          {/* Deadline */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Deadline (Optional)
+            </label>
+            <div className="relative">
+              <Input
+                type="date"
+                value={formData.proposedDeadline || ''}
+                onChange={(e) => handleInputChange('proposedDeadline', e.target.value)}
+                min={formData.proposedStartDate || new Date().toISOString().split('T')[0]}
+                className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:top-1/2 [&::-webkit-calendar-picker-indicator]:transform [&::-webkit-calendar-picker-indicator]:-translate-y-1/2 [&::-webkit-calendar-picker-indicator]:w-4 [&::-webkit-calendar-picker-indicator]:h-4 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:z-10"
+                style={{
+                  colorScheme: 'dark',
+                  transform: 'translateX(0)'
+                }}
+              />
+              <Calendar className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none z-0" />
+            </div>
+            {errors.proposedDeadline && (
+              <p className="text-red-400 text-xs mt-1">{errors.proposedDeadline}</p>
+            )}
+            <p className="text-gray-400 text-xs mt-1">
+              When you need this completed
             </p>
           </div>
         </div>
