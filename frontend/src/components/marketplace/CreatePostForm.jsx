@@ -703,7 +703,7 @@ const handleFormSubmit = async (e) => {
             
             {uploadingImages && (
               <div className="flex items-center justify-center py-4">
-                <Loader />
+                <Loader size="sm" />
                 <span className="ml-2 text-gray-300">Uploading images...</span>
               </div>
             )}
@@ -798,12 +798,12 @@ const handleFormSubmit = async (e) => {
           >
             {isSubmitting ? (
               <div className="flex items-center justify-center">
-                <Loader />
+                <Loader size="sm" />
                 <span className="ml-2">Creating Post...</span>
               </div>
             ) : uploadingImages ? (
               <div className="flex items-center justify-center">
-                <Loader />
+                <Loader size="sm" />
                 <span className="ml-2">Uploading Images...</span>
               </div>
             ) : (

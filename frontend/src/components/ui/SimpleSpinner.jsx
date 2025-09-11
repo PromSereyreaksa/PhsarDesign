@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Loader = ({ size = 'md', className = '' }) => {
+const SimpleSpinner = ({ size = 'md', className = '' }) => {
   const sizeClasses = {
     sm: 'h-4 w-4',
     md: 'h-8 w-8',
@@ -21,4 +21,4 @@ const Loader = ({ size = 'md', className = '' }) => {
   );
 };
 
-export default Loader;
+export default SimpleSpinner;

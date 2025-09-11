@@ -83,6 +83,38 @@ export function ServiceContactForm({
     validateField(field, value)
   }
 
+  // Handle numeric input restrictions
+  const handleNumericKeyDown = (e) => {
+    // Allow: backspace, delete, tab, escape, enter, decimal point
+    if ([8, 9, 27, 13, 46, 110, 190].indexOf(e.keyCode) !== -1 ||
+        // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X, Ctrl+Z
+        (e.keyCode === 65 && e.ctrlKey === true) ||
+        (e.keyCode === 67 && e.ctrlKey === true) ||
+        (e.keyCode === 86 && e.ctrlKey === true) ||
+        (e.keyCode === 88 && e.ctrlKey === true) ||
+        (e.keyCode === 90 && e.ctrlKey === true) ||
+        // Allow: home, end, left, right, down, up
+        (e.keyCode >= 35 && e.keyCode <= 40)) {
+      return
+    }
+    // Ensure that it is a number and stop the keypress
+    if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+      e.preventDefault()
+    }
+  }
+
+  const handleNumericInput = (e) => {
+    // Remove any non-numeric characters except decimal point
+    const value = e.target.value.replace(/[^0-9.]/g, '')
+    // Ensure only one decimal point
+    const parts = value.split('.')
+    if (parts.length > 2) {
+      e.target.value = parts[0] + '.' + parts.slice(1).join('')
+    } else {
+      e.target.value = value
+    }
+  }
+
   const isValid = () => {
     const requiredFields = ['subject', 'message', 'proposedBudget']
     
@@ -167,6 +199,8 @@ export function ServiceContactForm({
             type="number"
             value={formData.proposedBudget || ''}
             onChange={(e) => handleInputChange('proposedBudget', e.target.value)}
+            onKeyDown={handleNumericKeyDown}
+            onInput={handleNumericInput}
             placeholder="0"
             min="0"
             max="50000"
