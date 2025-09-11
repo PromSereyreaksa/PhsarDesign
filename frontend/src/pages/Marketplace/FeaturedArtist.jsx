@@ -210,13 +210,10 @@ const FeaturedArtists = () => {
                   key={artist.id || artist.artistId || index}
                   className="bg-white/5 hover:bg-white/10 rounded-2xl overflow-hidden group cursor-pointer transform hover:scale-105 transition-all duration-500 ease-out"
                   onClick={() => {
-                    const artistId = artist.artistId || artist.id;
-                    const userId = artist.user?.userId || artist.userId;
+                    const slug = artist.user?.slug
                     
-                    if (artistId) {
-                      navigate(`/profile/artist/${artistId}`);
-                    } else if (userId) {
-                      navigate(`/profile/artist/${userId}`);
+                    if (slug) {
+                      navigate(`/${slug}`);
                     } else {
                       console.warn('No valid artist ID found for navigation:', artist);
                     }

@@ -267,13 +267,6 @@ function App() {
           }
         />
 
-        {/* Public profile routes */}
-        <Route path="/artist/:slug" element={
-          <LazyRoute>
-            <PublicArtistProfile />
-          </LazyRoute>
-        } />
-
         {/* Auth routes */}
         <Route path="/forgot-password" element={
           <LazyRoute>
