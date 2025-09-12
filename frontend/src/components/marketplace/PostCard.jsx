@@ -83,12 +83,12 @@ const PostCard = ({ post }) => {
   // Navigate to details page
   const handleViewDetails = (e) => {
     e?.stopPropagation?.()
-    // Use ID-based routing to ensure we can fetch the post reliably
-    const postId = post.postId
-    if (postId) {
-      navigate(`/marketplace/service/${post.slug}`)
-    } else {
+    // Determine if this is a job post based on the data structure
+    const isJobPost = post.jobId || post.client || post.postType === "job"
+    if (isJobPost) {
       navigate(`/marketplace/job/${post.slug}`)
+    } else {
+      navigate(`/marketplace/service/${post.slug}`)
     }
   }
 

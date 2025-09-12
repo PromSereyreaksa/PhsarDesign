@@ -24,7 +24,7 @@ export default function ArtistsSection({ customImages }) {
 
   const getFallbackArtists = () => [
     {
-      name: 'Prom Sereyreaksa',
+      name: 'Alex Thompson',
       role: 'UI/UX Designer',
       bio: 'Passionate about creating beautiful digital experiences',
       color: '#A95BAB'

@@ -125,20 +125,29 @@ const ApplicationsPage = () => {
     
     // Handle different ID field names from backend
     const applicationId = application.id || application.applicationId
+    
+    // State for managing long content
+    const [isExpanded, setIsExpanded] = useState(false)
+    const maxLength = 150 // characters
+    const shouldTruncate = application.message && application.message.length > maxLength
+    
+    const displayMessage = shouldTruncate && !isExpanded 
+      ? `${application.message.substring(0, maxLength)}...` 
+      : application.message
 
     return (
-      <div className="bg-gray-900/60 backdrop-blur-xl border border-gray-700/40 rounded-2xl p-6 space-y-4">
+      <div className="bg-gray-900/60 backdrop-blur-xl border border-gray-700/40 rounded-2xl p-6 space-y-4 overflow-hidden">
         {/* Header */}
         <div className="flex justify-between items-start">
-          <div className="flex-1">
-            <h3 className="text-lg font-semibold text-white mb-2">
+          <div className="flex-1 min-w-0"> {/* min-w-0 to allow text truncation */}
+            <h3 className="text-lg font-semibold text-white mb-2 truncate">
               {application.subject}
             </h3>
             
             <div className="flex items-center space-x-4 text-sm text-gray-400">
-              <div className="flex items-center space-x-2">
-                <User className="w-4 h-4" />
-                <span>
+              <div className="flex items-center space-x-2 min-w-0">
+                <User className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate">
                   {otherUser ? 
                     `${otherUser.firstName} ${otherUser.lastName}` : 
                     'Unknown User'
@@ -146,7 +155,7 @@ const ApplicationsPage = () => {
                 </span>
               </div>
               
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 flex-shrink-0">
                 <Clock className="w-4 h-4" />
                 <span>{formatDate(application.createdAt)}</span>
               </div>
@@ -160,9 +169,19 @@ const ApplicationsPage = () => {
 
         {/* Content */}
         <div className="space-y-3">
-          <p className="text-gray-300 text-sm leading-relaxed">
-            {application.message}
-          </p>
+          <div className="text-gray-300 text-sm leading-relaxed">
+            <p className="whitespace-pre-wrap break-words">
+              {displayMessage}
+            </p>
+            {shouldTruncate && (
+              <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="mt-2 text-[#A95BAB] hover:text-[#A95BAB]/80 text-xs font-medium transition-colors"
+              >
+                {isExpanded ? 'Show less' : 'Show more'}
+              </button>
+            )}
+          </div>
           
           {application.proposedBudget && (
             <div className="text-sm">
