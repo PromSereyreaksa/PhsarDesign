@@ -186,7 +186,7 @@ const PostDetail = ({ post }) => {
           <div className="bg-gray-800/20 backdrop-blur border border-gray-700/50 rounded-2xl p-8 flex items-center justify-center">
             {post.image || post.thumbnail || post.coverImage ? (
               <img
-                src={post.image || post.thumbnail || post.coverImage}
+                src={post.image || post.thumbnail || post.coverImage || post.attachments[0]}
                 alt={post.title || "Post image"}
                 className="w-full h-full object-cover rounded-lg max-h-96"
               />

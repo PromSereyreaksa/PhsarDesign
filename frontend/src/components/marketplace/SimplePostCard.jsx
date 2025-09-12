@@ -6,9 +6,13 @@ const SimplePostCard = ({ post }) => {
   const navigate = useNavigate()
 
   const handleViewDetails = () => {
-    const isPostId = post.postId ? true : false;
-    if (isPostId) navigate(`/marketplace/service/${post.slug}`)
-    else navigate(`/marketplace/job/${post.slug}`)
+    // Determine if this is a job post based on the data structure
+    const isJobPost = post.jobId || post.client || post.postType === "job"
+    if (isJobPost) {
+      navigate(`/marketplace/job/${post.slug}`)
+    } else {
+      navigate(`/marketplace/service/${post.slug}`)
+    }
   }
 
   const formatPrice = (budget) => {

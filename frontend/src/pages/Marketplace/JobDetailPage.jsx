@@ -56,7 +56,17 @@ const JobDetailPage = () => {
 
   // 🔹 Extract all possible image URLs from attachments
   const getImageUrls = (attachments) => {
-    if (!attachments || !Array.isArray(attachments)) return []
+    if (!attachments) return []
+    
+    // Handle single attachment object
+    if (!Array.isArray(attachments)) {
+      const url = typeof attachments === "string" 
+        ? attachments 
+        : attachments?.url || attachments?.src || attachments?.path || attachments?.link
+      return url ? [url] : []
+    }
+    
+    // Handle array of attachments
     return attachments
       .map((att) =>
         typeof att === "string"
@@ -118,6 +128,18 @@ const JobDetailPage = () => {
     ? `${currentPost.client.user.firstName} ${currentPost.client.user.lastName}`
     : currentPost?.client?.organizationName || "Client"
   const avatarUrl = currentPost?.client?.user?.avatarURL 
+
+  // Debug logging
+  console.log('🔍 JobDetailPage rendering with:', {
+    currentPost: currentPost,
+    hasAttachment: !!currentPost.attachment,
+    hasAttachments: !!currentPost.attachments,
+    attachment: currentPost.attachment,
+    attachments: currentPost.attachments,
+    imageUrls: imageUrls,
+    loading: loading,
+    error: error
+  }) 
 
   // 🔹 Related posts (other jobs from same client)
   const relatedPosts =
