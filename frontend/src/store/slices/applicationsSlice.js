@@ -39,6 +39,11 @@ export const acceptApplication = createAsyncThunk(
   'applications/accept',
   async ({ applicationId, postId, convertToProject = true }, { rejectWithValue, dispatch, getState }) => {
     try {
+      if (!applicationId) {
+        console.error('[Applications] Accept failed: applicationId is undefined')
+        return rejectWithValue('Application ID is required')
+      }
+      
       console.log('[Applications] Accepting application:', { applicationId, postId, convertToProject })
       const response = await applicationsAPI.acceptApplication(applicationId)
       console.log('[Applications] Application accepted:', response)
@@ -101,6 +106,11 @@ export const rejectApplication = createAsyncThunk(
   'applications/reject',
   async ({ applicationId, rejectionReason }, { rejectWithValue, dispatch }) => {
     try {
+      if (!applicationId) {
+        console.error('[Applications] Reject failed: applicationId is undefined')
+        return rejectWithValue('Application ID is required')
+      }
+      
       console.log('[Applications] Rejecting application:', applicationId)
       const response = await applicationsAPI.rejectApplication(applicationId, rejectionReason)
       console.log('[Applications] Application rejected:', response)

@@ -15,19 +15,42 @@ const ApplicationCard = ({ application, onStatusUpdate, userType }) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
+  // Debug log the application structure
+  console.log('[ApplicationCard] Received application:', application);
+
+  // Get application ID with fallback
+  const getApplicationId = () => {
+    const appId = application?.applicationId || application?.id;
+    console.log('[ApplicationCard] Application ID check:', {
+      applicationId: application?.applicationId,
+      id: application?.id,
+      finalAppId: appId
+    });
+    if (!appId) {
+      console.error('[ApplicationCard] Application ID is missing:', application);
+    }
+    return appId;
+  };
+
   const handleAccept = async () => {
+    const appId = getApplicationId();
+    if (!appId) {
+      alert('Application ID is missing. Cannot accept application.');
+      return;
+    }
+
     try {
       setLoading(true);
 
       // First update application status to accepted
       await dispatch(updateApplicationStatus({
-        applicationId: application.applicationId,
+        applicationId: appId,
         status: 'accepted'
       })).unwrap();
 
       // Then convert to project
       await dispatch(convertApplicationToProject({
-        applicationId: application.applicationId
+        applicationId: appId
       })).unwrap();
 
       // Navigate to projects page
@@ -35,7 +58,7 @@ const ApplicationCard = ({ application, onStatusUpdate, userType }) => {
       
       // Update parent component if callback provided
       if (onStatusUpdate) {
-        onStatusUpdate(application.applicationId, 'accepted');
+        onStatusUpdate(appId, 'accepted');
       }
 
     } catch (error) {
@@ -48,16 +71,22 @@ const ApplicationCard = ({ application, onStatusUpdate, userType }) => {
   };
 
   const handleReject = async () => {
+    const appId = getApplicationId();
+    if (!appId) {
+      alert('Application ID is missing. Cannot reject application.');
+      return;
+    }
+
     try {
       setLoading(true);
       
       await dispatch(updateApplicationStatus({
-        applicationId: application.applicationId,
+        applicationId: appId,
         status: 'rejected'
       })).unwrap();
 
       if (onStatusUpdate) {
-        onStatusUpdate(application.applicationId, 'rejected');
+        onStatusUpdate(appId, 'rejected');
       }
 
     } catch (error) {
@@ -69,7 +98,12 @@ const ApplicationCard = ({ application, onStatusUpdate, userType }) => {
   };
 
   const handleViewDetails = () => {
-    navigate(`/dashboard/applications/${application.applicationId}`);
+    const appId = getApplicationId();
+    if (!appId) {
+      alert('Application ID is missing. Cannot view details.');
+      return;
+    }
+    navigate(`/dashboard/applications/${appId}`);
   };
 
   const getStatusColor = (status) => {

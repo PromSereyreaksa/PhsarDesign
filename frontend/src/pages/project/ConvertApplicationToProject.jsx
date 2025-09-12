@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { 
   Card, 
@@ -52,10 +52,20 @@ const ConvertApplicationToProject = ({
   useEffect(() => {
     if (applicationId) {
       fetchApplicationDetails();
+    } else {
+      console.error('ConvertApplicationToProject: applicationId is undefined');
+      setError('Application ID is required');
+      setLoading(false);
     }
-  }, [applicationId]);
+  }, [applicationId, fetchApplicationDetails]);
 
-  const fetchApplicationDetails = async () => {
+  const fetchApplicationDetails = useCallback(async () => {
+    if (!applicationId) {
+      setError('Application ID is required');
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -77,9 +87,15 @@ const ConvertApplicationToProject = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [applicationId, onError]);
 
   const handleConvertToProject = async () => {
+    if (!applicationId) {
+      console.error('Cannot convert application: applicationId is undefined');
+      toast.error('Application ID is missing. Cannot convert to project.');
+      return;
+    }
+
     try {
       setConverting(true);
       setError(null);

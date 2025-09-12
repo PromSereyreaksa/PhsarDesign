@@ -3,7 +3,10 @@ import api from '../lib/api';
 export const projectsAPI = {
   // Convert application to project
   convertApplicationToProject: async (applicationId, projectData) => {
-    const response = await api.post(`/applications/${applicationId}/convert-to-project`, projectData);
+    if (!applicationId) {
+      throw new Error('Application ID is required');
+    }
+    const response = await api.post(`/api/applications/${applicationId}/convert-to-project`, projectData);
     return response;
   },
 

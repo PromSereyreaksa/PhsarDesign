@@ -55,11 +55,20 @@ const ApplicationsPage = () => {
 
   const handleAcceptApplication = async (applicationId) => {
     try {
-      await dispatch(acceptApplication(applicationId)).unwrap()
+      console.log('[ApplicationsPage] Accepting application with ID:', applicationId);
+      if (!applicationId) {
+        throw new Error('Application ID is required');
+      }
+      
+      await dispatch(acceptApplication({ 
+        applicationId,
+        convertToProject: true 
+      })).unwrap()
       showToast('Application accepted and converted to project successfully!', 'success')
       // Refresh notifications
       dispatch(fetchNotifications())
     } catch (error) {
+      console.error('[ApplicationsPage] Accept application error:', error);
       showToast(error || 'Failed to accept application', 'error')
     }
   }

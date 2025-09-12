@@ -6,10 +6,15 @@ export const convertApplicationToProject = createAsyncThunk(
   'projects/convertApplicationToProject',
   async ({ applicationId, projectData }, { rejectWithValue }) => {
     try {
+      if (!applicationId) {
+        console.error('convertApplicationToProject: applicationId is undefined');
+        return rejectWithValue('Application ID is required');
+      }
       const response = await projectsAPI.convertApplicationToProject(applicationId, projectData);
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || 'Failed to convert application to project');
+      console.error('convertApplicationToProject error:', error);
+      return rejectWithValue(error.response?.data || error.message || 'Failed to convert application to project');
     }
   }
 );

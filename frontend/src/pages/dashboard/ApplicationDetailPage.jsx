@@ -67,13 +67,23 @@ const ApplicationDetailPage = () => {
   const handleAcceptApplication = async () => {
     try {
       const appId = application.applicationId || application.id
-      await dispatch(acceptApplication(appId)).unwrap()
+      console.log('[ApplicationDetailPage] Accepting application with ID:', appId);
+      
+      if (!appId) {
+        throw new Error('Application ID is required');
+      }
+      
+      await dispatch(acceptApplication({ 
+        applicationId: appId,
+        convertToProject: true 
+      })).unwrap()
       showToast('Application accepted and converted to project successfully!', 'success')
       // Refresh notifications
       dispatch(fetchNotifications())
       // Navigate back to applications page
       navigate('/dashboard/applications')
     } catch (error) {
+      console.error('[ApplicationDetailPage] Accept application error:', error);
       showToast(error || 'Failed to accept application', 'error')
     }
   }
@@ -693,10 +703,10 @@ const ApplicationDetailPage = () => {
                             Skills
                           </p>
                           <p className="text-gray-300 text-sm">
-                            {Array.isArray(application.artist?.skills || otherUser?.artist?.skills || application.receiver?.artist?.skills) 
-                              ? (application.artist?.skills || otherUser?.artist?.skills || application.receiver?.artist?.skills).join(', ')
-                              : (application.artist?.skills || otherUser?.artist?.skills || application.receiver?.artist?.skills)
-                            }
+                            {(() => {
+                              const skills = application.artist?.skills || otherUser?.artist?.skills || application.receiver?.artist?.skills;
+                              return Array.isArray(skills) ? skills.join(', ') : (skills || 'Not specified');
+                            })()}
                           </p>
                         </div>
                       )}
