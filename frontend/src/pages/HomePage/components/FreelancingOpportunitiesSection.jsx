@@ -30,7 +30,52 @@ export default function FreelancingOpportunitiesSection({ customImages, titleRef
     // Fetch more posts to ensure we have posts from different categories
     dispatch(fetchJobPosts({ limit: 50, isActive: true }))
     dispatch(fetchCategories())
+    
+    // Run attachment parsing tests in development
+    const testCases = [
+      { attachment: "https://example.com/image.jpg", expected: ["https://example.com/image.jpg"] },
+      { attachment: [{ url: "https://example.com/image2.jpg" }], expected: ["https://example.com/image2.jpg"] },
+      { attachment: '[{"url": "https://example.com/image3.jpg"}]', expected: ["https://example.com/image3.jpg"] },
+      { attachment: [{ src: "https://example.com/image4.jpg" }], expected: ["https://example.com/image4.jpg"] },
+      { attachment: null, expected: [] }
+    ]
+    
+    testCases.forEach((test, index) => {
+      const result = getImageUrls(test.attachment)
+      console.log(`Attachment Test ${index + 1}:`, {
+        input: test.attachment,
+        expected: test.expected,
+        result: result,
+        passed: JSON.stringify(result) === JSON.stringify(test.expected)
+      })
+    })
   }, [dispatch])
+
+  // Extract image URLs from attachments
+  const getImageUrls = (attachments) => {
+    if (!attachments) return []
+    
+    // Handle both array and single attachment formats
+    const attachmentArray = Array.isArray(attachments) ? attachments : [attachments]
+    
+    return attachmentArray
+      .map((att) => {
+        if (typeof att === "string") {
+          // Direct URL string - ensure it's a valid URL
+          return att.trim()
+        } else if (att && typeof att === "object") {
+          // Object with url, src, path, or link properties
+          const url = att.url || att.src || att.path || att.link
+          return url ? url.trim() : null
+        }
+        return null
+      })
+      .filter(Boolean)
+      .filter(url => {
+        // Basic URL validation - check if it starts with http/https or is a relative path
+        return url.startsWith('http') || url.startsWith('/') || url.startsWith('./') || url.startsWith('../')
+      })
+  }
 
   // Create category mapping from job posts
   const getCategoryData = () => {
@@ -62,17 +107,38 @@ export default function FreelancingOpportunitiesSection({ customImages, titleRef
       let randomImage = null
       if (categoryPosts.length > 0) {
         const randomPost = categoryPosts[Math.floor(Math.random() * categoryPosts.length)]
-        console.log(`Random post for ${category.name}:`, randomPost)
+        console.log(`Random post for ${category.name}:`, {
+          title: randomPost.title,
+          attachment: randomPost.attachment,
+          attachments: randomPost.attachments
+        })
         
-        if (randomPost.attachment && randomPost.attachment.length > 0) {
-          // Get first attachment URL
-          const attachment = typeof randomPost.attachment === 'string' 
-            ? JSON.parse(randomPost.attachment) 
-            : randomPost.attachment
-          if (Array.isArray(attachment) && attachment.length > 0) {
-            randomImage = attachment[0].url || attachment[0]
-            console.log(`Image found for ${category.name}:`, randomImage)
+        // Use the improved getImageUrls function to extract attachment URLs
+        const attachments = randomPost.attachment || randomPost.attachments || randomPost.images
+        if (attachments) {
+          let parsedAttachments = attachments
+          
+          // Handle string JSON attachments
+          if (typeof attachments === 'string') {
+            try {
+              parsedAttachments = JSON.parse(attachments)
+              console.log(`Parsed attachment JSON for ${category.name}:`, parsedAttachments)
+            } catch (e) {
+              console.warn(`Failed to parse attachment JSON for ${category.name}:`, e)
+              // If JSON parsing fails, treat as direct URL string
+              parsedAttachments = [attachments]
+            }
           }
+          
+          const imageUrls = getImageUrls(parsedAttachments)
+          if (imageUrls.length > 0) {
+            randomImage = imageUrls[0]
+            console.log(`Image found for ${category.name}:`, randomImage)
+          } else {
+            console.log(`No valid image URLs found for ${category.name}`, parsedAttachments)
+          }
+        } else {
+          console.log(`No attachments found for ${category.name}`)
         }
       } else {
         console.log(`No posts found for category ${category.name}`)
@@ -129,6 +195,14 @@ export default function FreelancingOpportunitiesSection({ customImages, titleRef
           const hasCustomImage = customImages && index < customImages.length && customImages[index]
           const hasPostImage = artwork.image
           
+          // Debug logging for image selection
+          console.log(`Rendering ${artwork.name}:`, {
+            hasCustomImage: !!hasCustomImage,
+            hasPostImage: !!hasPostImage,
+            customImage: hasCustomImage,
+            postImage: hasPostImage
+          })
+          
           return (
             <div 
               key={artwork.categoryId || index} 
@@ -144,8 +218,13 @@ export default function FreelancingOpportunitiesSection({ customImages, titleRef
                     src={customImages[index]}
                     alt={artwork.name}
                     className="w-full h-48 object-cover transition-transform duration-500 ease-out group-hover:scale-110"
+                    loading="lazy"
+                    onLoad={() => {
+                      console.log(`Successfully loaded custom image for ${artwork.name}:`, customImages[index])
+                    }}
                     onError={(e) => {
                       // Fallback to color block if image fails to load
+                      console.warn(`Failed to load custom image for ${artwork.name}:`, customImages[index])
                       e.target.style.display = 'none'
                       e.target.nextSibling.style.display = 'flex'
                     }}
@@ -168,8 +247,13 @@ export default function FreelancingOpportunitiesSection({ customImages, titleRef
                     src={hasPostImage}
                     alt={artwork.name}
                     className="w-full h-48 object-cover transition-transform duration-500 ease-out group-hover:scale-110"
+                    loading="lazy"
+                    onLoad={() => {
+                      console.log(`Successfully loaded image for ${artwork.name}:`, hasPostImage)
+                    }}
                     onError={(e) => {
                       // Fallback to color block if image fails to load
+                      console.warn(`Failed to load post image for ${artwork.name}:`, hasPostImage)
                       e.target.style.display = 'none'
                       e.target.nextSibling.style.display = 'flex'
                     }}
