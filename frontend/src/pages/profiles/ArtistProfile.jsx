@@ -219,21 +219,24 @@ export default function ArtistProfile() {
 console.log("My post:", myAvailabilityPosts);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000] relative">
+    <div className="min-h-screen bg-gradient-to-b from-[#202020] to-[#000000]">
       <AuthNavbar />
 
-      <div className="pt-20">
-        <div className="relative">
-          <div className="h-64 md:h-80 relative overflow-hidden">
+      {/* Main content with proper spacing */}
+      <div className="pt-20 pb-8">
+        {/* Cover section */}
+        <div className="relative mt-0 md:mt-0">
+          <div className="h-48 md:h-64 lg:h-80 relative overflow-hidden">
             <img src={artistData.coverImage || "/placeholder.svg"} alt="Cover" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-black/40" />
           </div>
 
-          <div className="absolute bottom-0 left-0 right-0 p-6">
-            <div className="max-w-7xl mx-auto">
-              <div className="flex flex-col md:flex-row items-start md:items-end gap-6">
+          {/* Profile info section - positioned below cover image */}
+          <div className="relative -mt-8 md:-mt-10 z-10">
+            <div className="max-w-7xl mx-auto px-4 md:px-6">
+              <div className="flex flex-col md:flex-row items-start md:items-end gap-4 md:gap-6">
                 <div className="relative">
-                  <Avatar className="w-32 h-32 border-4 border-white/20 bg-white/10 backdrop-blur-sm">
+                  <Avatar className="w-24 h-24 md:w-32 md:h-32 border-4 border-white/20 bg-white/10 backdrop-blur-sm">
                     {artistData.avatar ? (
                       <AvatarImage
                         key={artistData.avatar}
@@ -271,19 +274,19 @@ console.log("My post:", myAvailabilityPosts);
                 <div className="flex-1 text-white">
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
-                      <div className="flex items-center gap-4 mb-2">
-                        <h1 className="text-3xl font-bold">{artistData.name}</h1>
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-2">
+                        <h1 className="text-2xl md:text-3xl font-bold">{artistData.name}</h1>
                         <div className="flex items-center gap-3">
                           <div className="flex items-center gap-1">
-                            <Star className="w-5 h-5 text-yellow-400 fill-current" />
-                            <span className="text-xl font-semibold text-yellow-400">{artistData.rating}</span>
+                            <Star className="w-4 h-4 md:w-5 md:h-5 text-yellow-400 fill-current" />
+                            <span className="text-lg md:text-xl font-semibold text-yellow-400">{artistData.rating}</span>
                           </div>
                           <div className="text-gray-300">•</div>
-                          <div className="text-lg font-medium text-[#A95BAB]">{artistData.totalProjects} projects</div>
+                          <div className="text-base md:text-lg font-medium text-[#A95BAB]">{artistData.totalProjects} projects</div>
                         </div>
                       </div>
                       <p className="text-gray-300 mb-2">{artistData.username}</p>
-                      <div className="flex items-center gap-4 text-sm text-gray-300">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-300">
                         <div className="flex items-center gap-1">
                           <MapPin className="w-4 h-4" />
                           {artistData.location || "Location not specified"}

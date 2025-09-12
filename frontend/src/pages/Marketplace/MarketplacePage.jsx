@@ -52,6 +52,19 @@ const MarketplacePage = () => {
   const location = useLocation();
   const [isSearching, setIsSearching] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Screen size detection for mobile post limiting
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsMobile(window.innerWidth < 768); // md breakpoint
+    };
+    
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
 
   // Get user for RBAC checks
   const { user } = useAppSelector((state) => state.auth);
@@ -640,9 +653,9 @@ const MarketplacePage = () => {
       {/* Search and Filter Section */}
       <div className="pb-6">
         <div className="max-w-6xl mx-auto px-6">
-          <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex flex-col lg:flex-row gap-4">
             {/* Search Bar */}
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <SearchBar
                 type="marketplace"
                 filters={filters}
@@ -651,38 +664,40 @@ const MarketplacePage = () => {
               />
             </div>
 
-            {/* Tab Switch - Services left, Jobs right */}
-            <div className="flex bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-xl p-1">
-              <button
-                onClick={() => handleTabChange("availability")}
-                className={`px-6 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
-                  activeTab === "availability"
-                    ? "bg-[#A95BAB]/20 text-[#A95BAB] border border-[#A95BAB]/30"
-                    : "text-gray-400 hover:text-white"
-                }`}
-              >
-                Services
-              </button>
-              <button
-                onClick={() => handleTabChange("jobs")}
-                className={`px-6 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
-                  activeTab === "jobs"
-                    ? "bg-[#A95BAB]/20 text-[#A95BAB] border border-[#A95BAB]/30"
-                    : "text-gray-400 hover:text-white"
-                }`}
-              >
-                Jobs
-              </button>
-            </div>
+            {/* Controls Container - Tab Switch and Filters */}
+            <div className="flex flex-col sm:flex-row gap-4 lg:gap-3">
+              {/* Tab Switch - Services left, Jobs right */}
+              <div className="flex bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-xl p-1 flex-shrink-0">
+                <button
+                  onClick={() => handleTabChange("availability")}
+                  className={`px-4 lg:px-6 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
+                    activeTab === "availability"
+                      ? "bg-[#A95BAB]/20 text-[#A95BAB] border border-[#A95BAB]/30"
+                      : "text-gray-400 hover:text-white"
+                  }`}
+                >
+                  Services
+                </button>
+                <button
+                  onClick={() => handleTabChange("jobs")}
+                  className={`px-4 lg:px-6 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
+                    activeTab === "jobs"
+                      ? "bg-[#A95BAB]/20 text-[#A95BAB] border border-[#A95BAB]/30"
+                      : "text-gray-400 hover:text-white"
+                  }`}
+                >
+                  Jobs
+                </button>
+              </div>
 
-            {/* Quick Filters */}
-            <div className="flex items-center space-x-3">
+              {/* Quick Filters */}
+              <div className="flex flex-wrap items-center gap-3">
               {/* Updated Category Select with API data */}
               <select
                 value={filters.category || ""}
                 onChange={(e) => handleCategoryChange(e.target.value)}
                 disabled={categoriesLoading}
-                className="px-4 py-3 bg-gray-900/50 backdrop-blur-sm border border-gray-700/50 rounded-xl text-white text-sm focus:border-[#A95BAB]/50 focus:ring-1 focus:ring-[#A95BAB]/50 transition-all appearance-none bg-no-repeat bg-right pr-10 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                className="min-w-0 flex-shrink-0 w-auto max-w-[200px] px-4 py-3 bg-gray-900/50 backdrop-blur-sm border border-gray-700/50 rounded-xl text-white text-sm focus:border-[#A95BAB]/50 focus:ring-1 focus:ring-[#A95BAB]/50 transition-all appearance-none bg-no-repeat bg-right pr-10 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer truncate"
                 style={{
                   backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
                   backgroundPosition: "right 0.75rem center",
@@ -702,7 +717,7 @@ const MarketplacePage = () => {
               <select
                 value={filters.sortBy || "newest"}
                 onChange={(e) => handleFilterChange({ sortBy: e.target.value })}
-                className="px-4 py-3 bg-gray-900/50 backdrop-blur-sm border border-gray-700/50 rounded-xl text-white text-sm focus:border-[#A95BAB]/50 focus:ring-1 focus:ring-[#A95BAB]/50 transition-all appearance-none bg-no-repeat bg-right pr-10 cursor-pointer"
+                className="min-w-0 flex-shrink-0 w-auto max-w-[140px] px-4 py-3 bg-gray-900/50 backdrop-blur-sm border border-gray-700/50 rounded-xl text-white text-sm focus:border-[#A95BAB]/50 focus:ring-1 focus:ring-[#A95BAB]/50 transition-all appearance-none bg-no-repeat bg-right pr-10 cursor-pointer truncate"
                 style={{
                   backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
                   backgroundPosition: "right 0.75rem center",
@@ -714,6 +729,7 @@ const MarketplacePage = () => {
                 <option value="price_asc">Price: Low</option>
                 <option value="price_desc">Price: High</option>
               </select>
+            </div>
             </div>
           </div>
         </div>
@@ -740,15 +756,15 @@ const MarketplacePage = () => {
 
       {/* Posts Grid */}
       <div className="max-w-6xl mx-auto px-6 pb-16">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-2xl font-bold text-white">
+        <div className="flex flex-col gap-4 mb-8 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-xl lg:text-2xl font-bold text-white">
               {(filters.section || "jobs") === "services"
                 ? "Popular Services"
                 : "Freelancing Opportunities"}
             </h2>
             {!isSearching && (
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1 mt-1">
                 <p className="text-gray-400 text-sm">
                   {currentPagination.totalCount > 0 
                     ? `${currentPagination.totalCount} ${currentPagination.totalCount === 1 ? 'result' : 'results'} found`
@@ -757,35 +773,35 @@ const MarketplacePage = () => {
                 </p>
                 {/* Show active filters */}
                 {(filters.search || filters.category || filters.sortBy !== 'newest') && (
-                  <div className="flex flex-wrap gap-2 mt-1">
+                  <div className="flex flex-wrap gap-2 mt-2">
                     {filters.search && (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#A95BAB]/20 text-[#A95BAB] text-xs rounded-full">
-                        Search: "{filters.search}"
+                      <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#A95BAB]/20 text-[#A95BAB] text-xs rounded-full">
+                        <span className="truncate max-w-[120px]">Search: "{filters.search}"</span>
                         <button
                           onClick={() => handleFilterChange({ search: '' })}
-                          className="hover:text-[#A95BAB]/80"
+                          className="hover:text-[#A95BAB]/80 flex-shrink-0 ml-1"
                         >
                           ×
                         </button>
                       </span>
                     )}
                     {filters.category && (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full">
-                        Category: {filters.category}
+                      <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-500/20 text-blue-400 text-xs rounded-full">
+                        <span className="truncate max-w-[120px]">Category: {filters.category}</span>
                         <button
                           onClick={() => handleFilterChange({ category: '' })}
-                          className="hover:text-blue-300"
+                          className="hover:text-blue-300 flex-shrink-0 ml-1"
                         >
                           ×
                         </button>
                       </span>
                     )}
                     {filters.sortBy !== 'newest' && (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full">
-                        Sort: {filters.sortBy}
+                      <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-500/20 text-green-400 text-xs rounded-full">
+                        <span className="truncate max-w-[100px]">Sort: {filters.sortBy}</span>
                         <button
                           onClick={() => handleFilterChange({ sortBy: 'newest' })}
-                          className="hover:text-green-300"
+                          className="hover:text-green-300 flex-shrink-0 ml-1"
                         >
                           ×
                         </button>
@@ -797,15 +813,16 @@ const MarketplacePage = () => {
             )}
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-end flex-shrink-0">
             {/* Unified Create Button - shows only when user is authenticated and has appropriate role */}
             {createButtonInfo && (
               <button
                 onClick={handleCreatePost}
-                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-[#A95BAB] to-[#A95BAB]/80 hover:from-[#A95BAB]/90 hover:to-[#A95BAB]/70 text-white rounded-xl font-medium text-sm transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-[#A95BAB]/25"
+                className="inline-flex items-center px-4 py-2.5 lg:px-6 lg:py-3 bg-gradient-to-r from-[#A95BAB] to-[#A95BAB]/80 hover:from-[#A95BAB]/90 hover:to-[#A95BAB]/70 text-white rounded-xl font-medium text-sm transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-[#A95BAB]/25"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                {createButtonInfo.text}
+                <span className="hidden sm:inline">{createButtonInfo.text}</span>
+                <span className="sm:hidden">{createButtonInfo.shortText}</span>
               </button>
             )}
           </div>
@@ -917,7 +934,7 @@ const MarketplacePage = () => {
                     </div>
                     
                     {/* All posts in flat grid for the selected category (6 posts per page with pagination) */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-8">
                       {postsToDisplay.map((post, index) => (
                         <LazyPostCard 
                           key={post.jobId || post.id || post.postId || index}
@@ -961,8 +978,9 @@ const MarketplacePage = () => {
                       </div>
 
                       {/* Posts Grid for this category */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-                        {categoryData.posts.map((post, index) => (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-8">
+                        {/* Limit to 3 posts on mobile, show all on larger screens */}
+                        {(isMobile ? categoryData.posts.slice(0, 3) : categoryData.posts).map((post, index) => (
                           <LazyPostCard 
                             key={post.jobId || post.id || post.postId || index}
                             post={post}
