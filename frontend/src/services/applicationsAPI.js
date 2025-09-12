@@ -63,6 +63,9 @@ class ApplicationsAPI {
    * Convert an accepted application to a project
    */
   async convertApplicationToProject(applicationId) {
+    if (!applicationId) {
+      throw new Error('Application ID is required for converting to project');
+    }
     const response = await api.post(`/api/applications/${applicationId}/convert-to-project`)
     return response.data
   }
@@ -71,6 +74,9 @@ class ApplicationsAPI {
    * Reject an application
    */
   async rejectApplication(applicationId, rejectionReason = '') {
+    if (!applicationId) {
+      throw new Error('Application ID is required for rejection')
+    }
     const response = await api.post(`/api/applications/${applicationId}/reject`, {
       rejectionReason
     })
@@ -81,6 +87,9 @@ class ApplicationsAPI {
    * Accept an application (this will automatically convert to project on backend)
    */
   async acceptApplication(applicationId) {
+    if (!applicationId) {
+      throw new Error('Application ID is required for acceptance')
+    }
     const response = await api.post(`/api/applications/${applicationId}/convert-to-project`)
     return response.data
   }
@@ -89,6 +98,9 @@ class ApplicationsAPI {
    * Update application status
    */
   async updateApplicationStatus(applicationId, status) {
+    if (!applicationId) {
+      throw new Error('Application ID is required for status update')
+    }
     const response = await api.patch(`/api/applications/${applicationId}/status`, {
       status
     })
@@ -99,6 +111,9 @@ class ApplicationsAPI {
    * Get application details by ID
    */
   async getApplicationById(applicationId) {
+    if (!applicationId) {
+      throw new Error('Application ID is required to fetch details')
+    }
     const response = await api.get(`/api/applications/${applicationId}`)
     
     // Handle different response formats from backend
@@ -113,6 +128,9 @@ class ApplicationsAPI {
    * Delete an application
    */
   async deleteApplication(applicationId) {
+    if (!applicationId) {
+      throw new Error('Application ID is required for deletion')
+    }
     const response = await api.delete(`/api/applications/${applicationId}`)
     return response.data
   }

@@ -85,7 +85,7 @@ export function ApplicationManagementModal({ isOpen, onClose, project, applicati
         ) : (
           <div className="space-y-6">
             {applications.map((application) => (
-              <div key={application.applicationId} className="border border-white/10 rounded-lg p-6">
+              <div key={application.applicationId || application.id || `modal-app-${applications.indexOf(application)}`} className="border border-white/10 rounded-lg p-6">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center space-x-4">
                     <div className="w-12 h-12 bg-[#A95BAB] rounded-full flex items-center justify-center text-white font-semibold">
@@ -143,15 +143,15 @@ export function ApplicationManagementModal({ isOpen, onClose, project, applicati
                 {application.status === 'pending' && (
                   <div className="space-y-4">
                     <div>
-                      <Label htmlFor={`message-${application.applicationId}`} className="text-white">
+                      <Label htmlFor={`message-${application.applicationId || application.id}`} className="text-white">
                         Message to Artist (Optional)
                       </Label>
                       <Textarea
-                        id={`message-${application.applicationId}`}
+                        id={`message-${application.applicationId || application.id}`}
                         placeholder="Add a personal message to the artist..."
-                        value={selectedApplication === application.applicationId ? clientMessage : ""}
+                        value={selectedApplication === (application.applicationId || application.id) ? clientMessage : ""}
                         onChange={(e) => {
-                          setSelectedApplication(application.applicationId)
+                          setSelectedApplication(application.applicationId || application.id)
                           setClientMessage(e.target.value)
                         }}
                         className="mt-1 bg-white/10 border-white/20 text-white placeholder:text-gray-400"
@@ -162,7 +162,14 @@ export function ApplicationManagementModal({ isOpen, onClose, project, applicati
                     <div className="flex justify-end space-x-3">
                       <Button
                         variant="outline"
-                        onClick={() => handleStatusUpdate(application.applicationId, 'rejected')}
+                        onClick={() => {
+                          const appId = application.applicationId || application.id;
+                          if (!appId) {
+                            console.error('Application ID is missing:', application);
+                            return;
+                          }
+                          handleStatusUpdate(appId, 'rejected');
+                        }}
                         disabled={isProcessing}
                         className="border-red-500/50 text-red-400 hover:bg-red-500/10"
                       >
@@ -170,7 +177,14 @@ export function ApplicationManagementModal({ isOpen, onClose, project, applicati
                         {isProcessing ? "Processing..." : "Reject"}
                       </Button>
                       <Button
-                        onClick={() => handleStatusUpdate(application.applicationId, 'accepted')}
+                        onClick={() => {
+                          const appId = application.applicationId || application.id;
+                          if (!appId) {
+                            console.error('Application ID is missing:', application);
+                            return;
+                          }
+                          handleStatusUpdate(appId, 'accepted');
+                        }}
                         disabled={isProcessing}
                         className="bg-green-600 hover:bg-green-700 text-white"
                       >

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Card, 
   CardContent, 
@@ -49,9 +49,9 @@ const IncomingApplications = () => {
 
   useEffect(() => {
     fetchIncomingApplications();
-  }, [page, statusFilter]);
+  }, [page, statusFilter, fetchIncomingApplications]);
 
-  const fetchIncomingApplications = async () => {
+  const fetchIncomingApplications = useCallback(async () => {
     try {
       setLoading(true);
       const offset = (page - 1) * limit;
@@ -69,19 +69,53 @@ const IncomingApplications = () => {
       }
 
       const data = await response.json();
-      setApplications(data.data.applications);
-      setTotalPages(Math.ceil(data.data.total / limit));
+      console.log('[Applications] Incoming applications API response:', data);
+      
+      // Handle different response structures
+      const applicationsData = data.applications || data.data?.applications || [];
+      const totalCount = data.total || data.data?.total || 0;
+      
+      console.log('[Applications] Processed data:', {
+        applicationsCount: applicationsData.length,
+        totalCount,
+        firstApp: applicationsData[0]
+      });
+      
+      // Debug log to check application structure
+      if (applicationsData && applicationsData.length > 0) {
+        console.log('[Applications] Sample application structure:', applicationsData[0]);
+        console.log('[Applications] Available ID properties:', {
+          applicationId: applicationsData[0].applicationId,
+          id: applicationsData[0].id,
+          hasApplicationId: 'applicationId' in applicationsData[0],
+          hasId: 'id' in applicationsData[0]
+        });
+      }
+      
+      setApplications(applicationsData);
+      setTotalPages(Math.ceil(totalCount / limit));
       setError(null);
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, statusFilter, limit]);
 
   const handleStatusUpdate = async (applicationId, newStatus) => {
     try {
       setActionLoading(true);
+      
+      console.log('[Applications] handleStatusUpdate called with:', { applicationId, newStatus });
+      
+      // Check if applicationId is defined
+      if (!applicationId) {
+        console.error('[Applications] Application ID is undefined');
+        setError('Application ID is missing. Cannot update status.');
+        return;
+      }
+      
+      console.log('[Applications] Making API call to update status...');
       const response = await fetch(
         `/api/applications/${applicationId}/status`,
         {
@@ -94,14 +128,20 @@ const IncomingApplications = () => {
         }
       );
 
+      console.log('[Applications] Status update response:', response.status, response.ok);
+
       if (!response.ok) {
-        throw new Error('Failed to update application status');
+        const errorData = await response.text();
+        console.error('[Applications] Status update failed:', errorData);
+        throw new Error(`Failed to update application status: ${response.status} ${errorData}`);
       }
 
+      console.log('[Applications] Status updated successfully, refreshing list...');
       // Refresh applications list
       await fetchIncomingApplications();
       setSelectedApplication(null);
     } catch (err) {
+      console.error('[Applications] Status update error:', err);
       setError(err.message);
     } finally {
       setActionLoading(false);
@@ -266,7 +306,15 @@ const IncomingApplications = () => {
                 variant="contained"
                 color="success"
                 startIcon={<CheckCircle />}
-                onClick={() => handleStatusUpdate(application.applicationId, 'accepted')}
+                onClick={() => {
+                  const appId = application.applicationId || application.id;
+                  if (!appId) {
+                    console.error('Application ID is missing:', application);
+                    setError('Application ID is missing. Cannot accept application.');
+                    return;
+                  }
+                  handleStatusUpdate(appId, 'accepted');
+                }}
                 disabled={actionLoading}
               >
                 Accept
@@ -275,7 +323,15 @@ const IncomingApplications = () => {
                 variant="contained"
                 color="error"
                 startIcon={<Cancel />}
-                onClick={() => handleStatusUpdate(application.applicationId, 'rejected')}
+                onClick={() => {
+                  const appId = application.applicationId || application.id;
+                  if (!appId) {
+                    console.error('Application ID is missing:', application);
+                    setError('Application ID is missing. Cannot reject application.');
+                    return;
+                  }
+                  handleStatusUpdate(appId, 'rejected');
+                }}
                 disabled={actionLoading}
               >
                 Reject
@@ -370,7 +426,15 @@ const IncomingApplications = () => {
             <Button
               color="success"
               variant="contained"
-              onClick={() => handleStatusUpdate(application.applicationId, 'accepted')}
+              onClick={() => {
+                const appId = application.applicationId || application.id;
+                if (!appId) {
+                  console.error('Application ID is missing:', application);
+                  setError('Application ID is missing. Cannot accept application.');
+                  return;
+                }
+                handleStatusUpdate(appId, 'accepted');
+              }}
               disabled={actionLoading}
             >
               Accept
@@ -378,7 +442,15 @@ const IncomingApplications = () => {
             <Button
               color="error"
               variant="contained"
-              onClick={() => handleStatusUpdate(application.applicationId, 'rejected')}
+              onClick={() => {
+                const appId = application.applicationId || application.id;
+                if (!appId) {
+                  console.error('Application ID is missing:', application);
+                  setError('Application ID is missing. Cannot reject application.');
+                  return;
+                }
+                handleStatusUpdate(appId, 'rejected');
+              }}
               disabled={actionLoading}
             >
               Reject
@@ -445,7 +517,7 @@ const IncomingApplications = () => {
         <>
           {applications.map((application) => (
             <ApplicationCard 
-              key={application.applicationId} 
+              key={application.applicationId || application.id || `app-${applications.indexOf(application)}`} 
               application={application} 
             />
           ))}

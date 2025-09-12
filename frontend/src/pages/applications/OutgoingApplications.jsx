@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Card, 
   CardContent, 
@@ -49,11 +49,7 @@ const OutgoingApplications = () => {
   
   const limit = 10;
 
-  useEffect(() => {
-    fetchOutgoingApplications();
-  }, [page, statusFilter]);
-
-  const fetchOutgoingApplications = async () => {
+  const fetchOutgoingApplications = useCallback(async () => {
     try {
       setLoading(true);
       const offset = (page - 1) * limit;
@@ -79,7 +75,11 @@ const OutgoingApplications = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, statusFilter, limit]);
+
+  useEffect(() => {
+    fetchOutgoingApplications();
+  }, [fetchOutgoingApplications]);
 
   const handleWithdrawApplication = async (applicationId) => {
     if (!confirm('Are you sure you want to withdraw this application?')) {
@@ -311,7 +311,15 @@ const OutgoingApplications = () => {
               variant="outlined"
               color="error"
               startIcon={<Delete />}
-              onClick={() => handleWithdrawApplication(application.applicationId)}
+              onClick={() => {
+                const appId = application.applicationId || application.id;
+                if (!appId) {
+                  console.error('Application ID is missing:', application);
+                  // Could show toast error here
+                  return;
+                }
+                handleWithdrawApplication(appId);
+              }}
               disabled={actionLoading}
             >
               Withdraw
@@ -465,7 +473,14 @@ const OutgoingApplications = () => {
           <Button
             color="error"
             variant="outlined"
-            onClick={() => handleWithdrawApplication(application.applicationId)}
+            onClick={() => {
+              const appId = application.applicationId || application.id;
+              if (!appId) {
+                console.error('Application ID is missing:', application);
+                return;
+              }
+              handleWithdrawApplication(appId);
+            }}
             disabled={actionLoading}
           >
             Withdraw Application
@@ -553,7 +568,7 @@ const OutgoingApplications = () => {
         <>
           {applications.map((application) => (
             <ApplicationCard 
-              key={application.applicationId} 
+              key={application.applicationId || application.id || `outgoing-app-${applications.indexOf(application)}`} 
               application={application} 
             />
           ))}

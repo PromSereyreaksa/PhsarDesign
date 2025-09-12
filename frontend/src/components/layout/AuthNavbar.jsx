@@ -1,7 +1,6 @@
 "use client"
 
 import {
-    Bell,
     ChevronRight,
     FileText,
     FolderKanban,
@@ -12,41 +11,15 @@ import {
     User,
     X,
 } from "lucide-react"
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import React, { useEffect, useMemo, useRef, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { useLocation, useNavigate } from "react-router-dom"
-import { useNotifications } from "../../hooks/useNotifications"
 import { fetchIncomingApplications } from "../../store/slices/applicationsSlice"
 import { logout } from "../../store/slices/authSlice"
-import { markAllAsRead, markAsRead } from "../../store/slices/notificationsSlice"
 
 // Import from the correct slice - matching MarketplacePage
 import { setFilters } from "../../store/slices/marketplaceSlice"
-import { fetchAvailabilityPosts, fetchJobPosts, setActiveTab } from "../../store/slices/postsSlice"
-
-// Memoized notification badge component to prevent flashing
-const NotificationBadge = React.memo(({ unreadCount, isNewNotification }) => {
-  console.log('[NotificationBadge] Received props:', { unreadCount, isNewNotification, type: typeof unreadCount });
-  
-  // Safety check for unreadCount
-  const safeUnreadCount = unreadCount ?? 0;
-  console.log('[NotificationBadge] Safe unreadCount:', safeUnreadCount);
-  
-  if (safeUnreadCount <= 0) {
-    console.log('[NotificationBadge] No unread notifications, returning null');
-    return null;
-  }
-
-  return (
-    <span 
-      className={`absolute -top-1 -right-1 h-4 w-4 text-xs font-bold text-white bg-red-500 rounded-full flex items-center justify-center ${
-        isNewNotification ? '' : ''
-      }`}
-    >
-      {safeUnreadCount.toString()}
-    </span>
-  );
-});
+import { setActiveTab } from "../../store/slices/postsSlice"
 
 // Application badge for pending applications count
 const ApplicationBadge = React.memo(({ pendingCount }) => {
@@ -63,75 +36,13 @@ const ApplicationBadge = React.memo(({ pendingCount }) => {
   );
 });
 
-// Memoized notification item to prevent unnecessary re-renders
-const NotificationItem = ({ notification, onNotificationClick, onMarkAsRead }) => {
-  const handleClick = useCallback(() => {
-    onNotificationClick(notification)
-  }, [notification, onNotificationClick])
-
-  const handleMarkAsRead = useCallback((e) => {
-    e.stopPropagation()
-    console.log('[NotificationItem] Marking as read, notification object:', notification)
-    console.log('[NotificationItem] Notification ID:', notification?.id || notification?.notificationId || notification?.notification_id)
-    const notificationId = notification?.id || notification?.notificationId || notification?.notification_id
-    if (notificationId) {
-      onMarkAsRead(notificationId)
-    } else {
-      console.error('[NotificationItem] No valid notification ID found in:', notification)
-    }
-  }, [notification, onMarkAsRead])
-
-  return (
-    <div
-      key={notification.id}
-      className={`p-4 border-b border-gray-700/50 last:border-b-0 ${
-        !notification.isRead ? 'bg-[#A95BAB]/10' : ''
-      }`}
-    >
-      <div className="flex justify-between items-start gap-3">
-        <div 
-          className="flex-1 cursor-pointer"
-          onClick={handleClick}
-        >
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <p className={`text-sm ${!notification.isRead ? 'font-semibold text-white' : 'text-gray-300'}`}>
-                {notification.title}
-              </p>
-              <p className="text-sm text-gray-400 mt-1 line-clamp-2">
-                {notification.message}
-              </p>
-              <p className="text-xs text-gray-500 mt-2">
-                {new Date(notification.createdAt).toLocaleDateString()}
-              </p>
-            </div>
-            {!notification.isRead && (
-              <span className="w-2 h-2 bg-[#A95BAB] rounded-full ml-2 mt-1 flex-shrink-0"></span>
-            )}
-          </div>
-        </div>
-        
-        {/* Mark as read button */}
-        {!notification.isRead && (
-          <button
-            onClick={handleMarkAsRead}
-            className="text-xs text-[#A95BAB] hover:text-white transition-colors px-2 py-1 rounded border border-[#A95BAB]/30 hover:border-[#A95BAB]/60"
-          >
-            Mark read
-          </button>
-        )}
-      </div>
-    </div>
-  )
-}
+ApplicationBadge.displayName = 'ApplicationBadge';
 
 export default function AuthNavbar() {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false)
-  const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const desktopProfileDropdownRef = useRef(null)
   const mobileProfileDropdownRef = useRef(null)
-  const notificationDropdownRef = useRef(null)
   const navigate = useNavigate()
   const location = useLocation()
   const dispatch = useDispatch()
@@ -144,65 +55,11 @@ export default function AuthNavbar() {
   // Get applications for the mailbox badge
   const { incoming } = useSelector((s) => s.applications)
 
-  // Notification system with stable reference
-  const { notifications, unreadCount: rawUnreadCount, loading } = useNotifications()
-  
   // Calculate pending applications count
   const pendingApplicationsCount = useMemo(() => {
     if (!Array.isArray(incoming)) return 0
     return incoming.filter(app => app.status === 'pending').length
   }, [incoming])
-  
-  // Ensure unreadCount is always a valid number
-  const unreadCount = useMemo(() => {
-    const safeCount = typeof rawUnreadCount === 'number' ? rawUnreadCount : 0;
-    console.log('[AuthNavbar] UnreadCount calculation:', { 
-      rawUnreadCount, 
-      type: typeof rawUnreadCount, 
-      safeCount,
-      notificationsLength: notifications?.length 
-    });
-    return safeCount;
-  }, [rawUnreadCount, notifications?.length])
-  
-  // Memoize handlers to prevent unnecessary re-renders
-  const handleNotificationClick = useCallback((notification) => {
-    console.log('[AuthNavbar] Notification clicked:', notification)
-    const notificationId = notification?.id || notification?.notificationId || notification?.notification_id
-    
-    if (!notification.isRead && notificationId) {
-      dispatch(markAsRead(notificationId))
-    }
-    
-    // Navigate to relevant page based on notification type
-    switch (notification.type) {
-      case 'application_received':
-      case 'application_accepted':
-      case 'application_rejected':
-      case 'application':
-        navigate('/dashboard/applications')
-        break
-      case 'project_created':
-        navigate('/dashboard/projects')
-        break
-      case 'message_received':
-        navigate('/dashboard/messages')
-        break
-      default:
-        // For other notifications, go to notifications page
-        navigate('/dashboard/notifications')
-        break
-    }
-    setIsNotificationDropdownOpen(false)
-  }, [dispatch, navigate])
-
-  const handleMarkAllAsRead = useCallback(() => {
-    dispatch(markAllAsRead())
-  }, [dispatch])
-
-  const handleMarkAsRead = useCallback((notificationId) => {
-    dispatch(markAsRead(notificationId))
-  }, [dispatch])
 
   // Which parent menu is visually active
   const [activeMenu, setActiveMenu] = useState(null) // "home" | "talents" | "works" | "community" | null
@@ -246,10 +103,6 @@ export default function AuthNavbar() {
       if (desktopProfileDropdownRef.current && !desktopProfileDropdownRef.current.contains(event.target) &&
           mobileProfileDropdownRef.current && !mobileProfileDropdownRef.current.contains(event.target)) {
         setIsProfileDropdownOpen(false)
-      }
-      // Check notification dropdown
-      if (notificationDropdownRef.current && !notificationDropdownRef.current.contains(event.target)) {
-        setIsNotificationDropdownOpen(false)
       }
     }
 
@@ -398,7 +251,7 @@ export default function AuthNavbar() {
               </button>
             </div>
 
-            {/* Notification Bell */}
+            {/* Notification Bell - HIDDEN 
             <div className="relative" ref={notificationDropdownRef}>
               <button
                 onClick={() => setIsNotificationDropdownOpen(!isNotificationDropdownOpen)}
@@ -408,7 +261,7 @@ export default function AuthNavbar() {
                 <NotificationBadge unreadCount={unreadCount} />
               </button>
 
-              {/* Notification Dropdown */}
+              {/* Notification Dropdown 
               {isNotificationDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-80 bg-[#202020] border border-gray-700 rounded-lg shadow-lg z-50">
                   <div className="p-4 border-b border-gray-700 flex justify-between items-center">
@@ -460,6 +313,7 @@ export default function AuthNavbar() {
                 </div>
               )}
             </div>
+            */}
 
             {/* Profile */}
             <div className="relative" ref={desktopProfileDropdownRef}>
@@ -552,7 +406,7 @@ export default function AuthNavbar() {
               </button>
             </div>
 
-            {/* Mobile Notification Bell */}
+            {/* Mobile Notification Bell - HIDDEN 
             <div className="relative" ref={notificationDropdownRef}>
               <button
                 onClick={() => setIsNotificationDropdownOpen(!isNotificationDropdownOpen)}
@@ -562,7 +416,7 @@ export default function AuthNavbar() {
                 <NotificationBadge unreadCount={unreadCount} />
               </button>
 
-              {/* Mobile Notification Dropdown */}
+              {/* Mobile Notification Dropdown 
               {isNotificationDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-[#202020] border border-gray-700 rounded-lg shadow-lg z-50">
                   <div className="p-3 sm:p-4 border-b border-gray-700 flex justify-between items-center">
@@ -614,6 +468,7 @@ export default function AuthNavbar() {
                 </div>
               )}
             </div>
+            */}
 
             {/* Mobile Profile */}
             <div className="relative" ref={mobileProfileDropdownRef}>
