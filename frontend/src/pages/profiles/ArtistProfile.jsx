@@ -133,7 +133,7 @@ export default function ArtistProfile() {
           setArtistData({
             id: user.userId,
             name: `${user.firstName} ${user.lastName}`,
-            username: `@${user.firstName?.toLowerCase()}${user.lastName?.toLowerCase()}`,
+            username: `@${user.slug}`,
             avatar: fallbackAvatarUrl,
             bio: user.about || user.bio || null,
             location: user.location || null,

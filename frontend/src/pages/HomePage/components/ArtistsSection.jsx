@@ -55,13 +55,14 @@ export default function ArtistsSection({ customImages }) {
     },
   ]
 
-  // Helper function to create URL slug from name
+  // Helper function to create URL slug from name (fallback only)
   const createSlug = (firstName, lastName) => {
     return `${firstName}-${lastName}`.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').trim('-')
   }
 
   const transformedArtists = artists.length > 0 ? artists.map((artist, index) => {
-    const slug = createSlug(artist.user.firstName, artist.user.lastName)
+    // Use backend slug if available, otherwise fallback to generated slug
+    const slug = artist.user.slug || createSlug(artist.user.firstName, artist.user.lastName)
     console.log('Artist data:', artist) // Debug log to see the structure
     
     return {

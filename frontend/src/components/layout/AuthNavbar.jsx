@@ -42,7 +42,6 @@ export default function AuthNavbar() {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const desktopProfileDropdownRef = useRef(null)
-  const mobileProfileDropdownRef = useRef(null)
   const navigate = useNavigate()
   const location = useLocation()
   const dispatch = useDispatch()
@@ -100,8 +99,7 @@ export default function AuthNavbar() {
   useEffect(() => {
     function handleClickOutside(event) {
       // Check desktop profile dropdown
-      if (desktopProfileDropdownRef.current && !desktopProfileDropdownRef.current.contains(event.target) &&
-          mobileProfileDropdownRef.current && !mobileProfileDropdownRef.current.contains(event.target)) {
+      if (desktopProfileDropdownRef.current && !desktopProfileDropdownRef.current.contains(event.target)) {
         setIsProfileDropdownOpen(false)
       }
     }
@@ -392,162 +390,10 @@ export default function AuthNavbar() {
             </div>
           </div>
 
-          {/* Mobile right side - All icons and menu grouped together */}
-          <div className="flex md:hidden items-center space-x-1 sm:space-x-2">
-            {/* Mobile Applications Icon */}
-            <div className="relative">
-              <button
-                onClick={() => navigate('/dashboard/applications')}
-                className="relative p-1.5 sm:p-2 text-white hover:text-[#A95BAB] transition-colors duration-500 ease-out"
-                title="View Applications"
-              >
-                <FileText className="h-4 w-4 sm:h-5 sm:w-5" />
-                <ApplicationBadge pendingCount={pendingApplicationsCount} />
-              </button>
-            </div>
-
-            {/* Mobile Notification Bell - HIDDEN 
-            <div className="relative" ref={notificationDropdownRef}>
-              <button
-                onClick={() => setIsNotificationDropdownOpen(!isNotificationDropdownOpen)}
-                className="relative p-1.5 sm:p-2 text-white hover:text-[#A95BAB] transition-colors duration-500 ease-out"
-              >
-                <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
-                <NotificationBadge unreadCount={unreadCount} />
-              </button>
-
-              {/* Mobile Notification Dropdown 
-              {isNotificationDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-[#202020] border border-gray-700 rounded-lg shadow-lg z-50">
-                  <div className="p-3 sm:p-4 border-b border-gray-700 flex justify-between items-center">
-                    <h3 className="font-semibold text-white text-sm sm:text-base">Notifications</h3>
-                    {unreadCount > 0 && (
-                      <button
-                        onClick={handleMarkAllAsRead}
-                        className="text-xs sm:text-sm text-[#A95BAB] hover:text-white transition-colors"
-                      >
-                        Mark all as read
-                      </button>
-                    )}
-                  </div>
-                  
-                  <div className="max-h-96 overflow-y-auto">
-                    {loading ? (
-                      <div className="p-4 text-center text-gray-400">
-                        Loading notifications...
-                      </div>
-                    ) : notifications.length === 0 ? (
-                      <div className="p-4 text-center text-gray-400">
-                        No notifications
-                      </div>
-                    ) : (
-                      <div className="divide-y divide-gray-700">
-                        {notifications.map((notification) => (
-                          <NotificationItem
-                            key={notification.id}
-                            notification={notification}
-                            onNotificationClick={handleNotificationClick}
-                            onMarkAsRead={handleMarkAsRead}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="p-2 border-t border-gray-700">
-                    <button
-                      onClick={() => {
-                        navigate('/dashboard/notifications')
-                        setIsNotificationDropdownOpen(false)
-                      }}
-                      className="w-full text-center text-sm text-[#A95BAB] hover:text-white py-2 transition-colors"
-                    >
-                      View all notifications
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-            */}
-
-            {/* Mobile Profile */}
-            <div className="relative" ref={mobileProfileDropdownRef}>
-              <button
-                onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-                className="flex items-center p-1 sm:p-1.5 rounded-lg hover:bg-white/10 transition-colors duration-300"
-              >
-                <div className="w-6 h-6 sm:w-7 sm:h-7 bg-[#A95BAB] rounded-full flex items-center justify-center">
-                  {user?.avatarURL ? (
-                    <img
-                      src={user.avatarURL || "/placeholder.svg"}
-                      alt={user.firstName}
-                      className="w-6 h-6 sm:w-7 sm:h-7 rounded-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-white text-xs font-bold">{getUserInitials()}</span>
-                  )}
-                </div>
-              </button>
-
-              {isProfileDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-56 sm:w-64 bg-[#202020] border border-gray-700 rounded-lg shadow-lg z-50">
-                  <div className="p-3 sm:p-4 border-b border-gray-700">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#A95BAB] rounded-full flex items-center justify-center">
-                        {user?.avatarURL ? (
-                          <img
-                            src={user.avatarURL || "/placeholder.svg"}
-                            alt={user.firstName}
-                            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover"
-                          />
-                        ) : (
-                          <span className="text-white text-sm font-bold">{getUserInitials()}</span>
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-white font-bold text-sm sm:text-base">
-                          {user?.firstName && user?.lastName
-                            ? `${user.firstName} ${user.lastName}`
-                            : user?.email || "User"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="py-2">
-                    {profileMenuItems.map((item, i) => {
-                      const IconComponent = item.icon
-                      return (
-                        <button
-                          key={i}
-                          onClick={() => handleProfileMenuClick(item.href)}
-                          className="w-full flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3 text-gray-300 hover:bg-white/5 hover:text-white transition-colors duration-200"
-                        >
-                          <div className="flex items-center space-x-3">
-                            <IconComponent size={14} className="text-gray-400 sm:w-4 sm:h-4" />
-                            <span className="text-sm">{item.label}</span>
-                          </div>
-                          <ChevronRight size={12} className="text-gray-400 sm:w-3.5 sm:h-3.5" />
-                        </button>
-                      )
-                    })}
-                    <button
-                      onClick={handleLogout}
-                      className="w-full flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3 text-gray-300 hover:bg-red-500/10 hover:text-red-400 transition-colors duration-200"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <LogOut size={14} className="text-gray-400 sm:w-4 sm:h-4" />
-                        <span className="text-sm">Log out</span>
-                      </div>
-                      <ChevronRight size={12} className="text-gray-400 sm:w-3.5 sm:h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Mobile menu button - grouped with other icons */}
-            <div className="border-l border-gray-600 pl-1 sm:pl-2 ml-1 sm:ml-2">
+          {/* Mobile right side - Only menu button */}
+          <div className="flex md:hidden items-center">
+            {/* Mobile menu button */}
+            <div>
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="p-1.5 sm:p-2 text-white hover:text-[#A95BAB] transition-colors duration-300"
@@ -610,6 +456,7 @@ export default function AuthNavbar() {
 
                 {profileMenuItems.map((item, i) => {
                   const IconComponent = item.icon
+                  const isApplications = item.href === "/dashboard/applications"
                   return (
                     <button
                       key={i}
@@ -617,10 +464,20 @@ export default function AuthNavbar() {
                         handleProfileMenuClick(item.href)
                         setIsMobileMenuOpen(false)
                       }}
-                      className="flex items-center space-x-3 w-full text-left px-3 py-2 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors duration-300"
+                      className="flex items-center justify-between w-full text-left px-3 py-2 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors duration-300"
                     >
-                      <IconComponent size={16} className="text-gray-400" />
-                      <span className="text-sm">{item.label}</span>
+                      <div className="flex items-center space-x-3">
+                        <div className="relative">
+                          <IconComponent size={16} className="text-gray-400" />
+                          {isApplications && <ApplicationBadge pendingCount={pendingApplicationsCount} />}
+                        </div>
+                        <span className="text-sm">{item.label}</span>
+                      </div>
+                      {isApplications && pendingApplicationsCount > 0 && (
+                        <span className="text-xs text-[#A95BAB] font-medium">
+                          {pendingApplicationsCount}
+                        </span>
+                      )}
                     </button>
                   )
                 })}
