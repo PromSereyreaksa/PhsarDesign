@@ -171,9 +171,9 @@ export function StepServiceContactForm({ currentStep, formData, onInputChange, p
             <div className="flex-1">
               <h3 className="text-white font-medium mb-2">Service Details</h3>
               <div className="space-y-2">
-                <p className="text-gray-300 font-medium">{post.serviceName || post.title}</p>
+                <p className="text-gray-300 font-medium break-all line-clamp-2">{post.serviceName || post.title}</p>
                 {post.description && (
-                  <p className="text-gray-400 text-sm line-clamp-3">{post.description}</p>
+                  <p className="text-gray-400 text-sm break-all line-clamp-3">{post.description}</p>
                 )}
                 <div className="flex items-center gap-2 mt-2">
                   {post.category && (
@@ -215,7 +215,7 @@ export function StepServiceContactForm({ currentStep, formData, onInputChange, p
             value={formData.subject || ''}
             onChange={(e) => handleInputChange('subject', e.target.value)}
             placeholder="Brief title for your service request (e.g., 'Logo Design for Tech Startup')"
-            className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+            className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 break-all"
             maxLength={255}
           />
           <div className="flex justify-between items-center mt-1">
@@ -242,7 +242,7 @@ export function StepServiceContactForm({ currentStep, formData, onInputChange, p
 • What is the intended use/purpose?
 • Any reference materials or inspiration?"
             rows={8}
-            className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+            className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 break-all"
             maxLength={1500}
           />
           <div className="flex justify-between items-center mt-1">
@@ -401,7 +401,7 @@ export function StepServiceContactForm({ currentStep, formData, onInputChange, p
 • Revision expectations
 • Any other important details"
             rows={4}
-            className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+            className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 break-all"
             maxLength={1000}
           />
           <p className="text-gray-400 text-xs mt-1">
@@ -490,7 +490,7 @@ export function StepServiceContactForm({ currentStep, formData, onInputChange, p
               </div>
               <div>
                 <span className="text-gray-400 text-sm">Service:</span>
-                <p className="text-white text-sm break-words">{post.serviceName || post.title}</p>
+                <p className="text-white text-sm break-all">{post.serviceName || post.title}</p>
               </div>
               {post.category && (
                 <div>

@@ -167,9 +167,9 @@ export function StepJobApplicationForm({ currentStep, formData, onInputChange, p
             <div className="flex-1">
               <h3 className="text-white font-medium mb-2">Job Details</h3>
               <div className="space-y-2">
-                <p className="text-gray-300 font-medium">{post.title}</p>
+                <p className="text-gray-300 font-medium break-all line-clamp-2">{post.title}</p>
                 {post.description && (
-                  <p className="text-gray-400 text-sm line-clamp-3">{post.description}</p>
+                  <p className="text-gray-400 text-sm break-all line-clamp-3">{post.description}</p>
                 )}
                 <div className="flex items-center gap-2 mt-2">
                   {post.category && (
