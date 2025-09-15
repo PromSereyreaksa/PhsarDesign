@@ -157,7 +157,7 @@ export function ServiceContactForm({
           value={formData.subject || ''}
           onChange={(e) => handleInputChange('subject', e.target.value)}
           placeholder="Brief description of your project needs"
-          className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+          className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 break-all"
           maxLength={255}
         />
         <div className="flex justify-between items-center mt-1">
@@ -178,7 +178,7 @@ export function ServiceContactForm({
           onChange={(e) => handleInputChange('message', e.target.value)}
           placeholder="Describe your project requirements, style preferences, and any specific details the artist should know..."
           rows={6}
-          className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+          className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 break-all"
           maxLength={1500}
         />
         <div className="flex justify-between items-center mt-1">
@@ -303,7 +303,7 @@ export function ServiceContactForm({
           onChange={(e) => handleInputChange('additionalNotes', e.target.value)}
           placeholder="Any additional requirements, style references, or specific requests..."
           rows={3}
-          className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+          className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 break-all"
           maxLength={500}
         />
         <p className="text-gray-400 text-xs mt-1">

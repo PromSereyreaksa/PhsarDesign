@@ -194,9 +194,9 @@ export function StepServiceContactForm({ currentStep, formData, onInputChange, p
                 </div>
                 {/* Artist Info */}
                 {(post.artist || post.user) && (
-                  <div className="mt-3 p-3 bg-white/5 rounded border border-white/10">
+                  <div className="mt-3 p-2 sm:p-3 bg-white/5 rounded border border-white/10">
                     <p className="text-gray-400 text-xs mb-1">Artist</p>
-                    <p className="text-white text-sm font-medium">
+                    <p className="text-white text-sm font-medium break-words truncate">
                       {post.artist?.username || post.user?.username || 'Artist'}
                     </p>
                   </div>
@@ -481,21 +481,21 @@ export function StepServiceContactForm({ currentStep, formData, onInputChange, p
           </div>
 
           {/* Service Provider Info */}
-          <div className="p-4 bg-white/5 rounded-lg border border-white/10">
-            <h4 className="text-white font-medium mb-3">Service Provider</h4>
+          <div className="p-3 sm:p-4 bg-white/5 rounded-lg border border-white/10">
+            <h4 className="text-white font-medium mb-3 text-sm sm:text-base">Service Provider</h4>
             <div className="space-y-2">
               <div>
                 <span className="text-gray-400 text-sm">Artist:</span>
-                <p className="text-white">{post.artist?.username || post.user?.username || 'Artist'}</p>
+                <p className="text-white text-sm break-words">{post.artist?.username || post.user?.username || 'Artist'}</p>
               </div>
               <div>
                 <span className="text-gray-400 text-sm">Service:</span>
-                <p className="text-white">{post.serviceName || post.title}</p>
+                <p className="text-white text-sm break-words">{post.serviceName || post.title}</p>
               </div>
               {post.category && (
                 <div>
                   <span className="text-gray-400 text-sm">Category:</span>
-                  <p className="text-white">{post.category.name || post.category}</p>
+                  <p className="text-white text-sm break-words">{post.category.name || post.category}</p>
                 </div>
               )}
             </div>

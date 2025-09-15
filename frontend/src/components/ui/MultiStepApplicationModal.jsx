@@ -312,13 +312,13 @@ export function MultiStepApplicationModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-900 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden relative">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-1 sm:p-4">
+      <div className="bg-gray-900 rounded-lg w-full max-w-[95vw] sm:max-w-4xl max-h-[98vh] sm:max-h-[90vh] overflow-hidden relative flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/10">
-          <div>
-            <h2 className="text-xl font-semibold text-white">{modalTitle}</h2>
-            <p className="text-gray-400 text-sm mt-1">
+        <div className="flex items-center justify-between p-3 sm:p-6 border-b border-white/10 flex-shrink-0">
+          <div className="min-w-0 flex-1 pr-2 sm:pr-4">
+            <h2 className="text-base sm:text-xl font-semibold text-white truncate">{modalTitle}</h2>
+            <p className="text-gray-400 text-xs sm:text-sm mt-1 truncate">
               {post.title || post.serviceName || 'Service Request'} - Step {currentStep} of {totalSteps}
             </p>
           </div>
@@ -326,33 +326,34 @@ export function MultiStepApplicationModal({
             variant="ghost"
             size="sm"
             onClick={handleClose}
-            className="text-gray-400 hover:text-white"
+            className="text-gray-400 hover:text-white flex-shrink-0 w-8 h-8 p-0"
           >
             <X className="h-4 w-4" />
           </Button>
         </div>
 
         {/* Progress Steps */}
-        <div className="px-6 py-4 border-b border-white/10">
-          <div className="flex items-center justify-between">
-            {steps.map((step, index) => (
-              <div key={step.number} className="flex items-center">
-                <div className="flex items-center">
-                  <div className={`
-                    w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
-                    ${currentStep >= step.number 
-                      ? 'bg-[#A95BAB] text-white' 
-                      : 'bg-white/10 text-gray-400'
-                    }
-                  `}>
-                    {currentStep > step.number ? (
-                      <Check className="h-4 w-4" />
-                    ) : (
+        <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-white/10">
+          <div className="flex items-center justify-center sm:justify-between overflow-x-auto">
+            <div className="flex items-center space-x-2 sm:space-x-4 min-w-max">
+              {steps.map((step, index) => (
+                <div key={step.number} className="flex items-center">
+                  <div className="flex items-center">
+                    <div className={`
+                      w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium flex-shrink-0
+                      ${currentStep >= step.number 
+                        ? 'bg-[#A95BAB] text-white' 
+                        : 'bg-white/10 text-gray-400'
+                      }
+                    `}>
+                      {currentStep > step.number ? (
+                        <Check className="h-3 w-3 sm:h-4 sm:w-4" />
+                      ) : (
                       step.number
                     )}
                   </div>
-                  <div className="ml-3">
-                    <p className={`text-sm font-medium ${
+                  <div className="ml-2 sm:ml-3 hidden sm:block">
+                    <p className={`text-xs sm:text-sm font-medium ${
                       currentStep >= step.number ? 'text-white' : 'text-gray-400'
                     }`}>
                       {step.title}
@@ -361,22 +362,24 @@ export function MultiStepApplicationModal({
                 </div>
                 {index < steps.length - 1 && (
                   <div className={`
-                    flex-1 h-0.5 mx-4
+                    w-8 sm:flex-1 h-0.5 mx-2 sm:mx-4
                     ${currentStep > step.number ? 'bg-[#A95BAB]' : 'bg-white/10'}
                   `} />
                 )}
               </div>
             ))}
+            </div>
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-240px)] pb-24">
-          {error && (
-            <div className="mb-6 bg-red-500/10 border border-red-500/20 rounded-lg p-4">
-              <p className="text-red-400 text-sm">{error}</p>
-            </div>
-          )}
+        <div className="flex-1 overflow-y-auto p-3 sm:p-6">
+          <div className="pb-4 sm:pb-6">
+            {error && (
+              <div className="mb-4 sm:mb-6 bg-red-500/10 border border-red-500/20 rounded-lg p-3 sm:p-4">
+                <p className="text-red-400 text-sm break-words">{error}</p>
+              </div>
+            )}
 
           {/* Conditional Form Rendering */}
           {isJobApplication ? (
@@ -394,26 +397,27 @@ export function MultiStepApplicationModal({
               post={post}
             />
           )}
+          </div>
         </div>
 
-        {/* Footer Navigation - Fixed at bottom */}
-        <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between p-6 border-t border-white/10 bg-gray-900">
+        {/* Footer Navigation */}
+        <div className="flex flex-col sm:flex-row items-center justify-between p-3 sm:p-6 border-t border-white/10 bg-gray-900 gap-3 sm:gap-0 flex-shrink-0">
           <Button
             variant="outline"
             onClick={handlePrevious}
             disabled={currentStep === 1}
-            className="bg-transparent border-white/20 text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-transparent border-white/20 text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed order-2 sm:order-1 w-full sm:w-auto text-sm"
           >
             <ChevronLeft className="h-4 w-4 mr-2" />
             Previous
           </Button>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 order-1 sm:order-2 w-full sm:w-auto">
             {currentStep < totalSteps ? (
               <Button
                 onClick={handleNext}
                 disabled={!validateStep(currentStep)}
-                className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 text-white disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto text-sm"
               >
                 Next
                 <ChevronRight className="h-4 w-4 ml-2" />
@@ -422,7 +426,7 @@ export function MultiStepApplicationModal({
               <Button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-[#A95BAB] hover:bg-[#A95BAB]/80 text-white disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto text-sm"
               >
                 {isSubmitting ? "Submitting..." : `Submit ${isJobApplication ? "Application" : "Request"}`}
               </Button>
