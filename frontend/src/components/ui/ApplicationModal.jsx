@@ -188,13 +188,13 @@ export function ApplicationModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-900 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
+      <div className="bg-gray-900 rounded-lg max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/10">
-          <div>
-            <h2 className="text-xl font-semibold text-white">{modalTitle}</h2>
-            <p className="text-gray-400 text-sm mt-1">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-white/10">
+          <div className="flex-1 min-w-0 mr-4">
+            <h2 className="text-lg sm:text-xl font-semibold text-white truncate">{modalTitle}</h2>
+            <p className="text-gray-400 text-xs sm:text-sm mt-1 truncate">
               {post.title || post.serviceName || 'Service Request'}
             </p>
           </div>
@@ -202,32 +202,36 @@ export function ApplicationModal({
             variant="ghost"
             size="sm"
             onClick={handleClose}
-            className="text-gray-400 hover:text-white"
+            className="text-gray-400 hover:text-white shrink-0"
           >
             <X className="h-4 w-4" />
           </Button>
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+        <div className="p-4 sm:p-6 overflow-y-auto max-h-[calc(95vh-120px)] sm:max-h-[calc(90vh-140px)]">
           {/* Post Summary */}
-          <div className="mb-6 p-4 bg-white/5 rounded-lg border border-white/10">
-            <h3 className="text-white font-medium mb-2">
+          <div className="mb-6 p-3 sm:p-4 bg-white/5 rounded-lg border border-white/10">
+            <h3 className="text-white font-medium mb-2 text-sm sm:text-base">
               {isJobApplication ? "Job Details" : "Service Details"}
             </h3>
-            <div className="space-y-1">
-              <p className="text-gray-300">{post.title || post.serviceName}</p>
+            <div className="space-y-2">
+              <p className="text-gray-300 text-sm sm:text-base break-all line-clamp-2">
+                {post.title || post.serviceName}
+              </p>
               {post.description && (
-                <p className="text-gray-400 text-sm line-clamp-2">{post.description}</p>
+                <p className="text-gray-400 text-xs sm:text-sm break-all line-clamp-3">
+                  {post.description}
+                </p>
               )}
-              <div className="flex items-center gap-2 mt-2">
+              <div className="flex flex-wrap items-center gap-2 mt-2">
                 {post.category && (
-                  <span className="px-2 py-1 bg-[#A95BAB]/20 text-[#A95BAB] text-xs rounded">
+                  <span className="px-2 py-1 bg-[#A95BAB]/20 text-[#A95BAB] text-xs rounded break-all">
                     {post.category.name || post.category}
                   </span>
                 )}
                 {post.budget && (
-                  <span className="px-2 py-1 bg-white/10 text-gray-300 text-xs rounded">
+                  <span className="px-2 py-1 bg-white/10 text-gray-300 text-xs rounded break-all">
                     Budget: {post.budget}
                   </span>
                 )}

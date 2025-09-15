@@ -31,6 +31,7 @@ const PostDetailPage = () => {
   const { isAuthenticated } = useAppSelector((state) => state.auth)
 
   const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false)
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false)
 
   // Memoized price formatting
   const formattedPrice = useMemo(() => {
@@ -85,7 +86,7 @@ const PostDetailPage = () => {
   }, [dispatch, currentPost?.artist?.artistId, isRelatedVisible, posts?.length])
 
   // Optimized handlers
-  const handleBack = useCallback(() => navigate("/marketplace"), [navigate])
+  const handleBack = useCallback(() => navigate(-1), [navigate])
   
   const handleApplicationSubmit = useCallback(() => {
     setIsApplicationModalOpen(false)
@@ -135,7 +136,7 @@ const PostDetailPage = () => {
               className="inline-flex items-center space-x-2 mb-8 px-4 py-2 bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl text-gray-300 hover:text-white hover:border-gray-600/60 transition-all"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Back to Marketplace</span>
+              <span>← Back</span>
             </button>
 
             <div className="text-center py-16">
@@ -147,7 +148,7 @@ const PostDetailPage = () => {
                 {error || "The post may have been removed."}
               </p>
               <button
-                onClick={() => navigate("/marketplace")}
+                onClick={() => navigate(-1)}
                 className="px-8 py-3 bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-lg transition-all duration-300 transform hover:scale-105 font-semibold text-white"
               >
                 Browse Marketplace
@@ -171,7 +172,7 @@ const PostDetailPage = () => {
             className="inline-flex items-center space-x-2 mb-8 px-4 py-2 bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl text-gray-300 hover:text-white hover:border-gray-600/60 transition-all cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
-          <span>Back to Marketplace</span>
+          <span>← Back</span>
         </button>
 
         {/* Post Detail */}
@@ -263,9 +264,25 @@ const PostDetailPage = () => {
             {/* Description */}
             <div className="space-y-2">
               <h3 className="text-base font-medium text-white">Description</h3>
-              <p className="text-sm text-gray-300 leading-relaxed">
-                {currentPost.description || "No description available."}
-              </p>
+              <div className="text-sm text-gray-300 leading-relaxed">
+                {currentPost.description ? (
+                  <>
+                    <p className={`${!isDescriptionExpanded && currentPost.description.length > 300 ? 'line-clamp-4' : ''} break-words`}>
+                      {currentPost.description}
+                    </p>
+                    {currentPost.description.length > 300 && (
+                      <button
+                        onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                        className="text-[#A95BAB] hover:text-[#A95BAB]/80 text-sm mt-2 font-medium transition-colors"
+                      >
+                        {isDescriptionExpanded ? 'Show less' : 'Show more'}
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <p>No description available.</p>
+                )}
+              </div>
             </div>
 
             {/* Skills */}

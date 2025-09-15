@@ -161,7 +161,7 @@ export function JobApplicationForm({
           value={formData.subject || ''}
           onChange={(e) => handleInputChange('subject', e.target.value)}
           placeholder="Brief title for your application"
-          className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+          className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 break-all"
           maxLength={255}
         />
         <div className="flex justify-between items-center mt-1">
@@ -182,7 +182,7 @@ export function JobApplicationForm({
           onChange={(e) => handleInputChange('message', e.target.value)}
           placeholder="Explain why you're the perfect fit for this job. Describe your relevant experience, approach, and what makes you unique..."
           rows={6}
-          className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+          className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 break-all"
           maxLength={2000}
         />
         <div className="flex justify-between items-center mt-1">
@@ -282,7 +282,7 @@ export function JobApplicationForm({
           onChange={(e) => handleInputChange('experience', e.target.value)}
           placeholder="Describe your relevant experience for this type of project..."
           rows={3}
-          className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+          className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 break-all"
           maxLength={1000}
         />
         <p className="text-gray-400 text-xs mt-1">
@@ -300,7 +300,7 @@ export function JobApplicationForm({
           onChange={(e) => handleInputChange('portfolio', e.target.value)}
           placeholder="Share links to relevant work samples (max 10 items)..."
           rows={3}
-          className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+          className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 break-all"
         />
         {errors.portfolio && (
           <p className="text-red-400 text-xs mt-1">{errors.portfolio}</p>
@@ -320,7 +320,7 @@ export function JobApplicationForm({
           onChange={(e) => handleInputChange('pastProjects', e.target.value)}
           placeholder="Describe similar projects you've completed..."
           rows={3}
-          className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+          className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 break-all"
           maxLength={1000}
         />
         <p className="text-gray-400 text-xs mt-1">
@@ -338,7 +338,7 @@ export function JobApplicationForm({
           onChange={(e) => handleInputChange('additionalNotes', e.target.value)}
           placeholder="Any additional information or questions..."
           rows={3}
-          className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+          className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 break-all"
           maxLength={500}
         />
         <p className="text-gray-400 text-xs mt-1">

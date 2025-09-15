@@ -173,17 +173,28 @@ const PublicArtistProfile = () => {
       <AuthNavbar/>
 
       <div className="pt-20">
-        <div className="relative">
-          <div className="h-64 md:h-80 relative overflow-hidden">
+        <div className="relative mt-0">
+          <div className="h-40 sm:h-48 md:h-64 lg:h-80 relative overflow-hidden">
             <img src={artistData.coverImage || "/placeholder.svg"} alt="Cover" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-black/40" />
+            
+            {/* Back Button on Cover */}
+            <div className="absolute top-4 left-4">
+              <button
+                onClick={() => navigate(-1)}
+                className="text-white/80 hover:text-white transition-colors text-sm flex items-center gap-1 bg-black/30 px-3 py-1.5 rounded-lg backdrop-blur-sm"
+              >
+                ← Back
+              </button>
+            </div>
           </div>
 
-          <div className="absolute bottom-0 left-0 right-0 p-6">
-            <div className="max-w-7xl mx-auto">
-              <div className="flex flex-col md:flex-row items-start md:items-end gap-6">
+          {/* Profile info section - positioned below cover image */}
+          <div className="relative -mt-5 sm:-mt-6 md:-mt-8 z-40">
+            <div className="max-w-7xl mx-auto px-4 md:px-6">
+              <div className="flex flex-col md:flex-row items-start md:items-end gap-4 md:gap-6">
                 <div className="relative">
-                  <Avatar className="w-32 h-32 border-4 border-white/20 bg-white/10 backdrop-blur-sm">
+                  <Avatar className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 border-4 border-white/20 bg-white/10 backdrop-blur-sm">
                     {artistData.avatar ? (
                       <AvatarImage
                         key={artistData.avatar}
@@ -200,7 +211,7 @@ const PublicArtistProfile = () => {
                         }}
                       />
                     ) : null}
-                    <AvatarFallback className="text-2xl font-bold text-white bg-[#A95BAB]">
+                    <AvatarFallback className="text-lg sm:text-xl md:text-2xl font-bold text-white bg-[#A95BAB]">
                       {artistData.name
                         .split(" ")
                         .map((n) => n[0])

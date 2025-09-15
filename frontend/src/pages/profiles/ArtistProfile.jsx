@@ -225,18 +225,28 @@ console.log("My post:", myAvailabilityPosts);
       {/* Main content with proper spacing */}
       <div className="pt-20 pb-8">
         {/* Cover section */}
-        <div className="relative mt-0 md:mt-0">
-          <div className="h-48 md:h-64 lg:h-80 relative overflow-hidden">
+        <div className="relative mt-0">
+          <div className="h-40 sm:h-48 md:h-64 lg:h-80 relative overflow-hidden">
             <img src={artistData.coverImage || "/placeholder.svg"} alt="Cover" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-black/40" />
+            
+            {/* Back Button on Cover */}
+            <div className="absolute top-4 left-4">
+              <button
+                onClick={() => navigate(-1)}
+                className="text-white/80 hover:text-white transition-colors text-sm flex items-center gap-1 bg-black/30 px-3 py-1.5 rounded-lg backdrop-blur-sm"
+              >
+                ← Back
+              </button>
+            </div>
           </div>
 
           {/* Profile info section - positioned below cover image */}
-          <div className="relative -mt-8 md:-mt-10 z-10">
+          <div className="relative -mt-5 sm:-mt-6 md:-mt-8 z-40">
             <div className="max-w-7xl mx-auto px-4 md:px-6">
               <div className="flex flex-col md:flex-row items-start md:items-end gap-4 md:gap-6">
                 <div className="relative">
-                  <Avatar className="w-24 h-24 md:w-32 md:h-32 border-4 border-white/20 bg-white/10 backdrop-blur-sm">
+                  <Avatar className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 border-4 border-white/20 bg-white/10 backdrop-blur-sm">
                     {artistData.avatar ? (
                       <AvatarImage
                         key={artistData.avatar}
@@ -253,7 +263,7 @@ console.log("My post:", myAvailabilityPosts);
                         }}
                       />
                     ) : null}
-                    <AvatarFallback className="text-2xl font-bold text-white bg-[#A95BAB]">
+                    <AvatarFallback className="text-lg sm:text-xl md:text-2xl font-bold text-white bg-[#A95BAB]">
                       {artistData.name
                         .split(" ")
                         .map((n) => n[0])
@@ -263,10 +273,10 @@ console.log("My post:", myAvailabilityPosts);
                   {isOwner && (
                     <Button
                       size="sm"
-                      className="absolute -bottom-2 -right-2 bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-full p-2"
+                      className="absolute -bottom-1 -right-1 sm:-bottom-2 sm:-right-2 bg-[#A95BAB] hover:bg-[#A95BAB]/80 rounded-full p-1.5 sm:p-2"
                       onClick={handleEditProfile}
                     >
-                      <Edit className="w-4 h-4" />
+                      <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
                     </Button>
                   )}
                 </div>
